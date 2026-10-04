@@ -15,7 +15,12 @@ import { ClassifyRequest, NpcRequest, ReportRequest } from "../src/providers/typ
 // returns a response the client validates again. Jobs routed to "mock" use the offline providers.
 
 const config = loadConfig();
-const registry = new Registry({ timeoutMs: config.timeoutMs, maxRetries: config.maxRetries });
+const registry = new Registry({
+  timeoutMs: config.timeoutMs,
+  maxRetries: config.maxRetries,
+  auth: config.auth,
+  cloud: config.cloud,
+});
 try {
   registry.validate(
     Object.values(config.jobs).flatMap((j) => (j.fallback ? [j.route, j.fallback] : [j.route])),
@@ -69,7 +74,7 @@ createServer(async (req, res) => {
   }
 }).listen(config.port, () => {
   const summary = describeConfig(config).jobs;
-  console.log(`AI RolePlay API on http://localhost:${config.port}`);
+  console.log(`AI RolePlay API on http://localhost:${config.port}  auth mode ${config.auth.mode}`);
   for (const [job, j] of Object.entries(summary))
     console.log(
       `  ${job.padEnd(9)} ${j.route}${j.fallback ? `  (fallback ${j.fallback})` : ""}  prompt ${j.promptVersion}`,

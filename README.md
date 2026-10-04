@@ -18,13 +18,17 @@ pnpm install
 pnpm dev            # offline: scripted persona, heuristic classifier, template report writer
 ```
 
-To run with Claude:
+To run with Claude, pick the authentication that matches your environment. No API key is required:
 
 ```
 cp .env.example .env
-# set ANTHROPIC_API_KEY and, for example:
+# Internal gateway (no credential in this process):
+#   LLM_AUTH_MODE=gateway  ANTHROPIC_BASE_URL=https://llm-gateway.internal/anthropic
 #   LLM_ROUTE_DEFAULT=anthropic:claude-opus-5-5
-pnpm server         # API server on :8787, prints the routing table at startup
+# Or Bedrock with IAM:   LLM_BEDROCK_REGION=us-east-1  LLM_ROUTE_DEFAULT=bedrock:anthropic.claude-opus-5-5
+# Or Vertex with ADC:    LLM_VERTEX_REGION=global LLM_VERTEX_PROJECT_ID=p  LLM_ROUTE_DEFAULT=vertex:claude-opus-5-5
+# Or a bearer token / API key in env mode: ANTHROPIC_AUTH_TOKEN or ANTHROPIC_API_KEY
+pnpm server         # API server on :8787, prints the routing table and auth mode at startup
 pnpm dev:ai         # Vite with VITE_AI_PROVIDER=http, proxies /api to the server
 ```
 
@@ -42,7 +46,18 @@ PROMPT_VERSION_<JOB>=v1                     # prompt file under prompts/<job>/
 ROLEPLAY_DUAL_PASS=1                        # classify twice, keep the conservative band, report agreement
 ```
 
-Jobs code against one provider neutral interface (`server/llm/types.ts`). Anthropic is implemented (`server/llm/anthropic.ts`). `openai`, `google`, `azure-openai`, `bedrock` and `vertex` are reserved provider names: routing to one before its adapter exists fails at startup with a clear message, so a job is never silently served by the wrong model. Each call emits one JSON usage line (job, provider, model, tokens, latency) for cost tracking. `GET /api/health` returns the routing table without credentials.
+Jobs code against one provider neutral interface (`server/llm/types.ts`). Claude is implemented for the first party API (direct or through an internal gateway), Amazon Bedrock and Google Vertex through one adapter (`server/llm/claude.ts`). `openai`, `google` and `azure-openai` are reserved provider names: routing to one before its adapter exists fails at startup with a clear message, so a job is never silently served by the wrong model. Each call emits one JSON usage line (job, provider, model, tokens, latency) for cost tracking. `GET /api/health` returns the routing table, the auth mode and which credential sources are present by name, never values.
+
+## Credentials
+
+The server never needs an Anthropic API key. `LLM_AUTH_MODE` selects how Claude calls authenticate:
+
+| Mode | How it works | Variables |
+| --- | --- | --- |
+| `gateway` | No credential leaves the process. The base URL is an internal gateway that authenticates on the network path; the SDK's auth headers are omitted. | `ANTHROPIC_BASE_URL`, optional `LLM_GATEWAY_HEADERS` (JSON object) |
+| `env` (default) | The SDK resolves credentials: API key, bearer token, workload identity federation or a CLI profile. | `ANTHROPIC_API_KEY` or `ANTHROPIC_AUTH_TOKEN` or the federation variables |
+| Bedrock route | Cloud identity through the AWS default credential chain. | `LLM_BEDROCK_REGION` or `AWS_REGION` |
+| Vertex route | Google application default credentials. | `LLM_VERTEX_REGION`, `LLM_VERTEX_PROJECT_ID` |
 
 ## Layout
 

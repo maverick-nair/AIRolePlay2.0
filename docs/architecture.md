@@ -32,6 +32,8 @@ With `VITE_AI_PROVIDER=mock` (the default) the browser never calls the server: t
 
 `server/config.ts` reads one route per job (`provider:model[:effort]`), a default, an optional fallback per job, prompt versions, timeouts and retry counts. `server/llm/registry.ts` turns a route into a cached `LlmClient` and refuses unknown or unimplemented providers at startup. `server/llm/runner.ts` executes a job call against the primary route, then the fallback, logging a JSON usage line per call (job, provider, model, effort, tokens, cache tokens, latency, ok). When every route fails the job returns the offline implementation's answer and the response `meta.provider` says `mock`.
 
+Credentials: `server/llm/claude.ts` builds the first party, Bedrock and Vertex clients. In `gateway` auth mode the SDK's auth headers are omitted and `ANTHROPIC_BASE_URL` must point at the internal gateway, so no credential is ever held by this process. In `env` mode the SDK resolves a key, a bearer token, workload identity or a profile on its own. Bedrock and Vertex use cloud identity. `credentialSources()` reports which variables are present by name for the health route; values are never read by application code.
+
 Adding a provider: implement `LlmClient` in `server/llm/<provider>.ts` (two methods, `complete` and `parse`), add a case in `registry.ts`, and add the credential name to `.env.example`. No job changes.
 
 Choosing routes: the persona job is latency sensitive and benefits from low effort; the classifier and report writer are accuracy sensitive and benefit from medium or higher effort and from dual pass classification. Security sensitive deployments can route all three to a private endpoint (Bedrock, Vertex, Azure) once those adapters exist, with no change to the browser.

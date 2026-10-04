@@ -26,7 +26,7 @@ pnpm test                 # vitest: scoring engine, classifier heuristics, routi
 pnpm check                # everything CI runs
 ```
 
-Providers: `VITE_AI_PROVIDER=mock` (default) runs everything in the browser with scripted persona lines, a transparent pattern based classifier and a template report writer. `VITE_AI_PROVIDER=http` sends persona, classification and report calls to the API server. The server routes each job (`npc`, `classify`, `report`) independently through `LLM_ROUTE_<JOB>=provider:model[:effort]`, with `LLM_ROUTE_DEFAULT`, an optional `LLM_FALLBACK_<JOB>`, and `PROMPT_VERSION_<JOB>`. Anthropic is the implemented adapter; routing to a reserved provider without an adapter fails at startup. Jobs routed to `mock` answer with the offline providers. `ROLEPLAY_DUAL_PASS=1` runs each classification twice and reports the agreement; on disagreement the more conservative band is kept. Every call logs one JSON usage line. See `.env.example` and `docs/architecture.md`.
+Providers: `VITE_AI_PROVIDER=mock` (default) runs everything in the browser with scripted persona lines, a transparent pattern based classifier and a template report writer. `VITE_AI_PROVIDER=http` sends persona, classification and report calls to the API server. The server routes each job (`npc`, `classify`, `report`) independently through `LLM_ROUTE_<JOB>=provider:model[:effort]`, with `LLM_ROUTE_DEFAULT`, an optional `LLM_FALLBACK_<JOB>`, and `PROMPT_VERSION_<JOB>`. Claude is implemented for the first party API (directly or through an internal gateway with `LLM_AUTH_MODE=gateway`, no key in the process), Bedrock (IAM) and Vertex (ADC) through one adapter; routing to a reserved provider without an adapter fails at startup. Jobs routed to `mock` answer with the offline providers. `ROLEPLAY_DUAL_PASS=1` runs each classification twice and reports the agreement; on disagreement the more conservative band is kept. Every call logs one JSON usage line. See `.env.example` and `docs/architecture.md`.
 
 Stack: React 19, TypeScript, Vite 8, Tailwind CSS v4, Zod 4, `@anthropic-ai/sdk`, jsPDF (lazy loaded), Vitest, ESLint, Prettier, Node http for the server (run with tsx).
 
@@ -45,9 +45,10 @@ Stack: React 19, TypeScript, Vite 8, Tailwind CSS v4, Zod 4, `@anthropic-ai/sdk`
 - `src/data/scenarios/renewalNegotiation.ts` - the authored scenario. `src/data/` also keeps `badges.ts`, `peers.ts`, `bands.ts` and the sample cohort numbers.
 - `src/components/` - `TenPointScale`, `SkillScore`, `SkillRadar`, `ScoreRing`, `BandChip`, `ClaimLadderPanel`, `AttemptTrend`, `VoiceWave`, `BoxField`, `ConfettiBurst`, `BadgeMedal`, `FlameIcon`, `RollingNumber`, `EmailDialog`, `ThemeToggle`, `ToolButton`, `CountdownTimer`, `SectionLabel`, `LeaderboardIcon`.
 - `src/lib/` - `reportId.ts`, `score.ts` (`bandFor`, `scoreColor`, `scoreLabel`, `cefrColor`), `color.ts` (`readableOn`), `motion.ts`, `useCountUp.ts`, `buildReportPdf.ts` (renders the report object), `theme.ts`.
-- `server/` - `index.ts` (routes `/api/npc`, `/api/classify`, `/api/report`, `/api/health`), `config.ts` (per job routing from env), `llm/` (provider contract, Anthropic adapter, registry, runner with fallback and usage logging), `jobs/` (one file per AI job), `prompts.ts` (loads `prompts/<job>/<version>.md`). Structured outputs are validated with Zod, retried once, then the fallback route, then the offline provider.
+- `server/` - `index.ts` (routes `/api/npc`, `/api/classify`, `/api/report`, `/api/health`), `config.ts` (per job routing from env), `llm/` (provider contract, Claude adapter with first party, gateway, Bedrock and Vertex factories, registry, runner with fallback and usage logging), `jobs/` (one file per AI job), `prompts.ts` (loads `prompts/<job>/<version>.md`). Structured outputs are validated with Zod, retried once, then the fallback route, then the offline provider.
 - `test/scoring.test.ts` - engine, classifier, hints, descriptive metrics, report assembly, claim ladder.
 - `test/config.test.ts` - routing config parsing, defaults, credential hygiene, dual pass reconciliation.
+- `test/registry.test.ts` - provider construction without keys (gateway, Bedrock, Vertex), startup refusals, auth config.
 - `scripts/lint-copy.ts` - copy lint (dashes, wording).
 
 ## Theme tokens (index.css)
@@ -71,7 +72,7 @@ Novice 1-2 `#b5472f`, Emerging 3-4 `#e07b2e`, Competent 5-6 `#efc23a`, Proficien
 
 ## What is still mocked (needed before production)
 
-1. **Persona, classifier and report writer** run offline by default. With a key and routes the API server uses Claude. The LLM path has not yet been exercised against a live key in this repository; validate the prompts and output schemas on real traffic first. Adapters for other providers are routing names only until written.
+1. **Persona, classifier and report writer** run offline by default. With routes configured the API server uses Claude through your environment's own credentials (gateway, bearer token, Bedrock or Vertex identity). The LLM path has not yet been exercised against a live key in this repository; validate the prompts and output schemas on real traffic first. Adapters for other providers are routing names only until written.
 2. **Speech**: dictation types a fixed phrase, the camera is a stock image, there is no text to speech. Real STT and TTS belong behind adapters on the server, with consent before capture.
 3. **Sessions, peers and leaderboard**: attempts persist in localStorage, peer baselines and the leaderboard are sample constants. The report shape in `src/domain/report.ts` is what the backend should store.
 4. **Email** is a mailto handoff; real sending with the PDF attached needs a server.
