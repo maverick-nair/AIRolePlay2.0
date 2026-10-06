@@ -76,9 +76,17 @@ docs/             handover, architecture, scoring method, product strategy
 
 See `docs/handover.md` for the full file map, scoring rules and what is still mocked, `docs/architecture.md` for the request flow, and `docs/product-strategy.md` for the market analysis this product is built on.
 
-## Claude Code mod
+## Claude Code mods
 
-`tools/claude-mods/copy-lint-guard` is a Claude Code hooks module that runs `pnpm lint:copy` before any `git commit` or `git push` Claude issues and blocks the command when the copy rules fail. Install it with `/plugin install copy-lint-guard --marketplace maverick-nair/AIRolePlay2.0`; details in its README.
+`tools/claude-mods/` holds three Claude Code hooks modules that guard git activity Claude runs through Bash. Install any of them from this repository's marketplace with `/plugin install <name> --marketplace maverick-nair/AIRolePlay2.0`:
+
+| Mod | Guards |
+| --- | --- |
+| `copy-lint-guard` | Runs `pnpm lint:copy` before `git commit` or `git push`; blocks on an em or en dash or banned wording. |
+| `secret-guard` | Refuses commands carrying a literal API key, staging `.env` files, and commits or pushes whose changes add a secret looking value. |
+| `push-check` | Runs `pnpm check` before `git push` and blocks the push when typecheck, lint, tests or the build fail. |
+
+Each has a README with details and tests runnable with `claude plugin test tools/claude-mods/<name>`.
 
 ## Copy and accessibility rules
 

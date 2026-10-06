@@ -7,6 +7,14 @@
     {
       "name": "copy-lint-guard",
       "source": "./tools/claude-mods/copy-lint-guard"
+    },
+    {
+      "name": "secret-guard",
+      "source": "./tools/claude-mods/secret-guard"
+    },
+    {
+      "name": "push-check",
+      "source": "./tools/claude-mods/push-check"
     }
   ],
   "description": "Claude Code mods for the AI RolePlay 2.0 repository."

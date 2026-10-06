@@ -1,0 +1,6 @@
+{
+  "name": "secret-guard",
+  "version": "0.1.0",
+  "description": "Blocks Bash commands that carry a literal API key or would commit or push .env files or secret looking values.",
+  "author": { "name": "KNOLSKAPE" }
+}

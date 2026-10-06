@@ -1,0 +1,6 @@
+{
+  "name": "push-check",
+  "version": "0.1.0",
+  "description": "Runs the project's pnpm check before any git push from Bash and blocks the push when it fails.",
+  "author": { "name": "KNOLSKAPE" }
+}
