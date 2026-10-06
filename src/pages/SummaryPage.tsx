@@ -274,7 +274,7 @@ export default function SummaryPage({
                 className="px-3.5 py-2 rounded-lg text-xs font-display font-semibold min-h-[36px] transition-colors disabled:cursor-not-allowed disabled:line-through focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
                 style={
                   compare === o.v
-                    ? { background: "rgb(var(--ink))", color: "var(--bg)" }
+                    ? { background: "var(--accent)", color: "#ffffff" }
                     : { color: "rgb(var(--ink) / 0.75)" }
                 }
               >

@@ -125,8 +125,7 @@ export default function AssessmentLanding({
               <img
                 src={PORTRAIT_SRC}
                 alt={persona.portraitAlt}
-                className="w-full h-full object-cover"
-                style={{ filter: "grayscale(0.4) contrast(1.05)" }}
+                className="portrait-img w-full h-full object-cover"
               />
               <div
                 className="absolute inset-0"

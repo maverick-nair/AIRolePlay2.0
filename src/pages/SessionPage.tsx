@@ -687,10 +687,10 @@ export default function SessionPage({
                     }}
                   >
                     <svg width="46" height="46" viewBox="0 0 36 36" fill="none">
-                      <circle cx="18" cy="13" r="7" fill="rgb(var(--ink) / 0.9)" />
+                      <circle cx="18" cy="13" r="7" fill="#ffffff" />
                       <path
                         d="M4 34c0-7.732 6.268-14 14-14s14 6.268 14 14"
-                        stroke="rgb(var(--ink) / 0.9)"
+                        stroke="#ffffff"
                         strokeWidth="2.5"
                         strokeLinecap="round"
                       />
@@ -707,7 +707,10 @@ export default function SessionPage({
               </div>
               <div
                 className="absolute top-3 left-3 px-2.5 py-1 flex items-center gap-2"
-                style={{ background: "rgba(0,0,0,0.5)" }}
+                style={{
+                  background: "color-mix(in srgb, var(--bg) 78%, transparent)",
+                  backdropFilter: "blur(6px)",
+                }}
               >
                 <span
                   className={`w-1.5 h-1.5 rounded-full ${speaking ? "bg-[var(--ok)] animate-pulse" : "bg-ink/30"}`}
@@ -760,7 +763,10 @@ export default function SessionPage({
               )}
               <div
                 className="absolute top-3 left-3 px-2.5 py-1 flex items-center gap-2 z-10"
-                style={{ background: "rgba(0,0,0,0.5)" }}
+                style={{
+                  background: "color-mix(in srgb, var(--bg) 78%, transparent)",
+                  backdropFilter: "blur(6px)",
+                }}
               >
                 {isRecording && (
                   <span className="w-1.5 h-1.5 rounded-full bg-[var(--danger)] animate-pulse" />
