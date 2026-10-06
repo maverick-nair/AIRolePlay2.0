@@ -1,0 +1,13 @@
+{
+  "name": "airoleplay-mods",
+  "owner": {
+    "name": "KNOLSKAPE"
+  },
+  "plugins": [
+    {
+      "name": "copy-lint-guard",
+      "source": "./tools/claude-mods/copy-lint-guard"
+    }
+  ],
+  "description": "Claude Code mods for the AI RolePlay 2.0 repository."
+}

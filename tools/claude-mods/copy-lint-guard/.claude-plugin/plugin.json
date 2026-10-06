@@ -1,0 +1,8 @@
+{
+  "name": "copy-lint-guard",
+  "version": "0.1.0",
+  "description": "Runs pnpm lint:copy before any git commit or git push from Bash and blocks the command when the copy rules fail.",
+  "author": {
+    "name": "KNOLSKAPE"
+  }
+}

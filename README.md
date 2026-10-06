@@ -76,6 +76,10 @@ docs/             handover, architecture, scoring method, product strategy
 
 See `docs/handover.md` for the full file map, scoring rules and what is still mocked, `docs/architecture.md` for the request flow, and `docs/product-strategy.md` for the market analysis this product is built on.
 
+## Claude Code mod
+
+`tools/claude-mods/copy-lint-guard` is a Claude Code hooks module that runs `pnpm lint:copy` before any `git commit` or `git push` Claude issues and blocks the command when the copy rules fail. Install it with `/plugin install copy-lint-guard --marketplace maverick-nair/AIRolePlay2.0`; details in its README.
+
 ## Copy and accessibility rules
 
 Say "skills", never "competency". No em dashes, no en dashes, no emojis anywhere (the copy lint fails on them). WCAG 2.2 AA: keyboard operable, visible focus, reduced motion respected, secondary text at `text-ink/70` or stronger. Default exports for components.
