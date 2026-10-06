@@ -18,6 +18,7 @@ import reportId from "../lib/reportId";
 import { scoreSession } from "../domain/scoring";
 import { providers } from "../providers";
 import { saveAttempt } from "../store/attempts";
+import type { Product } from "../products";
 
 const START_XP = 560;
 const START_STREAK = 2;
@@ -37,12 +38,14 @@ type Snapshot = {
 };
 
 export default function SessionPage({
+  product,
   scenario,
   mode,
   difficulty,
   hints,
   onEnd,
 }: {
+  product: Product;
   scenario: Scenario;
   mode: Mode;
   difficulty: Difficulty;
@@ -383,13 +386,16 @@ export default function SessionPage({
             className="w-8 h-8 flex items-center justify-center flex-none"
             style={{ background: "var(--accent)" }}
           >
-            <span className="text-white text-sm font-bold font-display leading-none">AI</span>
+            <span className="text-white text-xs font-bold font-display leading-none">{product.mark}</span>
           </div>
           <span
             className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 text-[11px] font-display uppercase tracking-wider"
             style={{ background: "rgba(52,211,153,0.12)", color: "var(--ok)" }}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--ok)]" /> Live
+          </span>
+          <span className="hidden lg:inline text-ink/80 font-display font-semibold text-sm">
+            {product.name}
           </span>
           <span
             className="hidden md:inline-flex items-center gap-2 px-2.5 py-1 text-[11px] font-display uppercase tracking-wider"
@@ -625,7 +631,7 @@ export default function SessionPage({
                 className="text-[10px] font-display uppercase tracking-widest"
                 style={{ color: "var(--brand)" }}
               >
-                RolePlay Scenario
+                {isPractice ? "Practice scenario" : "Assessment scenario"}
               </span>
               <span
                 className="px-1.5 py-0.5 text-[10px] font-display uppercase tracking-wider"

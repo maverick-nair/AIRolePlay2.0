@@ -1,11 +1,13 @@
 # AI RolePlay 2.0
 
-An enterprise AI RolePlay product for workplace conversations, built as two propositions on one evidence based instrument:
+Two products for workplace conversations, built on one evidence based instrument, one scoring engine and one backend. Each has its own interface and entry point, and neither offers the other's mode:
 
-- **Practice**: unlimited attempts, rewind any of your turns (the persona rewinds with you), criteria on request, hints in the moment, selectable persona difficulty, and a trend across attempts.
-- **Assessment**: one attempt, a fixed time limit, a standardised persona that follows a schedule of critical incidents, hidden criteria, no hints and no rewind.
+| Product | 4E line | Entry | What it does |
+| --- | --- | --- | --- |
+| **AI RolePlay** | Experience | `/` (`index.html`) | Practice: unlimited runs, rewind any of your turns (the persona rewinds with you), criteria on request, hints in the moment, selectable persona difficulty, and a trend across runs. Scores are for the learner. |
+| **Conversation AI** | Evaluate | `/assess/` (`assess/index.html`) | Assessment: one attempt, a fixed time limit, a standardised persona that follows a schedule of critical incidents, hidden criteria, no hints, no rewind, and a confirmation before the attempt starts. The report is saved and the scenario locks. |
 
-Every score is produced the same way in both modes. A classifier (an LLM, or the offline heuristic) places each participant turn into a band (Strong, Adequate, Weak, Harmful) against authored behavioural indicators with written anchors, quoting the words that justify it. Rules turn bands into points through a fixed table. No model ever writes a number into a score. Every rating traces to quoted turns, and every report states where the instrument sits on the claim ladder (rung 1 of 4 today: structured feedback, not for talent decisions).
+Every score is produced the same way in both products. A classifier (an LLM, or the offline heuristic) places each participant turn into a band (Strong, Adequate, Weak, Harmful) against authored behavioural indicators with written anchors, quoting the words that justify it. Rules turn bands into points through a fixed table. No model ever writes a number into a score. Every rating traces to quoted turns, and every report states where the instrument sits on the claim ladder (rung 1 of 4 today: structured feedback, not for talent decisions).
 
 The first scenario is a renewal negotiation with Margaret Hale, VP Procurement at Northwind Freight.
 
@@ -16,6 +18,7 @@ Node 22 and pnpm 10.
 ```
 pnpm install
 pnpm dev            # offline: scripted persona, heuristic classifier, template report writer
+                    # AI RolePlay at http://localhost:5173/  Conversation AI at http://localhost:5173/assess/
 ```
 
 To run with Claude, pick the authentication that matches your environment. No API key is required:
@@ -62,9 +65,13 @@ The server never needs an Anthropic API key. `LLM_AUTH_MODE` selects how Claude 
 ## Layout
 
 ```
+index.html        AI RolePlay entry (src/main.tsx)
+assess/index.html Conversation AI entry (src/main-assess.tsx)
+src/products.ts   the two product definitions (name, 4E line, mode, mark) and the theme hook
+src/apps/         PracticeApp (AI RolePlay shell), AssessmentApp (Conversation AI shell)
 src/domain/       pure scoring engine, scenario schema, report assembly, claim ladder (no clocks, no IO)
 src/providers/    NPC, classifier and report writer interfaces; mock and http implementations
-src/pages/        LandingPage, SessionPage, SummaryPage
+src/pages/        PracticeLanding, AssessmentLanding, SessionPage, SummaryPage (the last two take a product prop)
 src/components/   shared UI
 src/data/         the authored scenario and sample cohort data
 src/store/        attempt persistence (localStorage until the backend exists)

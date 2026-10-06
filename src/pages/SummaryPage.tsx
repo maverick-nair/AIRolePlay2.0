@@ -24,16 +24,19 @@ import type { Band, Scenario } from "../domain/scenario";
 import { BAND_POINTS, NOT_OBSERVED_POINTS } from "../domain/scoring";
 import { CLAIM_LADDER } from "../domain/instrumentStatus";
 import { formatTalkShare } from "../domain/descriptive";
+import type { Product } from "../products";
 
 const CEFR_LADDER = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
 export default function SummaryPage({
+  product,
   report,
   scenario,
   attempts,
   onPractiseAgain,
   onHome,
 }: {
+  product: Product;
   report: Report;
   scenario: Scenario;
   attempts: Report[];
@@ -162,16 +165,16 @@ export default function SummaryPage({
             className="w-7 h-7 rounded-lg flex items-center justify-center"
             style={{ background: "linear-gradient(135deg,var(--accent),var(--accent-2))" }}
           >
-            <span className="text-white text-xs font-bold font-display">AI</span>
+            <span className="text-white text-xs font-bold font-display">{product.mark}</span>
           </div>
-          <span className="text-ink/70 font-display font-medium text-sm">AI RolePlay</span>
+          <span className="text-ink/70 font-display font-medium text-sm">{product.name}</span>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={onHome}
             className="px-3 py-2 rounded-lg text-ink/85 text-xs font-semibold hover:text-ink border border-ink/15 min-h-[36px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
           >
-            Back to scenario
+            {isAssessment ? "Back to assessment" : "Back to AI RolePlay"}
           </button>
           <button
             onClick={download}
@@ -213,7 +216,7 @@ export default function SummaryPage({
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-5">
           <div>
             <p className="text-ink/70 text-xs uppercase tracking-widest font-medium mb-1 flex items-center gap-2">
-              {isAssessment ? "Assessment report" : "Practice report"}
+              {isAssessment ? `${product.name} assessment report` : `${product.name} practice report`}
               <span
                 className="px-1.5 py-0.5 rounded text-[10px] font-display font-semibold tracking-wider normal-case"
                 style={
@@ -222,7 +225,9 @@ export default function SummaryPage({
                     : { background: "rgba(52,211,153,0.14)", color: "var(--ok)" }
                 }
               >
-                {isAssessment ? "One attempt, standardised persona" : `Attempt ${attemptIndex + 1}`}
+                {isAssessment
+                  ? "One attempt, standardised persona"
+                  : `Attempt ${attemptIndex + 1} of ${attempts.length}`}
               </span>
             </p>
             <h1 className="font-display font-bold text-2xl md:text-3xl text-ink tracking-tight">

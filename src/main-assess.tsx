@@ -1,10 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import PracticeApp from "./apps/PracticeApp";
+import AssessmentApp from "./apps/AssessmentApp";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <PracticeApp />
+    <AssessmentApp />
   </React.StrictMode>,
 );

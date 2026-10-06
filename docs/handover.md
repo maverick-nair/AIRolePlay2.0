@@ -2,10 +2,12 @@
 
 ## What it is
 
-An AI RolePlay product with two deliberately different propositions on one instrument:
+Two products on one instrument, one engine and one backend. They are separate interfaces with separate entry points, and neither offers the other's mode:
 
-- **Practice**: unlimited attempts, rewind to any of your turns (the persona rewinds with you), criteria available on request, in the moment hints, selectable persona difficulty, and a trend across attempts. Scores are for the learner.
-- **Assessment**: one attempt per scenario, a fixed time limit, a standardised persona that follows a schedule of critical incidents, hidden criteria, no hints and no rewind. The lock lives in the attempt store.
+- **AI RolePlay** (Experience line, `/`, `index.html`, `src/apps/PracticeApp.tsx`): practice. Unlimited runs, rewind to any of your turns (the persona rewinds with you), criteria available on request, in the moment hints, selectable persona difficulty, and a trend across runs. Scores are for the learner.
+- **Conversation AI** (Evaluate line, `/assess/`, `assess/index.html`, `src/apps/AssessmentApp.tsx`): assessment. One attempt per scenario, a fixed time limit, a standardised persona that follows a schedule of critical incidents, hidden criteria, no hints, no rewind, and an explicit confirmation before the attempt begins. The lock lives in the attempt store; once an attempt exists the landing shows the saved report instead of a start button.
+
+Product definitions (name, 4E line, mode, mark) live in `src/products.ts`. `applyProductTheme` sets `data-product` on the document root so `src/index.css` can give Conversation AI its blue accent while every token name stays the same. The attempt store is shared, so a completed assessment never blocks practice and practice runs never count as an assessment.
 
 Scenario shipped: **Renewal Negotiation with Margaret Hale** (VP Procurement, Northwind Freight). No emojis, no em or en dashes. Dark and light themes, WCAG 2.2 AA.
 
@@ -32,8 +34,11 @@ Stack: React 19, TypeScript, Vite 8, Tailwind CSS v4, Zod 4, `@anthropic-ai/sdk`
 
 ## Files
 
-- `src/App.tsx` - shell: theme provider, page switch, session config, attempt list.
-- `src/pages/` - `LandingPage` (briefing, skills with indicators, objectives, instrument status, mode chooser), `SessionPage` (turn loop, snapshots and rewind, hints, incident scheduling via the provider, report build on End Call), `SummaryPage` (Overview, Evidence by Skill, Communication, Transcript, Method tabs).
+- `index.html` and `assess/index.html` - the two entries; `vite.config.ts` builds both (`build.rollupOptions.input`).
+- `src/main.tsx`, `src/main-assess.tsx` - mount `PracticeApp` and `AssessmentApp`.
+- `src/products.ts` - the two product definitions and the theme hook.
+- `src/apps/` - `PracticeApp` (theme, page switch, run options, attempt list for AI RolePlay), `AssessmentApp` (theme, page switch, the one completed attempt for Conversation AI).
+- `src/pages/` - `PracticeLanding` (briefing, skills with indicators on request, objectives, feedback status, run setup with difficulty and hints), `AssessmentLanding` (briefing, skills without indicators, assessment rules, claim ladder, confirmation and begin, completed state), `SessionPage` (turn loop, snapshots and rewind, hints, incident scheduling via the provider, report build on End Call), `SummaryPage` (Overview, Evidence by Skill, Communication, Transcript, Method tabs).
 - `src/domain/` - pure, deterministic:
   - `scenario.ts` Zod schemas. A scenario is `stimulus` (persona, hidden interests, opening, critical incidents, mock lines) plus `instrument` (skills, indicators with anchors and coaching copy, objectives, claim rung, evidence summary, peer baseline). `validateScenario` checks cross references.
   - `scoring.ts` consequence tables (`BAND_POINTS`, `NOT_OBSERVED_POINTS`), indicator and skill scoring, overall score and coverage, objective completion, per turn XP, streak and badge rules, level thresholds, practice hints.

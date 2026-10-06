@@ -24,7 +24,8 @@ With `VITE_AI_PROVIDER=mock` (the default) the browser never calls the server: t
 | Domain | `src/domain/` | Pure and deterministic. Scenario schema, scoring engine, report assembly, descriptive metrics, claim ladder. ESLint blocks clocks, randomness, network, storage and UI imports. |
 | Providers (client) | `src/providers/` | Interfaces for NPC, classifier and report writer; Zod request and response schemas shared with the server; mock and http implementations. |
 | Store | `src/store/` | Attempt persistence. localStorage today; the `Report` shape is what the backend will store. Enforces one assessment attempt. |
-| UI | `src/pages/`, `src/components/` | React 19, Tailwind v4, tokens in `src/index.css`. Pages read the scenario object and engine output only. |
+| Products | `index.html`, `assess/index.html`, `src/products.ts`, `src/apps/` | Two Vite entries. AI RolePlay (`/`, practice) and Conversation AI (`/assess/`, assessment) are separate shells over the same pages, providers and store. `src/products.ts` names each product, its 4E line and its mode; the shell sets `data-product` so the stylesheet applies the product accent. |
+| UI | `src/pages/`, `src/components/` | React 19, Tailwind v4, tokens in `src/index.css`. Pages read the scenario object, the product and engine output only. `SessionPage` and `SummaryPage` are shared and take a `product` prop; each product has its own landing. |
 | Server | `server/` | Node http. `config.ts` parses routing from env. `llm/` holds the provider contract, adapters, registry and runner. `jobs/` holds one file per AI job. `index.ts` wires routes. |
 | Prompts | `prompts/<job>/<version>.md` | Front matter plus body with `{{placeholders}}`. Selected per job by `PROMPT_VERSION_<JOB>`. |
 
