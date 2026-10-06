@@ -68,7 +68,7 @@ export default function AssessmentLanding({
             <span className="text-white text-xs font-bold font-display leading-none">{product.mark}</span>
           </div>
           <span className="text-ink font-display font-semibold text-base tracking-tight">{product.name}</span>
-          <span className="hidden sm:inline text-ink/70 text-[10px] font-display uppercase tracking-widest border-l border-ink/15 pl-3">
+          <span className="hidden sm:inline text-ink/70 text-[11px] font-display uppercase tracking-widest border-l border-ink/15 pl-3">
             {product.line}
           </span>
         </div>
@@ -111,7 +111,7 @@ export default function AssessmentLanding({
                   key={k}
                   className={`p-4 ${i ? "border-l border-ink/10" : ""} ${i >= 2 ? "max-sm:border-t max-sm:border-l-0" : ""}`}
                 >
-                  <dt className="text-ink/75 text-[10px] font-display uppercase tracking-widest mb-1">{k}</dt>
+                  <dt className="text-ink/75 text-[11px] font-display uppercase tracking-widest mb-1">{k}</dt>
                   <dd className="font-display font-bold text-ink text-lg tabular-nums">{v}</dd>
                 </div>
               ))}
@@ -184,7 +184,7 @@ export default function AssessmentLanding({
                     <span className="font-display text-xs text-brand font-semibold tabular-nums">
                       {String(i + 1).padStart(2, "0")}
                     </span>
-                    <span className="text-ink/70 text-[10px] font-display uppercase tracking-widest">
+                    <span className="text-ink/70 text-[11px] font-display uppercase tracking-widest">
                       Weight {sk.weight}%
                     </span>
                   </span>

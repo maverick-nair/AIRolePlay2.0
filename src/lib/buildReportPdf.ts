@@ -136,12 +136,6 @@ export default async function buildReportPdf(report: Report, scenario: Scenario)
     gap(4);
   });
 
-  heading("Method");
-  text(
-    `Bands (Strong, Adequate, Weak, Harmful) were assigned per behavioural indicator from the participant's own words. Points come from a fixed table (10, 7, 4, 1); unobserved indicators count 4. Skill scores are the rounded mean of indicator points; the overall score is the weighted mean. Narrative by ${report.narrative.meta.provider}${report.narrative.meta.model ? ` (${report.narrative.meta.model}, prompt ${report.narrative.meta.promptVersion})` : ""}. Two pass agreement: ${report.agreement === null ? "not measured" : `${Math.round(report.agreement * 100)}%`}.`,
-    9,
-  );
-
   const pages = doc.getNumberOfPages();
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);

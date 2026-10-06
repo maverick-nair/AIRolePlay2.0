@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" role="img" aria-label="Camera preview placeholder">
+  <defs>
+    <radialGradient id="room" cx="0.5" cy="0.35" r="0.8">
+      <stop offset="0" stop-color="#3b3a44"/>
+      <stop offset="1" stop-color="#15141a"/>
+    </radialGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2d3a55"/>
+      <stop offset="1" stop-color="#1b2338"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="800" fill="url(#room)"/>
+  <g stroke="#ffffff" stroke-opacity="0.06" fill="none">
+    <rect x="60" y="80" width="300" height="420"/>
+    <rect x="440" y="80" width="300" height="420"/>
+  </g>
+  <path d="M120 800 C130 640 240 570 400 560 C560 570 670 640 680 800 Z" fill="url(#body)"/>
+  <path d="M345 470 L345 575 Q400 620 455 575 L455 470 Z" fill="#8a6a55"/>
+  <ellipse cx="400" cy="380" rx="120" ry="150" fill="#9f7a62"/>
+  <path d="M280 380 C275 250 330 190 400 190 C475 190 525 250 520 380 C510 310 470 280 400 280 C330 280 290 310 280 380 Z" fill="#241a16"/>
+</svg>

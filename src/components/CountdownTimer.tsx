@@ -21,8 +21,8 @@ export default function CountdownTimer({ initial, onExpire }: { initial: number;
   const secs = String(t % 60).padStart(2, "0");
   const low = t <= 60;
   return (
-    <div className="hidden sm:flex flex-col items-center pr-2 mr-1 border-r border-ink/10">
-      <span className="text-ink/70 text-[10px] font-medium tracking-widest uppercase font-display">
+    <div className="flex flex-col items-center pr-2 mr-1 border-r border-ink/10">
+      <span className="hidden sm:inline text-ink/70 text-[11px] font-medium tracking-widest uppercase font-display">
         Remaining
       </span>
       <span

@@ -8,7 +8,7 @@ import BadgeMedal from "../components/BadgeMedal";
 import ToolButton from "../components/ToolButton";
 import CountdownTimer from "../components/CountdownTimer";
 import LeaderboardIcon from "../components/LeaderboardIcon";
-import { PLAYERS_COMPLETED } from "../data/scenario";
+import { CAMERA_PREVIEW_SRC, PLAYERS_COMPLETED } from "../data/scenario";
 import { BADGES } from "../data/badges";
 import { PEERS } from "../data/peers";
 import type { Difficulty, Mode, Scenario, SessionTurn, TurnClassification } from "../domain/scenario";
@@ -19,6 +19,7 @@ import { scoreSession } from "../domain/scoring";
 import { providers } from "../providers";
 import { saveAttempt } from "../store/attempts";
 import type { Product } from "../products";
+import useMediaQuery from "../lib/useMediaQuery";
 
 const START_XP = 560;
 const START_STREAK = 2;
@@ -60,9 +61,14 @@ export default function SessionPage({
   const [isRecording, setIsRecording] = useState(false);
   const [cameraOn, setCameraOn] = useState(false);
   const [speaking, setSpeaking] = useState(true);
+  // Side panels dock beside the call on wide screens and open as full screen sheets on phones.
+  const mdUp = useMediaQuery("(min-width: 768px)");
+  const lgUp = useMediaQuery("(min-width: 1024px)");
   const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const [showObjectives, setShowObjectives] = useState(true);
-  const [showTranscript, setShowTranscript] = useState(true);
+  const [showObjectives, setShowObjectives] = useState(lgUp);
+  const [showTranscript, setShowTranscript] = useState(mdUp);
+  useEffect(() => setShowTranscript(mdUp), [mdUp]);
+  useEffect(() => setShowObjectives(lgUp), [lgUp]);
   const [showCriteria, setShowCriteria] = useState(false);
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<SessionTurn[]>(scenario.stimulus.opening);
@@ -380,7 +386,7 @@ export default function SessionPage({
   return (
     <div className="h-full flex flex-col overflow-hidden" style={{ background: "transparent" }}>
       {/* Top bar: participants named up top */}
-      <div className="flex items-center justify-between px-5 md:px-8 h-16 border-b border-ink/10 flex-shrink-0">
+      <div className="flex items-center justify-between gap-3 px-4 md:px-8 h-16 border-b border-ink/10 flex-shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <div
             className="w-8 h-8 flex items-center justify-center flex-none"
@@ -398,7 +404,7 @@ export default function SessionPage({
             {product.name}
           </span>
           <span
-            className="hidden md:inline-flex items-center gap-2 px-2.5 py-1 text-[11px] font-display uppercase tracking-wider"
+            className="hidden lg:inline-flex items-center gap-2 px-2.5 py-1 text-[11px] font-display uppercase tracking-wider"
             style={
               isPractice
                 ? { background: "rgb(var(--ink) / 0.06)", color: "rgb(var(--ink) / 0.8)" }
@@ -435,7 +441,7 @@ export default function SessionPage({
                   style={{ transition: "stroke-dasharray .9s cubic-bezier(.2,.8,.2,1)" }}
                 />
               </svg>
-              <span className="absolute font-display font-bold text-[10px] text-ink">
+              <span className="absolute font-display font-bold text-[11px] text-ink">
                 {level
                   .split(" ")
                   .map((w) => w[0])
@@ -443,7 +449,7 @@ export default function SessionPage({
               </span>
             </span>
             <span className="flex flex-col leading-tight">
-              <span className="text-ink/75 text-[10px] font-display uppercase tracking-widest">{level}</span>
+              <span className="text-ink/75 text-[11px] font-display uppercase tracking-widest">{level}</span>
               <span className="font-display font-bold text-ink text-sm">
                 <RollingNumber value={xp} /> <span className="text-ink/70 font-medium text-xs">XP</span>
               </span>
@@ -459,7 +465,7 @@ export default function SessionPage({
             >
               <FlameIcon size={13} />
               {streak}
-              {streak >= 3 && <span className="text-[10px] font-semibold">x1.5</span>}
+              {streak >= 3 && <span className="text-[11px] font-semibold">x1.5</span>}
             </span>
             <span
               className="text-ink/75 text-xs font-display tabular-nums"
@@ -507,20 +513,22 @@ export default function SessionPage({
               </svg>
             </ToolButton>
           </span>
-          <ToolButton
-            active={showLeaderboard}
-            onClick={() => setShowLeaderboard((v) => !v)}
-            label="Leaderboard"
-            badge={`#${myRank}`}
-            badgeColor="#f59e0b"
-          >
-            <LeaderboardIcon />
-          </ToolButton>
+          <span className="hidden sm:block">
+            <ToolButton
+              active={showLeaderboard}
+              onClick={() => setShowLeaderboard((v) => !v)}
+              label="Leaderboard"
+              badge={`#${myRank}`}
+              badgeColor="#f59e0b"
+            >
+              <LeaderboardIcon />
+            </ToolButton>
+          </span>
           <ThemeToggle />
           <button
             onClick={() => void endCall()}
             disabled={finishing}
-            className="tool-btn px-3.5 py-2 text-xs font-semibold font-display disabled:opacity-60"
+            className="tool-btn px-3.5 py-2 min-h-[40px] text-xs font-semibold font-display disabled:opacity-60 whitespace-nowrap"
             style={{
               background: "rgba(244,63,94,0.12)",
               color: "var(--danger)",
@@ -537,7 +545,7 @@ export default function SessionPage({
         {/* Transcript: left panel */}
         {showTranscript && (
           <aside
-            className="hidden md:flex w-80 flex-none border-r border-ink/10 flex-col overflow-hidden"
+            className={`${mdUp ? "w-80 flex-none border-r border-ink/10" : "fixed inset-0 z-50 safe-area"} flex flex-col overflow-hidden`}
             style={{ background: "var(--surface-3)" }}
           >
             <div className="px-4 py-3 border-b border-ink/10 flex items-center justify-between flex-none">
@@ -572,8 +580,8 @@ export default function SessionPage({
                     className={`group/turn flex flex-col gap-1 ${you ? "items-end" : "items-start"}`}
                   >
                     <div className="flex items-center gap-1.5">
-                      <span className="text-ink/70 text-[10px] font-display">{t.speaker}</span>
-                      <span className="text-ink/70 text-[10px] tabular-nums">{t.time}</span>
+                      <span className="text-ink/70 text-[11px] font-display">{t.speaker}</span>
+                      <span className="text-ink/70 text-[11px] tabular-nums">{t.time}</span>
                     </div>
                     <div
                       className="max-w-[88%] px-3 py-2 text-sm leading-relaxed"
@@ -623,18 +631,18 @@ export default function SessionPage({
           </aside>
         )}
 
-        <div className="flex-1 flex flex-col overflow-hidden px-4 md:px-8 py-5 gap-4">
+        <div className="flex-1 flex flex-col overflow-y-auto md:overflow-hidden px-4 md:px-8 py-4 md:py-5 gap-3 md:gap-4">
           {/* RolePlay topic banner */}
           <div className="border border-ink/10 flex-none px-5 py-4" style={{ background: "var(--surface)" }}>
             <div className="flex items-center gap-2 mb-1.5">
               <span
-                className="text-[10px] font-display uppercase tracking-widest"
+                className="text-[11px] font-display uppercase tracking-widest"
                 style={{ color: "var(--brand)" }}
               >
                 {isPractice ? "Practice scenario" : "Assessment scenario"}
               </span>
               <span
-                className="px-1.5 py-0.5 text-[10px] font-display uppercase tracking-wider"
+                className="px-1.5 py-0.5 text-[11px] font-display uppercase tracking-wider"
                 style={{ background: "rgba(52,211,153,0.14)", color: "var(--ok)" }}
               >
                 Live
@@ -643,14 +651,14 @@ export default function SessionPage({
             <h2 className="font-display font-bold text-ink text-lg md:text-xl tracking-tight leading-snug">
               {scenario.title}
             </h2>
-            <p className="text-ink/70 text-sm mt-1 truncate">
+            <p className="hidden sm:block text-ink/70 text-sm mt-1 truncate">
               Protect the deal and the relationship under price pressure.
             </p>
           </div>
 
           {/* Video split */}
           <div
-            className="flex-1 grid grid-cols-1 md:grid-cols-2 border border-ink/10 min-h-0"
+            className="flex-none md:flex-1 grid grid-cols-1 md:grid-cols-2 border border-ink/10 min-h-0"
             style={{ background: "rgb(var(--ink) / 0.08)", gap: 1 }}
           >
             {/* NPC frame */}
@@ -710,13 +718,13 @@ export default function SessionPage({
 
             {/* User frame */}
             <div
-              className="relative overflow-hidden flex flex-col items-center justify-center min-h-[200px]"
+              className="relative overflow-hidden flex flex-col items-center justify-center min-h-[200px] md:min-h-[240px]"
               style={{ background: "var(--surface-3)" }}
             >
               {cameraOn ? (
                 <div className="absolute inset-0 overflow-hidden">
                   <img
-                    src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&h=800&fit=crop&auto=format"
+                    src={CAMERA_PREVIEW_SRC}
                     alt="Your camera view"
                     className="w-full h-full object-cover opacity-70"
                   />
@@ -729,7 +737,7 @@ export default function SessionPage({
                   />
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-4 opacity-60">
+                <div className="flex flex-col items-center gap-3 opacity-60 pb-14">
                   <div className="w-20 h-20 rounded-full bg-ink/5 border border-ink/10 flex items-center justify-center">
                     <svg
                       width="30"
@@ -882,8 +890,11 @@ export default function SessionPage({
             </button>
           </div>
 
-          {/* Composer: ChatGPT-style input with dictation */}
-          <div className="flex-none">
+          {/* Composer: ChatGPT-style input with dictation. Sticks to the bottom while a phone scrolls the call. */}
+          <div
+            className="flex-none sticky bottom-0 z-20 md:static -mx-4 px-4 pb-1 md:mx-0 md:px-0 md:pb-0"
+            style={{ background: "var(--bg)" }}
+          >
             {hint && (
               <div
                 role="status"
@@ -895,7 +906,7 @@ export default function SessionPage({
                   border: "1px solid rgb(var(--accent-rgb) / 0.4)",
                 }}
               >
-                <span className="font-bold uppercase tracking-wider text-[10px] mt-0.5">Hint</span>
+                <span className="font-bold uppercase tracking-wider text-[11px] mt-0.5">Hint</span>
                 <span className="text-ink/85">{hint}</span>
               </div>
             )}
@@ -1004,10 +1015,10 @@ export default function SessionPage({
                 rows={1}
                 placeholder={
                   speaking
-                    ? `${persona.name} is speaking. Wait for your turn.`
+                    ? `${persona.name.split(" ")[0]} is speaking...`
                     : isRecording
                       ? "Listening..."
-                      : "Your turn. Tap the mic to speak, or type"
+                      : "Your turn: tap the mic or type"
                 }
                 className="flex-1 min-w-0 resize-none bg-transparent text-ink text-sm leading-relaxed placeholder:text-ink/70 px-2 py-2.5 max-h-32 focus:outline-none"
               />
@@ -1054,7 +1065,7 @@ export default function SessionPage({
         {/* Right column: objectives + leaderboard */}
         {(showObjectives || showLeaderboard) && (
           <div
-            className="hidden lg:flex w-72 flex-none border-l border-ink/10 flex-col overflow-hidden"
+            className={`${lgUp ? "w-72 flex-none border-l border-ink/10" : "fixed inset-0 z-50 safe-area"} flex flex-col overflow-hidden`}
             style={{ background: "var(--surface-3)" }}
           >
             {showObjectives && (
@@ -1082,7 +1093,7 @@ export default function SessionPage({
                 </div>
                 <div className="px-4 py-3 border-b border-ink/10 flex-none">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-ink/70 text-[10px] font-display uppercase tracking-widest">
+                    <span className="text-ink/70 text-[11px] font-display uppercase tracking-widest">
                       Progress
                     </span>
                     <span className="font-display font-semibold text-ink text-xs tabular-nums">
@@ -1241,7 +1252,7 @@ export default function SessionPage({
                       >
                         {medal ? (
                           <span
-                            className="w-5 h-5 flex-none flex items-center justify-center rounded-full text-[10px] font-display font-bold"
+                            className="w-5 h-5 flex-none flex items-center justify-center rounded-full text-[11px] font-display font-bold"
                             style={{ background: medal, color: "#1a1500" }}
                           >
                             {p.rank}
@@ -1268,7 +1279,7 @@ export default function SessionPage({
                           style={{ color: you ? "var(--brand)" : "rgb(var(--ink) / 0.7)" }}
                         >
                           {p.pts.toLocaleString()}
-                          <span className="text-[10px] font-normal text-ink/70"> XP</span>
+                          <span className="text-[11px] font-normal text-ink/70"> XP</span>
                         </span>
                       </div>
                     );

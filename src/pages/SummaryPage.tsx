@@ -11,7 +11,6 @@ import EmailDialog from "../components/EmailDialog";
 import SkillScore from "../components/SkillScore";
 import SkillRadar from "../components/SkillRadar";
 import BandChip, { BAND_COLORS } from "../components/BandChip";
-import ClaimLadderPanel from "../components/ClaimLadderPanel";
 import AttemptTrend from "../components/AttemptTrend";
 import { bandFor, cefrColor } from "../lib/score";
 import { readableOn } from "../lib/color";
@@ -21,7 +20,6 @@ import { BADGES } from "../data/badges";
 import { PEER_THRESHOLD, PLAYERS_COMPLETED } from "../data/scenario";
 import { formatDuration, tagTranscript, type Report } from "../domain/report";
 import type { Band, Scenario } from "../domain/scenario";
-import { BAND_POINTS, NOT_OBSERVED_POINTS } from "../domain/scoring";
 import { CLAIM_LADDER } from "../domain/instrumentStatus";
 import { formatTalkShare } from "../domain/descriptive";
 import type { Product } from "../products";
@@ -139,7 +137,6 @@ export default function SummaryPage({
     { id: "evidence", label: "Evidence by Skill" },
     { id: "comm", label: "Communication" },
     { id: "transcript", label: "Transcript" },
-    { id: "method", label: "Method" },
   ];
 
   const anchorFor = (indicatorId: string, band: Band | null) => {
@@ -159,7 +156,7 @@ export default function SummaryPage({
       }}
     >
       <div aria-hidden className="box-pattern" />
-      <nav className="flex items-center justify-between px-4 md:px-8 py-3 border-b border-ink/10">
+      <nav className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 md:px-8 py-3 border-b border-ink/10">
         <div className="flex items-center gap-2.5">
           <div
             className="w-7 h-7 rounded-lg flex items-center justify-center"
@@ -169,7 +166,7 @@ export default function SummaryPage({
           </div>
           <span className="text-ink/70 font-display font-medium text-sm">{product.name}</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">
           <button
             onClick={onHome}
             className="px-3 py-2 rounded-lg text-ink/85 text-xs font-semibold hover:text-ink border border-ink/15 min-h-[36px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
@@ -218,7 +215,7 @@ export default function SummaryPage({
             <p className="text-ink/70 text-xs uppercase tracking-widest font-medium mb-1 flex items-center gap-2">
               {isAssessment ? `${product.name} assessment report` : `${product.name} practice report`}
               <span
-                className="px-1.5 py-0.5 rounded text-[10px] font-display font-semibold tracking-wider normal-case"
+                className="px-1.5 py-0.5 rounded text-[11px] font-display font-semibold tracking-wider normal-case"
                 style={
                   isAssessment
                     ? { background: "rgb(var(--accent-rgb) / 0.14)", color: "var(--brand)" }
@@ -301,19 +298,13 @@ export default function SummaryPage({
           <p className="text-ink/80 text-xs leading-relaxed flex-1 min-w-[16rem]">
             {rung.claim} <span className="text-ink/70">{rung.fitFor}</span>
           </p>
-          <button
-            onClick={() => setTab("method")}
-            className="text-brand text-xs font-display font-semibold underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] rounded"
-          >
-            How this was scored
-          </button>
         </div>
 
         {/* Tab bar */}
         <div
           role="tablist"
           aria-label="Report sections"
-          className="flex items-center gap-1.5 p-1.5 rounded-2xl mb-5 glass overflow-x-auto"
+          className="flex flex-wrap items-center gap-1.5 p-1.5 rounded-2xl mb-5 glass"
         >
           {TABS.map((t) => {
             const active = tab === t.id;
@@ -325,7 +316,7 @@ export default function SummaryPage({
                 aria-selected={active}
                 aria-controls={`panel-${t.id}`}
                 onClick={() => setTab(t.id)}
-                className="tool-btn flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs md:text-sm font-display font-semibold min-h-[44px] whitespace-nowrap"
+                className="tool-btn flex-1 basis-[calc(50%-0.375rem)] sm:basis-0 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs md:text-sm font-display font-semibold min-h-[44px] whitespace-nowrap"
                 style={
                   active
                     ? {
@@ -1057,7 +1048,7 @@ export default function SummaryPage({
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-ink/75 text-xs font-semibold font-display">{d.name}</span>
                             <span
-                              className="px-2 py-0.5 rounded-full text-[10px] font-bold font-display"
+                              className="px-2 py-0.5 rounded-full text-[11px] font-bold font-display"
                               style={{
                                 background: cefrColor(d.level),
                                 color: readableOn(cefrColor(d.level)),
@@ -1239,102 +1230,6 @@ export default function SummaryPage({
                   );
                 })}
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* ===================== METHOD ===================== */}
-        {tab === "method" && (
-          <div
-            role="tabpanel"
-            id="panel-method"
-            aria-labelledby="tab-method"
-            className="animate-fade-in-up space-y-4"
-          >
-            <div className="glass rounded-2xl p-6">
-              <h2 className="font-display font-semibold text-ink text-sm mb-3">How this report was scored</h2>
-              <ol className="space-y-3 text-ink/85 text-sm leading-relaxed list-decimal pl-5">
-                <li>
-                  Each of your turns was classified against{" "}
-                  {scores.skills.reduce((a, s) => a + s.indicators.length, 0)} authored behavioural indicators
-                  with written anchors for Strong, Adequate, Weak and Harmful. The classifier chooses a band
-                  and quotes your words. It never produces a number.
-                </li>
-                <li>
-                  Bands become points through a fixed table: Strong {BAND_POINTS.Strong}, Adequate{" "}
-                  {BAND_POINTS.Adequate}, Weak {BAND_POINTS.Weak}, Harmful {BAND_POINTS.Harmful}. An indicator
-                  you had the chance to show but never did counts {NOT_OBSERVED_POINTS}. Repeated hits on one
-                  indicator are averaged.
-                </li>
-                <li>
-                  A skill score is the rounded mean of its indicator points. The overall score is the mean of
-                  skill scores weighted as shown in the snapshot.
-                </li>
-                <li>
-                  Narrative text explains the evidence above and may not introduce facts of its own.
-                  Conversation metrics are counted from the transcript and never enter the score.
-                </li>
-                <li>
-                  {isAssessment
-                    ? "In assessment mode the persona followed a fixed schedule of critical incidents and the criteria were hidden, so every participant faces an equivalent challenge."
-                    : "In practice mode the persona adapted to you and the criteria were available, so this report is for development, not comparison."}
-                </li>
-              </ol>
-            </div>
-
-            <div className="glass rounded-2xl p-6">
-              <h2 className="font-display font-semibold text-ink text-sm mb-1">Claim ladder</h2>
-              <p className="text-ink/75 text-xs mb-4">
-                What may be claimed about this instrument, and what evidence each claim requires. This
-                instrument is on rung {scenario.instrument.claimRung}.
-              </p>
-              <ClaimLadderPanel current={scenario.instrument.claimRung} />
-              <ul className="mt-4 space-y-1.5">
-                {scenario.instrument.evidenceSummary.map((e) => (
-                  <li key={e} className="flex items-start gap-2 text-ink/80 text-sm leading-relaxed">
-                    <span className="mt-2 w-1 h-1 rounded-full bg-brand flex-shrink-0" />
-                    {e}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="glass rounded-2xl p-6">
-              <h2 className="font-display font-semibold text-ink text-sm mb-3">Provenance</h2>
-              <dl className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {[
-                  ["Instrument", `${scenario.instrument.id} v${scenario.instrument.version}`],
-                  ["Scenario", `${scenario.id} v${scenario.version}`],
-                  [
-                    "Classifier",
-                    narrative.meta.provider === "mock"
-                      ? "Offline heuristic (pattern rules)"
-                      : `${narrative.meta.provider}, ${narrative.meta.model}`,
-                  ],
-                  [
-                    "Report writer",
-                    narrative.meta.provider === "mock"
-                      ? "Template writer"
-                      : `${narrative.meta.provider}, prompt ${narrative.meta.promptVersion}`,
-                  ],
-                  [
-                    "Two pass agreement",
-                    report.agreement === null ? "Not measured" : `${Math.round(report.agreement * 100)}%`,
-                  ],
-                  ["Human review", "Available on request; not yet applied"],
-                  ["Indicators observed", `${Math.round(scores.coverage * 100)}%`],
-                  ["Mode", isAssessment ? "Assessment, one attempt" : "Practice"],
-                ].map(([k, v]) => (
-                  <div
-                    key={k}
-                    className="rounded-xl p-3 border border-ink/10"
-                    style={{ background: "var(--surface-2)" }}
-                  >
-                    <dt className="text-ink/75 text-[11px] font-bold tracking-widest uppercase">{k}</dt>
-                    <dd className="text-ink text-sm font-medium mt-1 leading-snug">{v}</dd>
-                  </div>
-                ))}
-              </dl>
             </div>
           </div>
         )}

@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1200" width="900" height="1200" role="img" aria-label="Margaret Hale, VP of Procurement, in a white shirt">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b2a33"/>
+      <stop offset="1" stop-color="#15141a"/>
+    </linearGradient>
+    <linearGradient id="light" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.10"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="shirt" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7f4ee"/>
+      <stop offset="1" stop-color="#d9d4ca"/>
+    </linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c99a7a"/>
+      <stop offset="1" stop-color="#9f6f52"/>
+    </linearGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3a2a24"/>
+      <stop offset="1" stop-color="#1b1310"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.06"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.01"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="1200" fill="url(#bg)"/>
+  <!-- glass wall panels behind -->
+  <g stroke="#ffffff" stroke-opacity="0.08" fill="url(#glass)">
+    <rect x="40" y="60" width="260" height="1140"/>
+    <rect x="320" y="60" width="260" height="1140"/>
+    <rect x="600" y="60" width="260" height="1140"/>
+  </g>
+  <rect width="900" height="1200" fill="url(#light)"/>
+  <!-- shoulders and shirt -->
+  <path d="M110 1200 C120 960 250 870 390 840 L450 905 L510 840 C650 870 780 960 790 1200 Z" fill="url(#shirt)"/>
+  <!-- collar -->
+  <path d="M390 840 L450 985 L510 840 L480 830 L450 890 L420 830 Z" fill="#ece8df"/>
+  <path d="M405 836 L450 940 L495 836" fill="none" stroke="#c9c3b7" stroke-width="4"/>
+  <!-- blazer edges -->
+  <path d="M110 1200 C120 960 250 870 390 840 L330 1200 Z" fill="#23222a"/>
+  <path d="M790 1200 C780 960 650 870 510 840 L570 1200 Z" fill="#23222a"/>
+  <!-- neck -->
+  <path d="M395 700 L395 850 Q450 900 505 850 L505 700 Z" fill="url(#skin)"/>
+  <!-- head -->
+  <ellipse cx="450" cy="560" rx="165" ry="205" fill="url(#skin)"/>
+  <!-- hair: bob with side part -->
+  <path d="M285 560 C280 380 350 300 450 300 C560 300 625 390 615 560 C610 500 580 455 540 440 C500 430 470 450 455 470 C430 430 380 420 340 450 C305 480 290 520 285 560 Z" fill="url(#hair)"/>
+  <path d="M285 560 C275 650 290 740 320 800 C300 700 300 620 320 560 Z" fill="url(#hair)"/>
+  <path d="M615 560 C625 650 610 740 580 800 C600 700 600 620 580 560 Z" fill="url(#hair)"/>
+  <!-- earring -->
+  <circle cx="300" cy="640" r="7" fill="#e5c58a"/>
+  <circle cx="600" cy="640" r="7" fill="#e5c58a"/>
+  <!-- soft rim light -->
+  <path d="M615 560 C625 420 560 320 460 305" fill="none" stroke="#ffffff" stroke-opacity="0.18" stroke-width="6" stroke-linecap="round"/>
+</svg>

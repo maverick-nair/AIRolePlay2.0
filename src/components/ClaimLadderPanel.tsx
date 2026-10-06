@@ -24,7 +24,7 @@ export default function ClaimLadderPanel({ current }: { current: ClaimRung }) {
                 Rung {r.rung}
               </span>
               <span
-                className="text-[10px] font-display font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                className="text-[11px] font-display font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded"
                 style={
                   isCurrent
                     ? { background: "var(--accent)", color: "#fff" }

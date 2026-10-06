@@ -75,7 +75,7 @@ export default function PracticeLanding({
             <span className="text-white text-xs font-bold font-display leading-none">{product.mark}</span>
           </div>
           <span className="text-ink font-display font-semibold text-base tracking-tight">{product.name}</span>
-          <span className="hidden sm:inline text-ink/70 text-[10px] font-display uppercase tracking-widest border-l border-ink/15 pl-3">
+          <span className="hidden sm:inline text-ink/70 text-[11px] font-display uppercase tracking-widest border-l border-ink/15 pl-3">
             {product.line}
           </span>
         </div>
@@ -176,7 +176,7 @@ export default function PracticeLanding({
                   key={c.k}
                   className={`p-4 ${i ? "border-l border-ink/10" : ""} ${i === 2 ? "max-sm:border-l-0 max-sm:border-t" : ""} ${i === 3 ? "max-sm:border-t" : ""}`}
                 >
-                  <p className="text-ink/75 text-[10px] font-display uppercase tracking-widest mb-1">{c.k}</p>
+                  <p className="text-ink/75 text-[11px] font-display uppercase tracking-widest mb-1">{c.k}</p>
                   <p className="font-display font-bold text-ink text-lg">{c.v}</p>
                   {c.sub}
                 </div>
@@ -299,7 +299,7 @@ export default function PracticeLanding({
                     <span className="font-display text-xs text-brand font-semibold tabular-nums">
                       {String(i + 1).padStart(2, "0")}
                     </span>
-                    <span className="text-ink/70 text-[10px] font-display uppercase tracking-widest">
+                    <span className="text-ink/70 text-[11px] font-display uppercase tracking-widest">
                       {sk.weight}%
                     </span>
                   </span>
@@ -359,7 +359,7 @@ export default function PracticeLanding({
               className="mt-auto rounded-xl p-4 border border-ink/10"
               style={{ background: "var(--surface-2)" }}
             >
-              <p className="text-ink/75 text-[10px] font-display uppercase tracking-widest mb-1">
+              <p className="text-ink/75 text-[11px] font-display uppercase tracking-widest mb-1">
                 Feedback status
               </p>
               <p className="font-display font-semibold text-ink text-sm">
@@ -407,7 +407,7 @@ export default function PracticeLanding({
           </div>
           <div className="md:col-span-7 flex flex-col gap-5">
             <fieldset>
-              <legend className="text-ink/75 text-[10px] font-display uppercase tracking-widest mb-2">
+              <legend className="text-ink/75 text-[11px] font-display uppercase tracking-widest mb-2">
                 Persona difficulty
               </legend>
               <div className="grid grid-cols-3 gap-2" role="radiogroup">
