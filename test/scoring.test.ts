@@ -10,6 +10,7 @@ import {
   bandFromPoints,
   hintFor,
   levelFor,
+  practiceRunsLeft,
   scoreSession,
   scoreSkill,
   turnOutcome,
@@ -243,5 +244,17 @@ describe("claim ladder", () => {
     const ladder = claimLadder(scenario.instrument.claimRung);
     expect(ladder[0].state).toBe("current");
     expect(ladder[3].state).toBe("ahead");
+  });
+});
+
+describe("practice run cap", () => {
+  it("defaults a scenario to five practice runs", () => {
+    expect(scenario.maxPracticeAttempts).toBe(5);
+  });
+  it("counts down and never goes negative", () => {
+    expect(practiceRunsLeft(0, 5)).toBe(5);
+    expect(practiceRunsLeft(4, 5)).toBe(1);
+    expect(practiceRunsLeft(5, 5)).toBe(0);
+    expect(practiceRunsLeft(7, 5)).toBe(0);
   });
 });

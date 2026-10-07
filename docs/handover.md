@@ -4,7 +4,7 @@
 
 Two products on one instrument, one engine and one backend. They are separate interfaces with separate entry points, and neither offers the other's mode:
 
-- **AI RolePlay** (Experience line, `/`, `index.html`, `src/apps/PracticeApp.tsx`): practice. Unlimited runs, rewind to any of your turns (the persona rewinds with you), criteria available on request, in the moment hints, selectable persona difficulty, and a trend across runs. Scores are for the learner.
+- **AI RolePlay** (Experience line, `/`, `index.html`, `src/apps/PracticeApp.tsx`): practice. Up to five runs per scenario (`maxPracticeAttempts` in the scenario), rewind to any of your turns (the persona rewinds with you), criteria available on request, in the moment hints, selectable persona difficulty, and a trend across runs. Scores are for the learner.
 - **Conversation AI** (Evaluate line, `/assess/`, `assess/index.html`, `src/apps/AssessmentApp.tsx`): assessment. One attempt per scenario, a fixed time limit, a standardised persona that follows a schedule of critical incidents, hidden criteria, no hints, no rewind, and an explicit confirmation before the attempt begins. The lock lives in the attempt store; once an attempt exists the landing shows the saved report instead of a start button.
 
 Product definitions (name, 4E line, mode, mark) live in `src/products.ts`. `applyProductTheme` sets `data-product` on the document root so `src/index.css` can give Conversation AI its blue accent while every token name stays the same. The attempt store is shared, so a completed assessment never blocks practice and practice runs never count as an assessment.

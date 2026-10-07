@@ -1,14 +1,14 @@
 import { useState } from "react";
 import ThemeToggle from "../components/ThemeToggle";
-import SectionLabel from "../components/SectionLabel";
 import { PORTRAIT_SRC } from "../data/scenario";
 import type { Report } from "../domain/report";
 import type { Scenario } from "../domain/scenario";
 import type { Product } from "../products";
 import BuildStamp from "../components/BuildStamp";
 
-// Conversation AI landing: the assessment product. No gamification, no difficulty choice, no hints.
-// The participant reads the brief and the rules, confirms them, and takes the one attempt.
+// Conversation AI landing: an assessment brief laid out like a paper. One continuous sheet of
+// numbered sections on the left, a candidate card with the confirmation and Begin on the right.
+// No gamification, no difficulty choice, no hints, no indicators before the conversation.
 export default function AssessmentLanding({
   product,
   scenario,
@@ -28,52 +28,67 @@ export default function AssessmentLanding({
   const indicatorCount = scenario.instrument.skills.reduce((a, s) => a + s.indicators.length, 0);
 
   const RULES = [
-    {
-      k: "One attempt",
-      v: "The conversation runs once. There is no rewind, no retry and no second sitting.",
-    },
-    {
-      k: `${minutes} minutes`,
-      v: "The call ends when the time runs out and the report is produced from what was said.",
-    },
-    {
-      k: "Standardised persona",
-      v: `${persona.name} follows the same schedule of critical incidents for every participant.`,
-    },
-    {
-      k: "Hidden criteria",
-      v: `${indicatorCount} behavioural indicators are scored. Their anchors are shown only in the report, beside your words.`,
-    },
-    {
-      k: "Evidence, not impressions",
-      v: "Every rating quotes the turn it comes from. Conversation metrics are descriptive and never enter the score.",
-    },
-    {
-      k: "Text only scoring",
-      v: "If you speak, only the transcript is assessed. Nothing is inferred from voice or face.",
-    },
+    ["One attempt", "The conversation runs once. There is no rewind, no retry and no second sitting."],
+    [
+      `${minutes} minutes`,
+      "The call ends when the time runs out and the report is produced from what was said.",
+    ],
+    [
+      "Standardised persona",
+      `${persona.name} follows the same schedule of critical incidents for every participant.`,
+    ],
+    [
+      "Hidden criteria",
+      `${indicatorCount} behavioural indicators are scored. Their anchors are shown only in the report, beside your words.`,
+    ],
+    [
+      "Evidence, not impressions",
+      "Every rating quotes the turn it comes from. Conversation metrics are descriptive and never enter the score.",
+    ],
+    [
+      "Text only scoring",
+      "If you speak, only the transcript is assessed. Nothing is inferred from voice or face.",
+    ],
   ];
+
+  const META: [string, string][] = [
+    ["Instrument", `v${scenario.version}`],
+    ["Attempts", "1"],
+    ["Time limit", `${minutes} min`],
+    ["Skills", String(scenario.instrument.skills.length)],
+    ["Pass mark", `${scenario.passScore}/10`],
+  ];
+
+  const Rule = () => <hr className="border-0 border-t border-ink/15 my-8" />;
+  const Heading = ({ n, children }: { n: string; children: string }) => (
+    <h2 className="flex items-baseline gap-4 mb-4">
+      <span className="text-xs font-semibold tracking-[0.2em] text-brand tabular-nums">{n}</span>
+      <span className="font-display font-semibold text-ink text-2xl tracking-tight">{children}</span>
+    </h2>
+  );
 
   return (
     <div className="relative isolate min-h-full overflow-auto" style={{ background: "transparent" }}>
       <div aria-hidden className="box-pattern" />
+
+      {/* Product bar */}
       <nav
-        className="sticky top-0 z-20 flex items-center justify-between px-6 md:px-10 h-16 border-b border-ink/10"
-        style={{ background: "color-mix(in srgb, var(--bg) 85%, transparent)", backdropFilter: "blur(8px)" }}
+        className="sticky top-0 z-20 flex items-center justify-between px-6 md:px-10 h-14 border-b border-ink/15"
+        style={{ background: "color-mix(in srgb, var(--bg) 92%, transparent)", backdropFilter: "blur(8px)" }}
       >
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 flex items-center justify-center" style={{ background: "var(--accent)" }}>
-            <span className="text-white text-xs font-bold font-display leading-none">{product.mark}</span>
+            <span className="text-white text-xs font-bold leading-none">{product.mark}</span>
           </div>
-          <span className="text-ink font-display font-semibold text-base tracking-tight">{product.name}</span>
-          <span className="hidden sm:inline text-ink/70 text-[11px] font-display uppercase tracking-widest border-l border-ink/15 pl-3">
+          <span className="text-ink font-display font-semibold text-lg tracking-tight">{product.name}</span>
+          <span className="hidden sm:inline text-ink/70 text-[11px] uppercase tracking-widest border-l border-ink/15 pl-3">
             {product.line}
           </span>
         </div>
         <div className="flex items-center gap-4">
           <span
-            className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 text-[11px] font-display uppercase tracking-wider"
-            style={{ background: "rgb(var(--accent-rgb) / 0.14)", color: "var(--brand)" }}
+            className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 text-[11px] uppercase tracking-wider border"
+            style={{ borderColor: "rgb(var(--accent-rgb) / 0.5)", color: "var(--brand)" }}
           >
             Assessment
           </span>
@@ -81,174 +96,153 @@ export default function AssessmentLanding({
         </div>
       </nav>
 
-      <header className="max-w-6xl mx-auto px-6 md:px-10 pt-16 md:pt-20 pb-12 animate-fade-in-up">
-        <div className="grid md:grid-cols-12 gap-10 items-start">
-          <div className="md:col-span-8">
-            <p className="font-display text-xs font-semibold tracking-[0.2em] text-brand mb-4">
-              {scenario.category.toUpperCase()} · ASSESSMENT
-            </p>
-            <h1 className="font-display font-bold text-4xl md:text-5xl text-ink tracking-tight leading-[1.05] mb-5">
-              {scenario.title}
-            </h1>
-            <p className="text-ink/75 text-sm leading-relaxed max-w-2xl mb-6">
-              {product.tagline} You will hold one conversation with {persona.name}, {persona.role} at{" "}
-              {persona.organisation}. Your words are scored against {scenario.instrument.skills.length} skills
-              by the method described below, and the report shows the evidence behind every rating.
-            </p>
-            <dl
-              className="grid grid-cols-2 sm:grid-cols-4 border border-ink/15"
-              style={{ background: "var(--surface)" }}
-            >
-              {[
-                ["Attempts", "1"],
-                ["Time limit", `${minutes} min`],
-                ["Skills", String(scenario.instrument.skills.length)],
-                ["Pass mark", `${scenario.passScore}/10`],
-              ].map(([k, v], i) => (
-                <div
-                  key={k}
-                  className={`p-4 ${i ? "border-l border-ink/10" : ""} ${i >= 2 ? "max-sm:border-t max-sm:border-l-0" : ""}`}
+      {/* Brief header: eyebrow, serif title, meta strip */}
+      <header className="max-w-6xl mx-auto px-6 md:px-10 pt-12 md:pt-16 pb-8 animate-fade-in-up">
+        <p className="text-xs font-semibold tracking-[0.2em] text-brand mb-4 uppercase">
+          Assessment brief · {scenario.category}
+        </p>
+        <h1 className="font-display font-semibold text-4xl md:text-6xl text-ink tracking-tight leading-[1.02] mb-6 max-w-4xl">
+          {scenario.title}
+        </h1>
+        <p className="text-ink/75 text-base leading-relaxed max-w-3xl mb-8">
+          {product.tagline} You will hold one conversation with {persona.name}, {persona.role} at{" "}
+          {persona.organisation}. Your words are scored against {scenario.instrument.skills.length} skills,
+          and the report shows the evidence behind every rating.
+        </p>
+        <dl className="flex flex-wrap border-y border-ink/20 py-4 gap-y-4">
+          {META.map(([k, v], i) => (
+            <div key={k} className={`pr-8 ${i ? "pl-6 border-l border-ink/15" : ""}`}>
+              <dt className="text-ink/70 text-[11px] uppercase tracking-widest mb-1">{k}</dt>
+              <dd className="font-display font-semibold text-ink text-lg tabular-nums">{v}</dd>
+            </div>
+          ))}
+        </dl>
+      </header>
+
+      <div className="max-w-6xl mx-auto px-6 md:px-10 pb-16 grid lg:grid-cols-12 gap-8 items-start animate-fade-in-up">
+        {/* The paper */}
+        <article
+          className="lg:col-span-8 border border-ink/15 px-7 md:px-10 py-8"
+          style={{ background: "var(--surface)" }}
+        >
+          <Heading n="01">Your role</Heading>
+          <p className="text-ink/80 text-[15px] leading-relaxed">{scenario.stimulus.player.role}</p>
+          <Rule />
+          <Heading n="02">Your goal</Heading>
+          <p className="text-ink/80 text-[15px] leading-relaxed">{scenario.stimulus.player.goal}</p>
+          <Rule />
+          <Heading n="03">The situation</Heading>
+          <p className="text-ink/80 text-[15px] leading-relaxed">{scenario.stimulus.player.scene}</p>
+          <Rule />
+          <Heading n="04">Skills assessed</Heading>
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="text-ink/70 text-[11px] uppercase tracking-widest">
+                <th scope="col" className="font-semibold py-2 pr-3 border-b border-ink/20 w-8">
+                  #
+                </th>
+                <th scope="col" className="font-semibold py-2 pr-3 border-b border-ink/20">
+                  Skill
+                </th>
+                <th
+                  scope="col"
+                  className="font-semibold py-2 pr-3 border-b border-ink/20 hidden sm:table-cell"
                 >
-                  <dt className="text-ink/75 text-[11px] font-display uppercase tracking-widest mb-1">{k}</dt>
-                  <dd className="font-display font-bold text-ink text-lg tabular-nums">{v}</dd>
-                </div>
+                  What it covers
+                </th>
+                <th scope="col" className="font-semibold py-2 border-b border-ink/20 text-right w-20">
+                  Weight
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {scenario.instrument.skills.map((sk, i) => (
+                <tr key={sk.id} className="align-top">
+                  <td className="py-3 pr-3 border-b border-ink/10 text-brand text-xs font-semibold tabular-nums">
+                    {String(i + 1).padStart(2, "0")}
+                  </td>
+                  <td className="py-3 pr-3 border-b border-ink/10">
+                    <span className="block font-display font-semibold text-ink text-base">{sk.name}</span>
+                    <span className="block sm:hidden text-ink/75 text-xs leading-relaxed mt-1">
+                      {sk.desc}
+                    </span>
+                  </td>
+                  <td className="py-3 pr-3 border-b border-ink/10 text-ink/75 text-sm leading-relaxed hidden sm:table-cell">
+                    {sk.desc}
+                  </td>
+                  <td className="py-3 border-b border-ink/10 text-right font-display font-semibold text-ink text-base tabular-nums">
+                    {sk.weight}%
+                  </td>
+                </tr>
               ))}
-            </dl>
-          </div>
-          <div className="md:col-span-4">
-            <figure
-              className="relative aspect-[4/5] w-full overflow-hidden border border-ink/10"
-              style={{ background: "var(--surface-2)" }}
-            >
+            </tbody>
+          </table>
+          <p className="text-ink/70 text-xs mt-4 leading-relaxed">
+            The behavioural indicators under each skill are not shown before the conversation, so every
+            participant meets the same unprompted challenge. The report lists them with their anchors and your
+            quoted words.
+          </p>
+          <Rule />
+          <Heading n="05">How this assessment runs</Heading>
+          <ol className="space-y-4">
+            {RULES.map(([k, v], i) => (
+              <li key={k} className="grid grid-cols-[2rem_1fr] sm:grid-cols-[2rem_11rem_1fr] gap-x-3 gap-y-1">
+                <span className="text-ink/60 text-xs tabular-nums pt-0.5">{i + 1}.</span>
+                <span className="font-display font-semibold text-ink text-base">{k}</span>
+                <span className="text-ink/80 text-sm leading-relaxed col-start-2 sm:col-start-3">{v}</span>
+              </li>
+            ))}
+          </ol>
+        </article>
+
+        {/* Candidate card */}
+        <aside className="lg:col-span-4 lg:sticky lg:top-20 space-y-4">
+          <div className="border border-ink/15" style={{ background: "var(--surface)" }}>
+            <figure className="relative aspect-[5/4] overflow-hidden border-b border-ink/15">
               <img
                 src={PORTRAIT_SRC}
                 alt={persona.portraitAlt}
-                className="portrait-img w-full h-full object-cover"
+                className="portrait-img w-full h-full object-cover object-top"
               />
-              <div
-                className="absolute inset-0"
-                style={{
-                  background:
-                    "linear-gradient(to top, color-mix(in srgb, var(--bg) 92%, transparent) 0%, color-mix(in srgb, var(--bg) 70%, transparent) 30%, transparent 55%)",
-                }}
-              />
-              <figcaption className="absolute bottom-0 left-0 right-0 p-4">
-                <p className="font-display font-semibold text-ink text-sm">{persona.name}</p>
-                <p className="text-ink/80 text-xs mt-0.5">
-                  {persona.role}, {persona.organisation}
-                </p>
-              </figcaption>
             </figure>
+            <div className="p-5">
+              <p className="text-ink/70 text-[11px] uppercase tracking-widest mb-1">Your counterpart</p>
+              <p className="font-display font-semibold text-ink text-xl">{persona.name}</p>
+              <p className="text-ink/75 text-sm">
+                {persona.role}, {persona.organisation}
+              </p>
+            </div>
           </div>
-        </div>
-      </header>
 
-      <div className="max-w-6xl mx-auto px-6 md:px-10 pb-16 space-y-6 animate-fade-in-up">
-        {/* Brief */}
-        <div
-          className="grid md:grid-cols-3 border border-ink/10"
-          style={{ background: "rgb(var(--ink) / 0.08)", gap: 1 }}
-        >
-          <section className="p-7" style={{ background: "var(--surface)" }}>
-            <SectionLabel index="01">Your Role</SectionLabel>
-            <p className="text-ink/80 text-sm leading-relaxed">{scenario.stimulus.player.role}</p>
-          </section>
-          <section className="p-7" style={{ background: "var(--surface)" }}>
-            <SectionLabel index="02">Your Goal</SectionLabel>
-            <p className="text-ink/80 text-sm leading-relaxed">{scenario.stimulus.player.goal}</p>
-          </section>
-          <section className="p-7" style={{ background: "var(--surface)" }}>
-            <SectionLabel index="03">The Situation</SectionLabel>
-            <p className="text-ink/80 text-sm leading-relaxed">{scenario.stimulus.player.scene}</p>
-          </section>
-        </div>
-
-        <div className="grid md:grid-cols-12 gap-6">
-          {/* Skills assessed: names and descriptions only. Indicators and anchors stay hidden until the report. */}
           <section
-            className="md:col-span-7 border border-ink/10 p-7"
-            style={{ background: "var(--surface)" }}
+            className="border p-5"
+            style={{ background: "var(--surface)", borderColor: "rgb(var(--accent-rgb) / 0.6)" }}
           >
-            <SectionLabel index="04">Skills assessed</SectionLabel>
-            <ul className="grid sm:grid-cols-2 gap-3">
-              {scenario.instrument.skills.map((sk, i) => (
-                <li
-                  key={sk.id}
-                  className="p-4 border border-ink/10"
-                  style={{ background: "var(--surface-2)" }}
-                >
-                  <span className="flex items-center justify-between mb-2">
-                    <span className="font-display text-xs text-brand font-semibold tabular-nums">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <span className="text-ink/70 text-[11px] font-display uppercase tracking-widest">
-                      Weight {sk.weight}%
-                    </span>
-                  </span>
-                  <span className="block font-display font-semibold text-ink text-sm mb-1">{sk.name}</span>
-                  <span className="block text-ink/75 text-xs leading-relaxed">{sk.desc}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="text-ink/70 text-xs mt-4 leading-relaxed">
-              The behavioural indicators under each skill are not shown before the conversation, so every
-              participant meets the same unprompted challenge. The report lists them with their anchors and
-              your quoted words.
-            </p>
-          </section>
-
-          {/* Rules */}
-          <section
-            className="md:col-span-5 border border-ink/10 p-7"
-            style={{ background: "var(--surface)" }}
-          >
-            <SectionLabel index="05">How this assessment runs</SectionLabel>
-            <dl className="space-y-3">
-              {RULES.map((r) => (
-                <div key={r.k} className="flex gap-3">
-                  <dt className="w-32 flex-none font-display font-semibold text-ink text-sm">{r.k}</dt>
-                  <dd className="text-ink/80 text-sm leading-relaxed">{r.v}</dd>
-                </div>
-              ))}
-            </dl>
-          </section>
-        </div>
-
-        {/* Begin */}
-        <section
-          className="border p-7 grid md:grid-cols-12 gap-6 items-center"
-          style={{ background: "var(--surface)", borderColor: "rgb(var(--accent-rgb) / 0.45)" }}
-        >
-          {completed ? (
-            <>
-              <div className="md:col-span-8">
-                <h2 className="font-display font-semibold text-ink text-lg mb-1">Assessment complete</h2>
-                <p className="text-ink/80 text-sm leading-relaxed">
-                  You took this assessment on{" "}
+            {completed ? (
+              <>
+                <h2 className="font-display font-semibold text-ink text-xl mb-2">Assessment complete</h2>
+                <p className="text-ink/80 text-sm leading-relaxed mb-4">
+                  Taken on{" "}
                   {new Date(completed.completedAt).toLocaleString("en-GB", {
                     dateStyle: "medium",
                     timeStyle: "short",
-                  })}{" "}
-                  and scored{" "}
+                  })}
+                  . Score{" "}
                   <span className="font-display font-semibold text-ink">{completed.scores.overall}/10</span>.
                   The one attempt has been used; the report is saved under {completed.id}.
                 </p>
-              </div>
-              <div className="md:col-span-4 flex md:justify-end">
                 <button
                   onClick={() => onViewReport(completed)}
-                  className="inline-flex items-center justify-center gap-3 px-6 py-3.5 font-display font-semibold text-white text-sm tracking-wide focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]"
+                  className="w-full inline-flex items-center justify-center gap-3 px-6 py-3.5 font-semibold text-white text-sm tracking-wide focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]"
                   style={{ background: "var(--accent)" }}
                 >
                   Open the report
                 </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="md:col-span-8">
-                <h2 className="font-display font-semibold text-ink text-lg mb-2">Ready to begin?</h2>
-                <label className="flex items-start gap-3 text-sm text-ink/85 cursor-pointer">
+              </>
+            ) : (
+              <>
+                <h2 className="font-display font-semibold text-ink text-xl mb-3">Before you begin</h2>
+                <label className="flex items-start gap-3 text-sm text-ink/85 cursor-pointer mb-5">
                   <input
                     type="checkbox"
                     checked={confirmed}
@@ -260,20 +254,21 @@ export default function AssessmentLanding({
                     transcript is scored against hidden criteria, and that the report will be saved.
                   </span>
                 </label>
-              </div>
-              <div className="md:col-span-4 flex md:justify-end">
                 <button
                   onClick={onBegin}
                   disabled={!confirmed}
-                  className="inline-flex items-center justify-center gap-3 px-6 py-3.5 font-display font-semibold text-white text-sm tracking-wide transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)] disabled:cursor-not-allowed"
+                  className="w-full inline-flex items-center justify-center gap-3 px-6 py-3.5 font-semibold text-white text-sm tracking-wide transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)] disabled:cursor-not-allowed"
                   style={{ background: confirmed ? "var(--accent)" : "rgb(var(--ink) / 0.35)" }}
                 >
                   Begin the assessment
                 </button>
-              </div>
-            </>
-          )}
-        </section>
+                <p className="text-ink/70 text-xs mt-3 leading-relaxed">
+                  {minutes} minutes, one sitting. Find a quiet place and allow the full time.
+                </p>
+              </>
+            )}
+          </section>
+        </aside>
       </div>
       <BuildStamp product={product.name} />
     </div>

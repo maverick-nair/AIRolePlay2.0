@@ -4,7 +4,7 @@ Two products for workplace conversations, built on one evidence based instrument
 
 | Product | 4E line | Entry | What it does |
 | --- | --- | --- | --- |
-| **AI RolePlay** | Experience | `/` (`index.html`) | Practice: unlimited runs, rewind any of your turns (the persona rewinds with you), criteria on request, hints in the moment, selectable persona difficulty, and a trend across runs. Scores are for the learner. |
+| **AI RolePlay** | Experience | `/` (`index.html`) | Practice: up to five runs per scenario, rewind any of your turns (the persona rewinds with you), criteria on request, hints in the moment, selectable persona difficulty, and a trend across runs. Scores are for the learner. |
 | **Conversation AI** | Evaluate | `/assess/` (`assess/index.html`) | Assessment: one attempt, a fixed time limit, a standardised persona that follows a schedule of critical incidents, hidden criteria, no hints, no rewind, and a confirmation before the attempt starts. The report is saved and the scenario locks. |
 
 Every score is produced the same way in both products. A classifier (an LLM, or the offline heuristic) places each participant turn into a band (Strong, Adequate, Weak, Harmful) against authored behavioural indicators with written anchors, quoting the words that justify it. Rules turn bands into points through a fixed table. No model ever writes a number into a score. Every rating traces to quoted turns, and every report states where the instrument sits on the claim ladder (rung 1 of 4 today: structured feedback, not for talent decisions).

@@ -1,5 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap");
 @import "tailwindcss";
 
 @font-face {
@@ -55,7 +57,7 @@ html,
 body,
 #root {
   height: 100%;
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-body);
 }
 
 /* WCAG 2.2, 2.4.7 Focus Visible & 2.4.13 Focus Appearance: a strong, consistent
@@ -80,6 +82,9 @@ body,
 
 /* Theme tokens: dark is the default. `.light` on <html> flips them. */
 :root {
+  /* Design language: AI RolePlay is round, warm and playful; Conversation AI overrides these below. */
+  --font-body: "Inter", sans-serif;
+  --radius: 14px;
   --ink: 255 255 255; /* foreground channels, used as rgb(var(--ink) / a) */
   --bg: #0e0d0c; /* warm near-black ground */
   --surface: #161412; /* panels / cards */
@@ -127,31 +132,37 @@ body,
 /* Conversation AI (the assessment product) keeps every token name and takes a cooler accent, so the
    two products read as siblings and are never mistaken for each other. Contrast checked for AA. */
 :root[data-product="conversation-ai"] {
-  --brand: #7cc4ff; /* accent text on dark surfaces: 9.3:1 */
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --radius: 0px;
+  --ink: 232 236 246;
+  --bg: #0b1020; /* slate navy paper, not the ember black */
+  --surface: #121a30;
+  --surface-2: #182240;
+  --surface-3: #0e1529;
+  --tile-opacity: 0;
+  --brand: #8ab4ff; /* accent text on the navy ground: 8.6:1 */
   --accent: #1d4ed8; /* solid fills behind white text: 6.3:1 */
   --accent-hover: #1e40af;
   --accent-2: #1e3a8a;
   --accent-rgb: 59 130 246;
   --tile: #3b82f6;
-  --bg-gradient:
-    radial-gradient(1000px 640px at 50% -12%, rgba(59, 130, 246, 0.22), transparent 62%),
-    radial-gradient(760px 560px at 104% 4%, rgba(99, 102, 241, 0.14), transparent 58%),
-    radial-gradient(900px 700px at -6% 110%, rgba(56, 189, 248, 0.08), transparent 60%);
+  /* A single quiet band at the top; the rest is flat paper. */
+  --bg-gradient: linear-gradient(180deg, rgba(59, 130, 246, 0.14) 0%, transparent 320px);
 }
 :root.light[data-product="conversation-ai"] {
+  --ink: 15 23 42;
+  --bg: #f5f7fb;
+  --surface: #ffffff;
   --brand: #1d4ed8; /* accent text on the light ground: 6.1:1 */
   --accent: #1d4ed8;
   --accent-hover: #1e40af;
   --accent-2: #1e3a8a;
   --accent-rgb: 59 130 246;
   --tile: #ffffff;
-  --surface-2: rgba(246, 248, 252, 0.97);
-  --surface-3: rgba(249, 250, 253, 0.92);
-  --bg-gradient:
-    radial-gradient(1000px 680px at 50% -14%, rgba(147, 197, 253, 0.34), transparent 60%),
-    radial-gradient(820px 600px at 108% 2%, rgba(165, 180, 252, 0.3), transparent 56%),
-    radial-gradient(900px 760px at -8% 112%, rgba(186, 230, 253, 0.28), transparent 58%),
-    linear-gradient(170deg, #eef3fb 0%, #eef1f6 50%, #f4f2ef 100%);
+  --surface-2: #f3f6fb;
+  --surface-3: #f8fafd;
+  --bg-gradient: linear-gradient(180deg, rgba(147, 197, 253, 0.28) 0%, transparent 320px);
 }
 
 body {
@@ -606,4 +617,54 @@ body {
 }
 :root.light .scene-img {
   filter: invert(1) hue-rotate(180deg) grayscale(0.35) brightness(1.08) contrast(0.9);
+}
+
+/* ---------- Product design languages ---------- */
+/* AI RolePlay: rounded, soft, playful. Cards, controls and frames take the product radius. */
+[data-product="roleplay"]
+  :is(
+    button:not(.rounded-full),
+    [role="radio"],
+    [role="tab"],
+    section,
+    figure,
+    dl,
+    aside,
+    textarea,
+    li.border,
+    .glass,
+    .tool-btn
+  ) {
+  border-radius: var(--radius);
+}
+[data-product="roleplay"] .box-pattern::before {
+  filter: blur(6px);
+}
+
+/* Conversation AI: an assessment paper. Serif headings, sharp edges, ruled ground, no motion flourishes. */
+[data-product="conversation-ai"]
+  :is(.rounded-2xl, .rounded-xl, .rounded-lg, .rounded-md, .rounded, .glass, .glass-strong) {
+  border-radius: var(--radius);
+}
+[data-product="conversation-ai"] .glass,
+[data-product="conversation-ai"] .glass-strong {
+  border-color: rgb(var(--ink) / 0.16);
+}
+[data-product="conversation-ai"] .box-pattern::before {
+  display: none;
+}
+[data-product="conversation-ai"] .box-pattern::after {
+  background-image: linear-gradient(rgb(var(--ink) / 0.07) 1px, transparent 1px);
+  background-size: 100% 32px;
+}
+[data-product="conversation-ai"] .box-pattern {
+  -webkit-mask-image: linear-gradient(#000 0%, #000 60%, transparent 100%);
+  mask-image: linear-gradient(#000 0%, #000 60%, transparent 100%);
+}
+[data-product="conversation-ai"] .tool-btn:hover,
+[data-product="conversation-ai"] .tool-btn:active {
+  transform: none;
+}
+[data-product="conversation-ai"] .font-display {
+  letter-spacing: -0.01em;
 }

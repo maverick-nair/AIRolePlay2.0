@@ -9,6 +9,7 @@ export const renewalNegotiation = validateScenario({
   category: "Sales Negotiation",
   durationSeconds: 900,
   passScore: 8,
+  maxPracticeAttempts: 5,
   stimulus: {
     persona: {
       name: "Margaret Hale",

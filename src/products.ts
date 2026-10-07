@@ -2,7 +2,7 @@ import type { Mode } from "./domain/scenario";
 
 // The two products share one engine, one scenario model and one backend, but they are separate
 // interfaces with separate entry points, and neither offers the other's mode.
-//   AI RolePlay      (Experience) practice: unlimited attempts, rewind, hints, adaptive persona
+//   AI RolePlay      (Experience) practice: up to five runs per scenario, rewind, hints, adaptive persona
 //   Conversation AI  (Evaluate)   assessment: one attempt, standardised persona, hidden criteria
 export type ProductId = "roleplay" | "conversation-ai";
 

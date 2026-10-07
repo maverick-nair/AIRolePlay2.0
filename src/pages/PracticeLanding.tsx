@@ -26,12 +26,14 @@ export default function PracticeLanding({
   product,
   scenario,
   attempts,
+  runsLeft,
   onStart,
   onViewReport,
 }: {
   product: Product;
   scenario: Scenario;
   attempts: Report[];
+  runsLeft: number;
   onStart: (options: PracticeOptions) => void;
   onViewReport: (report: Report) => void;
 }) {
@@ -39,11 +41,15 @@ export default function PracticeLanding({
   const [hints, setHints] = useState(true);
   const best = attempts.length ? Math.max(...attempts.map((a) => a.scores.overall)) : null;
   const last = attempts[attempts.length - 1];
+  const maxRuns = scenario.maxPracticeAttempts;
+  const exhausted = runsLeft <= 0;
   const rung = CLAIM_LADDER[scenario.instrument.claimRung];
   const totalXp = scenario.instrument.objectives.reduce((a, o) => a + o.xp, 0);
   const minutes = Math.round(scenario.durationSeconds / 60);
   const persona = scenario.stimulus.persona;
-  const start = () => onStart({ difficulty, hints });
+  const start = () => {
+    if (!exhausted) onStart({ difficulty, hints });
+  };
 
   const Arrow = () => (
     <svg
@@ -114,13 +120,18 @@ export default function PracticeLanding({
             <div className="flex flex-wrap items-center gap-4">
               <button
                 onClick={start}
-                className="group inline-flex items-center gap-3 px-8 py-4 font-display font-semibold text-white text-sm tracking-wide transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
-                style={{ background: "var(--accent)" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--accent-hover)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "var(--accent)")}
+                disabled={exhausted}
+                className="group inline-flex items-center gap-3 px-8 py-4 font-display font-semibold text-white text-sm tracking-wide transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] disabled:cursor-not-allowed"
+                style={{ background: exhausted ? "rgb(var(--ink) / 0.35)" : "var(--accent)" }}
+                onMouseEnter={(e) => {
+                  if (!exhausted) e.currentTarget.style.background = "var(--accent-hover)";
+                }}
+                onMouseLeave={(e) => {
+                  if (!exhausted) e.currentTarget.style.background = "var(--accent)";
+                }}
               >
-                Start practising
-                <Arrow />
+                {exhausted ? `All ${maxRuns} runs used` : "Start practising"}
+                {!exhausted && <Arrow />}
               </button>
               <a
                 href="#setup"
@@ -160,10 +171,19 @@ export default function PracticeLanding({
                 },
                 {
                   k: "Practice Runs",
-                  v: <span>{attempts.length}</span>,
+                  v: (
+                    <span>
+                      {attempts.length}
+                      <span className="text-ink/70 text-base font-medium">/{maxRuns}</span>
+                    </span>
+                  ),
                   sub: (
                     <span className="text-ink/75 text-xs">
-                      {best === null ? "No attempts yet" : `Best ${best}/10`}
+                      {exhausted
+                        ? `All runs used. Best ${best}/10`
+                        : best === null
+                          ? `${runsLeft} runs available`
+                          : `Best ${best}/10, ${runsLeft} left`}
                     </span>
                   ),
                 },
@@ -385,6 +405,7 @@ export default function PracticeLanding({
                 "Criteria available on request, hints as you go.",
                 "Choose how hard the persona pushes.",
                 "Each run adds a point to your trend. Nothing here is a grade.",
+                `Up to ${maxRuns} runs on this scenario. ${exhausted ? "You have used them all." : `${runsLeft} left.`}`,
               ].map((t) => (
                 <li key={t} className="flex gap-2.5">
                   <span aria-hidden className="mt-2 w-1 h-1 rounded-full bg-[var(--ok)] flex-none" />
@@ -441,16 +462,23 @@ export default function PracticeLanding({
               Show hints in the moment when a turn misses an opportunity
             </label>
             <div className="mt-auto">
-              <button
-                onClick={start}
-                className="group inline-flex items-center justify-center gap-3 px-6 py-3.5 font-display font-semibold text-white text-sm tracking-wide transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]"
-                style={{ background: "var(--accent)" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "var(--accent-hover)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "var(--accent)")}
-              >
-                Start practising
-                <Arrow />
-              </button>
+              {exhausted ? (
+                <p className="text-ink/80 text-sm leading-relaxed" role="status">
+                  You have used all {maxRuns} practice runs on this scenario. Your reports stay available from
+                  the trend above.
+                </p>
+              ) : (
+                <button
+                  onClick={start}
+                  className="group inline-flex items-center justify-center gap-3 px-6 py-3.5 font-display font-semibold text-white text-sm tracking-wide transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]"
+                  style={{ background: "var(--accent)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--accent-hover)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "var(--accent)")}
+                >
+                  Start practising
+                  <Arrow />
+                </button>
+              )}
             </div>
           </div>
         </section>

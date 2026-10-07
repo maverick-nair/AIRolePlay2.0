@@ -31,6 +31,7 @@ export default function SummaryPage({
   report,
   scenario,
   attempts,
+  runsLeft = Number.POSITIVE_INFINITY,
   onPractiseAgain,
   onHome,
 }: {
@@ -38,6 +39,7 @@ export default function SummaryPage({
   report: Report;
   scenario: Scenario;
   attempts: Report[];
+  runsLeft?: number;
   onPractiseAgain: () => void;
   onHome: () => void;
 }) {
@@ -53,6 +55,7 @@ export default function SummaryPage({
   }, []);
 
   const isAssessment = report.mode === "assessment";
+  const canPractiseAgain = !isAssessment && runsLeft > 0;
   const { scores, metrics, narrative, stats } = report;
   const tagged = useMemo(() => tagTranscript(report), [report]);
   const peer = scenario.instrument.peerBaseline;
@@ -424,98 +427,112 @@ export default function SummaryPage({
                   <p className="text-ink/75 text-xs">
                     Focus next: <span className="text-ink font-semibold">{weakest?.label}</span>
                   </p>
-                  <button
-                    onClick={onPractiseAgain}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-display font-semibold text-sm text-white min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand)]"
-                    style={{ background: "var(--accent)" }}
-                  >
-                    Practise again
-                  </button>
+                  {canPractiseAgain ? (
+                    <button
+                      onClick={onPractiseAgain}
+                      className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-display font-semibold text-sm text-white min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand)]"
+                      style={{ background: "var(--accent)" }}
+                    >
+                      Practise again
+                    </button>
+                  ) : (
+                    <p className="text-ink/75 text-xs" role="status">
+                      All {scenario.maxPracticeAttempts} practice runs on this scenario are used.
+                    </p>
+                  )}
                 </div>
               </section>
             )}
 
-            {/* Rewards earned in this call */}
-            <section
-              className="rounded-2xl border p-5 mb-4 relative overflow-hidden"
-              style={{ background: "var(--surface)", borderColor: "rgb(var(--accent-rgb) / 0.35)" }}
-            >
-              <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
-                <h2 className="font-display font-semibold text-ink text-sm">Rewards Earned</h2>
-                <p className="text-ink/75 text-xs">
-                  XP and badges carry over to your profile and the season leaderboard.
-                </p>
-              </div>
-              <div className="grid grid-cols-2 lg:grid-cols-12 gap-4 items-center">
-                <div className="lg:col-span-3">
-                  <p className="text-ink/75 text-[11px] font-bold tracking-widest uppercase mb-1">
-                    XP Earned
-                  </p>
-                  <p className="font-display font-bold text-4xl text-ink">
-                    +<RollingNumber value={stats.endXp - stats.startXp} />
-                  </p>
-                  <p className="text-ink/75 text-xs mt-1">
-                    Total <RollingNumber value={stats.endXp} className="font-semibold text-ink" /> XP
+            {/* Rewards earned in this call: practice only. Assessment carries no game layer. */}
+            {!isAssessment && (
+              <section
+                className="rounded-2xl border p-5 mb-4 relative overflow-hidden"
+                style={{ background: "var(--surface)", borderColor: "rgb(var(--accent-rgb) / 0.35)" }}
+              >
+                <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
+                  <h2 className="font-display font-semibold text-ink text-sm">Rewards Earned</h2>
+                  <p className="text-ink/75 text-xs">
+                    XP and badges carry over to your profile and the season leaderboard.
                   </p>
                 </div>
-                <div className="lg:col-span-2">
-                  <p className="text-ink/75 text-[11px] font-bold tracking-widest uppercase mb-1">
-                    Best Streak
-                  </p>
-                  <p className="font-display font-bold text-4xl text-ink flex items-center gap-1.5">
-                    <span className="text-brand">
-                      <FlameIcon size={26} />
-                    </span>
-                    {stats.bestStreak}
-                  </p>
-                  <p className="text-ink/75 text-xs mt-1">Strong replies in a row</p>
-                </div>
-                {compare && (
-                  <div className="lg:col-span-2">
+                <div className="grid grid-cols-2 lg:grid-cols-12 gap-4 items-center">
+                  <div className="lg:col-span-3">
                     <p className="text-ink/75 text-[11px] font-bold tracking-widest uppercase mb-1">
-                      Leaderboard
+                      XP Earned
                     </p>
-                    <p className="font-display font-bold text-4xl text-ink">#{stats.endRank}</p>
+                    <p className="font-display font-bold text-4xl text-ink">
+                      +<RollingNumber value={stats.endXp - stats.startXp} />
+                    </p>
                     <p className="text-ink/75 text-xs mt-1">
-                      {stats.startRank > stats.endRank
-                        ? `Up ${stats.startRank - stats.endRank} from #${stats.startRank}`
-                        : `Held at #${stats.startRank}`}
+                      Total <RollingNumber value={stats.endXp} className="font-semibold text-ink" /> XP
                     </p>
                   </div>
-                )}
-                <div className={`col-span-2 ${compare ? "lg:col-span-5" : "lg:col-span-7"}`}>
-                  <p className="text-ink/75 text-[11px] font-bold tracking-widest uppercase mb-2">
-                    Badges{" "}
-                    <span className="text-ink font-display">
-                      {stats.badges.length}/{BADGES.length}
-                    </span>
-                  </p>
-                  <ul className="flex flex-wrap gap-3">
-                    {BADGES.map((b) => {
-                      const got = stats.badges.includes(b.id);
-                      return (
-                        <li key={b.id} className="flex flex-col items-center w-16 text-center" title={b.desc}>
-                          <span
-                            className={got ? "shine" : ""}
-                            style={{ clipPath: "polygon(50% 0, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)" }}
+                  <div className="lg:col-span-2">
+                    <p className="text-ink/75 text-[11px] font-bold tracking-widest uppercase mb-1">
+                      Best Streak
+                    </p>
+                    <p className="font-display font-bold text-4xl text-ink flex items-center gap-1.5">
+                      <span className="text-brand">
+                        <FlameIcon size={26} />
+                      </span>
+                      {stats.bestStreak}
+                    </p>
+                    <p className="text-ink/75 text-xs mt-1">Strong replies in a row</p>
+                  </div>
+                  {compare && (
+                    <div className="lg:col-span-2">
+                      <p className="text-ink/75 text-[11px] font-bold tracking-widest uppercase mb-1">
+                        Leaderboard
+                      </p>
+                      <p className="font-display font-bold text-4xl text-ink">#{stats.endRank}</p>
+                      <p className="text-ink/75 text-xs mt-1">
+                        {stats.startRank > stats.endRank
+                          ? `Up ${stats.startRank - stats.endRank} from #${stats.startRank}`
+                          : `Held at #${stats.startRank}`}
+                      </p>
+                    </div>
+                  )}
+                  <div className={`col-span-2 ${compare ? "lg:col-span-5" : "lg:col-span-7"}`}>
+                    <p className="text-ink/75 text-[11px] font-bold tracking-widest uppercase mb-2">
+                      Badges{" "}
+                      <span className="text-ink font-display">
+                        {stats.badges.length}/{BADGES.length}
+                      </span>
+                    </p>
+                    <ul className="flex flex-wrap gap-3">
+                      {BADGES.map((b) => {
+                        const got = stats.badges.includes(b.id);
+                        return (
+                          <li
+                            key={b.id}
+                            className="flex flex-col items-center w-16 text-center"
+                            title={b.desc}
                           >
-                            <BadgeMedal mark={b.mark} earned={got} size={42} />
-                          </span>
-                          <span
-                            className={`mt-1 text-[11px] leading-tight ${got ? "text-ink font-semibold" : "text-ink/70"}`}
-                          >
-                            {b.name}
-                          </span>
-                          <span className="sr-only">
-                            {got ? "Earned" : "Not earned"}: {b.desc}
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                            <span
+                              className={got ? "shine" : ""}
+                              style={{
+                                clipPath: "polygon(50% 0, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)",
+                              }}
+                            >
+                              <BadgeMedal mark={b.mark} earned={got} size={42} />
+                            </span>
+                            <span
+                              className={`mt-1 text-[11px] leading-tight ${got ? "text-ink font-semibold" : "text-ink/70"}`}
+                            >
+                              {b.name}
+                            </span>
+                            <span className="sr-only">
+                              {got ? "Earned" : "Not earned"}: {b.desc}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
                 </div>
-              </div>
-            </section>
+              </section>
+            )}
 
             {/* Conversation metrics: descriptive, computed from the transcript */}
             <section
@@ -1251,7 +1268,7 @@ export default function SummaryPage({
           >
             Email Report
           </button>
-          {!isAssessment && (
+          {canPractiseAgain && (
             <button
               onClick={onPractiseAgain}
               className="flex items-center gap-2 px-6 py-3 rounded-xl font-display font-semibold text-sm text-ink border border-ink/20 min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"

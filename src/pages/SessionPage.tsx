@@ -65,10 +65,10 @@ export default function SessionPage({
   const mdUp = useMediaQuery("(min-width: 768px)");
   const lgUp = useMediaQuery("(min-width: 1024px)");
   const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const [showObjectives, setShowObjectives] = useState(lgUp);
+  const [showObjectives, setShowObjectives] = useState(lgUp && isPractice);
   const [showTranscript, setShowTranscript] = useState(mdUp);
   useEffect(() => setShowTranscript(mdUp), [mdUp]);
-  useEffect(() => setShowObjectives(lgUp), [lgUp]);
+  useEffect(() => setShowObjectives(lgUp && isPractice), [lgUp, isPractice]);
   const [showCriteria, setShowCriteria] = useState(false);
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<SessionTurn[]>(scenario.stimulus.opening);
@@ -412,7 +412,7 @@ export default function SessionPage({
             }
             title={
               isPractice
-                ? "Practice: unlimited attempts, rewind available"
+                ? "Practice: up to five runs, rewind available"
                 : "Assessment: one attempt, standardised persona"
             }
           >
@@ -421,70 +421,81 @@ export default function SessionPage({
         </div>
 
         <div className="flex items-center gap-2 md:gap-3">
-          {/* XP HUD: level, rolling XP, progress to next level, streak multiplier */}
-          <div
-            className="relative hidden md:flex items-center gap-3 pl-1 pr-3 py-1 border border-ink/15"
-            style={{ background: "var(--surface)" }}
-          >
-            <span className="relative w-9 h-9 flex items-center justify-center" aria-hidden>
-              <svg width="36" height="36" viewBox="0 0 36 36" className="-rotate-90">
-                <circle cx="18" cy="18" r="15" fill="none" stroke="rgb(var(--ink) / 0.12)" strokeWidth="3" />
-                <circle
-                  cx="18"
-                  cy="18"
-                  r="15"
-                  fill="none"
-                  stroke="var(--brand)"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeDasharray={`${(levelPct / 100) * 94.2} 94.2`}
-                  style={{ transition: "stroke-dasharray .9s cubic-bezier(.2,.8,.2,1)" }}
-                />
-              </svg>
-              <span className="absolute font-display font-bold text-[11px] text-ink">
-                {level
-                  .split(" ")
-                  .map((w) => w[0])
-                  .join("")}
-              </span>
-            </span>
-            <span className="flex flex-col leading-tight">
-              <span className="text-ink/75 text-[11px] font-display uppercase tracking-widest">{level}</span>
-              <span className="font-display font-bold text-ink text-sm">
-                <RollingNumber value={xp} /> <span className="text-ink/70 font-medium text-xs">XP</span>
-              </span>
-            </span>
-            <span
-              className="flex items-center gap-1 px-2 py-1 text-xs font-display font-bold tabular-nums"
-              style={
-                streak >= 3
-                  ? { background: "var(--accent)", color: "#fff" }
-                  : { background: "rgb(var(--ink) / 0.06)", color: "rgb(var(--ink) / 0.8)" }
-              }
-              aria-label={`Streak ${streak}${streak >= 3 ? ", 1.5 times XP active" : ""}`}
+          {/* XP HUD (practice only): level, rolling XP, progress to next level, streak multiplier */}
+          {isPractice && (
+            <div
+              className="relative hidden md:flex items-center gap-3 pl-1 pr-3 py-1 border border-ink/15"
+              style={{ background: "var(--surface)" }}
             >
-              <FlameIcon size={13} />
-              {streak}
-              {streak >= 3 && <span className="text-[11px] font-semibold">x1.5</span>}
-            </span>
-            <span
-              className="text-ink/75 text-xs font-display tabular-nums"
-              aria-label={`${badges.length} badges earned`}
-            >
-              <span className="font-bold text-ink">{badges.length}</span>/{BADGES.length} badges
-            </span>
-            {floats.map((f) => (
+              <span className="relative w-9 h-9 flex items-center justify-center" aria-hidden>
+                <svg width="36" height="36" viewBox="0 0 36 36" className="-rotate-90">
+                  <circle
+                    cx="18"
+                    cy="18"
+                    r="15"
+                    fill="none"
+                    stroke="rgb(var(--ink) / 0.12)"
+                    strokeWidth="3"
+                  />
+                  <circle
+                    cx="18"
+                    cy="18"
+                    r="15"
+                    fill="none"
+                    stroke="var(--brand)"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeDasharray={`${(levelPct / 100) * 94.2} 94.2`}
+                    style={{ transition: "stroke-dasharray .9s cubic-bezier(.2,.8,.2,1)" }}
+                  />
+                </svg>
+                <span className="absolute font-display font-bold text-[11px] text-ink">
+                  {level
+                    .split(" ")
+                    .map((w) => w[0])
+                    .join("")}
+                </span>
+              </span>
+              <span className="flex flex-col leading-tight">
+                <span className="text-ink/75 text-[11px] font-display uppercase tracking-widest">
+                  {level}
+                </span>
+                <span className="font-display font-bold text-ink text-sm">
+                  <RollingNumber value={xp} /> <span className="text-ink/70 font-medium text-xs">XP</span>
+                </span>
+              </span>
               <span
-                key={f.id}
-                aria-hidden
-                className="xp-float absolute left-12 -bottom-1 font-display font-bold text-sm"
-                style={{ color: "var(--brand)" }}
+                className="flex items-center gap-1 px-2 py-1 text-xs font-display font-bold tabular-nums"
+                style={
+                  streak >= 3
+                    ? { background: "var(--accent)", color: "#fff" }
+                    : { background: "rgb(var(--ink) / 0.06)", color: "rgb(var(--ink) / 0.8)" }
+                }
+                aria-label={`Streak ${streak}${streak >= 3 ? ", 1.5 times XP active" : ""}`}
               >
-                +{f.v}
-                {f.mult ? " x1.5" : ""}
+                <FlameIcon size={13} />
+                {streak}
+                {streak >= 3 && <span className="text-[11px] font-semibold">x1.5</span>}
               </span>
-            ))}
-          </div>
+              <span
+                className="text-ink/75 text-xs font-display tabular-nums"
+                aria-label={`${badges.length} badges earned`}
+              >
+                <span className="font-bold text-ink">{badges.length}</span>/{BADGES.length} badges
+              </span>
+              {floats.map((f) => (
+                <span
+                  key={f.id}
+                  aria-hidden
+                  className="xp-float absolute left-12 -bottom-1 font-display font-bold text-sm"
+                  style={{ color: "var(--brand)" }}
+                >
+                  +{f.v}
+                  {f.mult ? " x1.5" : ""}
+                </span>
+              ))}
+            </div>
+          )}
           <CountdownTimer initial={scenario.durationSeconds} onExpire={onExpire} />
 
           <ToolButton active={showTranscript} onClick={() => setShowTranscript((v) => !v)} label="Transcript">
@@ -494,36 +505,40 @@ export default function SessionPage({
               <rect x="1" y="10.4" width="10" height="1.6" rx="0.8" fill="currentColor" />
             </svg>
           </ToolButton>
-          <span data-anchor="objectives-btn" className="inline-flex">
-            <ToolButton
-              active={showObjectives}
-              onClick={() => setShowObjectives((v) => !v)}
-              label="Objectives"
-              badge={`${objectivesDone}/${objectives.length}`}
-              badgeColor="var(--ok)"
-            >
-              <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-                <path
-                  d="M2 7.5l3 3 7-7"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </ToolButton>
-          </span>
-          <span className="hidden sm:block">
-            <ToolButton
-              active={showLeaderboard}
-              onClick={() => setShowLeaderboard((v) => !v)}
-              label="Leaderboard"
-              badge={`#${myRank}`}
-              badgeColor="#f59e0b"
-            >
-              <LeaderboardIcon />
-            </ToolButton>
-          </span>
+          {isPractice && (
+            <>
+              <span data-anchor="objectives-btn" className="inline-flex">
+                <ToolButton
+                  active={showObjectives}
+                  onClick={() => setShowObjectives((v) => !v)}
+                  label="Objectives"
+                  badge={`${objectivesDone}/${objectives.length}`}
+                  badgeColor="var(--ok)"
+                >
+                  <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
+                    <path
+                      d="M2 7.5l3 3 7-7"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </ToolButton>
+              </span>
+              <span className="hidden sm:block">
+                <ToolButton
+                  active={showLeaderboard}
+                  onClick={() => setShowLeaderboard((v) => !v)}
+                  label="Leaderboard"
+                  badge={`#${myRank}`}
+                  badgeColor="#f59e0b"
+                >
+                  <LeaderboardIcon />
+                </ToolButton>
+              </span>
+            </>
+          )}
           <ThemeToggle />
           <button
             onClick={() => void endCall()}
@@ -799,7 +814,7 @@ export default function SessionPage({
                   {isRecording ? "You are speaking" : speaking ? "Listening" : "Your turn"}
                 </p>
               </div>
-              {combo !== null && (
+              {isPractice && combo !== null && (
                 <div
                   role="status"
                   className="absolute top-3 right-3 px-2.5 py-1 font-display font-bold text-xs animate-fade-in-up z-10"
@@ -1303,8 +1318,10 @@ export default function SessionPage({
         )}
       </div>
 
-      {burst.n > 0 && <ConfettiBurst key={burst.n} origin={burst.origin} pieces={burst.origin ? 60 : 90} />}
-      {unlock && (
+      {isPractice && burst.n > 0 && (
+        <ConfettiBurst key={burst.n} origin={burst.origin} pieces={burst.origin ? 60 : 90} />
+      )}
+      {isPractice && unlock && (
         <div
           key={unlock.key}
           role="status"
