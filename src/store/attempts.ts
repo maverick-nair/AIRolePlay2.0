@@ -45,3 +45,9 @@ export function clearAttempts(scenarioId?: string) {
   if (!scenarioId) return writeAll([]);
   writeAll(readAll().filter((a) => a.scenarioId !== scenarioId));
 }
+
+// XP actually earned across saved practice runs. This is the only source of a learner's progress
+// until the backend exists; nothing is seeded, so a first time learner starts at zero.
+export function careerXp(list: Attempt[]): number {
+  return list.reduce((sum, a) => sum + Math.max(0, (a.stats?.endXp ?? 0) - (a.stats?.startXp ?? 0)), 0);
+}

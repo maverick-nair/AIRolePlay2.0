@@ -481,20 +481,7 @@ export default function SummaryPage({
                     </p>
                     <p className="text-ink/75 text-xs mt-1">Strong replies in a row</p>
                   </div>
-                  {compare && (
-                    <div className="lg:col-span-2">
-                      <p className="text-ink/75 text-[11px] font-bold tracking-widest uppercase mb-1">
-                        Leaderboard
-                      </p>
-                      <p className="font-display font-bold text-4xl text-ink">#{stats.endRank}</p>
-                      <p className="text-ink/75 text-xs mt-1">
-                        {stats.startRank > stats.endRank
-                          ? `Up ${stats.startRank - stats.endRank} from #${stats.startRank}`
-                          : `Held at #${stats.startRank}`}
-                      </p>
-                    </div>
-                  )}
-                  <div className={`col-span-2 ${compare ? "lg:col-span-5" : "lg:col-span-7"}`}>
+                  <div className="col-span-2 lg:col-span-7">
                     <p className="text-ink/75 text-[11px] font-bold tracking-widest uppercase mb-2">
                       Badges{" "}
                       <span className="text-ink font-display">

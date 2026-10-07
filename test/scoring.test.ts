@@ -111,7 +111,8 @@ describe("turn outcome (gamification rules)", () => {
     expect(strong.newlyMet).toEqual([true, false, false]);
     expect(strong.earnedBadges).toContain("detective");
     expect(strong.earnedBadges).toContain("icebreaker");
-    expect(strong.gain).toBe(25 + 45 + 5);
+    expect(strong.gain).toBe(15 + 15 + 45);
+    expect(strong.behaviour).toMatchObject({ indicatorId: "probing.open-questions", band: "Strong" });
   });
 
   it("applies the streak multiplier from the third strong reply", () => {
@@ -122,8 +123,61 @@ describe("turn outcome (gamification rules)", () => {
       classification: hit("relationship.tone", "Strong", 7),
     });
     expect(o.multiplied).toBe(true);
-    expect(o.gain).toBe(Math.round((25 + 5) * 1.5));
+    expect(o.gain).toBe(Math.round((15 + 15) * 1.5));
     expect(o.earnedBadges).toContain("hot-streak");
+  });
+
+  it("never pays for length: a long turn without behaviours earns the on topic amount only", () => {
+    const long = turnOutcome({
+      ...base,
+      text: "word ".repeat(80),
+      classification: { turnIndex: 5, onTopic: true, hits: [] },
+    });
+    const short = turnOutcome({
+      ...base,
+      text: "ok",
+      classification: { turnIndex: 5, onTopic: true, hits: [] },
+    });
+    expect(long.gain).toBe(15);
+    expect(long.gain).toBe(short.gain);
+  });
+
+  it("pays nothing for a gap, leads with it, and resets the streak", () => {
+    const o = turnOutcome({
+      ...base,
+      streak: 2,
+      text: "we can match their price",
+      classification: {
+        turnIndex: 5,
+        onTopic: true,
+        hits: [
+          { indicatorId: "relationship.tone", band: "Adequate", quote: "x", note: "ok" },
+          { indicatorId: "strategy.conditional-concession", band: "Weak", quote: "x", note: "No condition" },
+        ],
+      },
+    });
+    expect(o.gain).toBe(15 + 8);
+    expect(o.nextStreak).toBe(0);
+    expect(o.behaviour).toMatchObject({ indicatorId: "strategy.conditional-concession", band: "Weak" });
+    expect(o.behaviour?.label).not.toBe("strategy.conditional-concession");
+  });
+
+  it("counts at most two behaviours per turn", () => {
+    const o = turnOutcome({
+      ...base,
+      text: "x",
+      classification: {
+        turnIndex: 5,
+        onTopic: true,
+        hits: ["probing.open-questions", "probing.follow-up", "relationship.tone"].map((id) => ({
+          indicatorId: id,
+          band: "Strong" as const,
+          quote: "x",
+          note: "",
+        })),
+      },
+    });
+    expect(o.gain).toBe(15 + 15 + 15 + 45);
   });
 
   it("awards clean sweep when the last objective lands", () => {
@@ -145,6 +199,7 @@ describe("turn outcome (gamification rules)", () => {
     });
     expect(o.levelledUp).toBe(true);
     expect(levelFor(690).name).toBe("Competent");
+    expect(levelFor(0).name).toBe("Newcomer");
     expect(levelFor(700).name).toBe("Proficient");
   });
 });

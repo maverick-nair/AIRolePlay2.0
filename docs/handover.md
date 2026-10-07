@@ -72,7 +72,7 @@ Novice 1-2 `#b5472f`, Emerging 3-4 `#e07b2e`, Competent 5-6 `#efc23a`, Proficien
 - Band points: Strong 10, Adequate 7, Weak 4, Harmful 1. An indicator never observed counts 4, because every indicator in this scenario has an opportunity to appear.
 - Repeated hits on one indicator average their points.
 - Skill score = rounded mean of indicator points, clamped to 1 to 10. Overall = weighted mean of skill scores, rounded. Pass mark is per scenario (8 here).
-- Objective complete = an Adequate or better band on one of its listed indicators. XP: 25 for on topic, 45 per newly met objective, a length bonus capped at 20, times 1.5 from the third strong reply in a row. Off topic turns earn nothing and reset the streak.
+- Objective complete = an Adequate or better band on one of its listed indicators. XP rewards behaviours, never length: 15 for an on topic turn, plus 15 per Strong and 8 per Adequate behaviour (best two counted), plus 45 per newly met objective. Weak and Harmful bands earn nothing. The streak counts consecutive turns with a Strong behaviour, resets on a Weak or Harmful band, and multiplies XP by 1.5 from the third. Off topic turns earn nothing and reset the streak. Career XP and level come only from saved practice runs (`careerXp` in the attempt store); a first time learner starts at zero as a Newcomer.
 - Conversation metrics and language analysis are descriptive and never enter the score. Audio is scored by transcript only; no voice or facial emotion inference anywhere.
 
 ## Participant safeguards (do not remove)

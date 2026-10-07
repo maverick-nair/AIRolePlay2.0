@@ -632,3 +632,68 @@ body {
 .caption-in {
   animation: caption-in 0.25s ease-out;
 }
+
+/* Call screen. The ring shows who holds the floor; the state pill says it in words, so motion is
+   never the only signal. */
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4rem;
+  padding: 0 0.3rem;
+  margin-left: 0.25rem;
+  border: 1px solid rgb(var(--ink) / 0.3);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  font: 600 12px/1.4 var(--font-body, inherit);
+  color: rgb(var(--ink) / 0.85);
+}
+.speak-ring {
+  box-shadow: 0 0 0 3px var(--brand);
+  animation: speak-pulse 1.6s ease-in-out infinite;
+}
+@keyframes speak-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px var(--brand);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px var(--brand),
+      0 0 0 12px color-mix(in srgb, var(--brand) 18%, transparent);
+  }
+}
+.thinking-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 30%,
+    color-mix(in srgb, var(--brand) 22%, transparent) 50%,
+    transparent 70%
+  );
+  background-size: 250% 100%;
+  animation: shimmer 1.4s linear infinite;
+  pointer-events: none;
+}
+@keyframes shimmer {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .speak-ring,
+  .thinking-shimmer::after {
+    animation: none;
+  }
+}
+/* Shortcut keys mean nothing on a touch screen. */
+@media (max-width: 639px), (pointer: coarse) {
+  .kbd {
+    display: none;
+  }
+}

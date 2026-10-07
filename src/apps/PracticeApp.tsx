@@ -6,7 +6,7 @@ import SummaryPage from "../pages/SummaryPage";
 import { renewalNegotiation } from "../data/scenarios/renewalNegotiation";
 import type { Report } from "../domain/report";
 import { PRODUCTS, applyProductTheme } from "../products";
-import { listAttempts } from "../store/attempts";
+import { careerXp, listAttempts } from "../store/attempts";
 import { practiceRunsLeft } from "../domain/scoring";
 
 // AI RolePlay: the practice product. Up to maxPracticeAttempts runs per scenario, rewind, hints,
@@ -60,6 +60,7 @@ export default function PracticeApp() {
             mode="practice"
             difficulty={options.difficulty}
             hints={options.hints}
+            startXp={careerXp(attempts)}
             onEnd={(r) => {
               setReport(r);
               setAttempts(listAttempts(scenario.id, "practice"));

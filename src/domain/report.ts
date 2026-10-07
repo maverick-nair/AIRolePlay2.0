@@ -13,8 +13,11 @@ export type SessionStats = {
   badges: string[];
   bestStreak: number;
   objectives: number;
-  startRank: number;
-  endRank: number;
+  // Cohort rank is not tracked until a backend supplies real peers; older saved reports may carry it.
+  startRank?: number;
+  endRank?: number;
+  // Times the participant spoke over the persona. Descriptive only, never scored.
+  interruptions?: number;
 };
 
 export type Report = {
