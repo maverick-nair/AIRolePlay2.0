@@ -4,12 +4,16 @@ import type { Mode } from "../domain/scenario";
 // Attempt persistence. localStorage stands in for the sessions backend; the shape is what the
 // server will store. Assessment mode is one attempt per scenario and the lock lives here.
 
-const KEY = "gk.roleplay.attempts.v1";
+// Bumping the key resets access for every browser: the assessment unlocks and practice runs start
+// again from five. Older keys are removed on first read so stale reports do not linger.
+const KEY = "gk.roleplay.attempts.v2";
+const RETIRED_KEYS = ["gk.roleplay.attempts.v1"];
 
 export type Attempt = Report;
 
 function readAll(): Attempt[] {
   try {
+    for (const k of RETIRED_KEYS) localStorage.removeItem(k);
     const raw = localStorage.getItem(KEY);
     return raw ? (JSON.parse(raw) as Attempt[]) : [];
   } catch {
