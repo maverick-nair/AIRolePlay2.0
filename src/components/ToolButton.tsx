@@ -7,6 +7,7 @@ export default function ToolButton({
   label,
   badge,
   badgeColor,
+  badgeTextColor,
   children,
 }: {
   active?: boolean;
@@ -14,6 +15,7 @@ export default function ToolButton({
   label: string;
   badge?: ReactNode;
   badgeColor?: string;
+  badgeTextColor?: string;
   children: ReactNode;
 }) {
   return (
@@ -37,7 +39,7 @@ export default function ToolButton({
             className="badge-pop absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[11px] font-bold font-display rounded-full tabular-nums"
             style={{
               background: badgeColor ?? "var(--brand)",
-              color: "#0c0c0f",
+              color: badgeTextColor ?? "var(--bg)",
             }}
           >
             {badge}

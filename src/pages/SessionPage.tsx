@@ -341,8 +341,40 @@ export default function SessionPage({
     replyTimers.current.push(window.setTimeout(() => setFeedback(null), 2600));
   }
 
+  // Ending a call is the one action that cannot be taken back. Conversation AI asks first, because
+  // the attempt is single; AI RolePlay gives a five second window to resume instead of a dialog.
+  const [confirmEnd, setConfirmEnd] = useState<string | null>(null);
+  const [pendingEnd, setPendingEnd] = useState<number | null>(null);
+  const keepTalkingRef = useRef<HTMLButtonElement | null>(null);
+  const endTriggerRef = useRef<HTMLButtonElement | null>(null);
+  function requestEnd() {
+    if (finishing) return;
+    if (isPractice) return setPendingEnd(5);
+    const left = Math.max(0, scenario.durationSeconds - Math.floor((Date.now() - startRef.current) / 1000));
+    setConfirmEnd(`${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`);
+  }
+  function closeConfirm() {
+    setConfirmEnd(null);
+    endTriggerRef.current?.focus();
+  }
+  useEffect(() => {
+    if (pendingEnd === null) return;
+    if (pendingEnd <= 0) {
+      setPendingEnd(null);
+      void endCall();
+      return;
+    }
+    const id = window.setTimeout(() => setPendingEnd((p) => (p === null ? null : p - 1)), 1000);
+    return () => window.clearTimeout(id);
+  }, [pendingEnd]);
+  useEffect(() => {
+    if (confirmEnd) keepTalkingRef.current?.focus();
+  }, [confirmEnd]);
+
   async function endCall() {
     if (finishing) return;
+    setConfirmEnd(null);
+    setPendingEnd(null);
     setFinishing(true);
     replyTimers.current.forEach((t) => window.clearTimeout(t));
     const completedAt = new Date().toISOString();
@@ -378,6 +410,12 @@ export default function SessionPage({
     if (!isPractice) void endCall();
   }
 
+  const lastPersonaLine = (() => {
+    for (let i = messages.length - 1; i >= 0; i--)
+      if (messages[i].speaker !== "You") return { index: i, text: messages[i].text };
+    return null;
+  })();
+
   // Which player-turn ordinal does a transcript index correspond to (for rewind buttons)?
   const openingLength = scenario.stimulus.opening.length;
   const playerOrdinalAt = (index: number) =>
@@ -386,7 +424,7 @@ export default function SessionPage({
   return (
     <div className="h-full flex flex-col overflow-hidden" style={{ background: "transparent" }}>
       {/* Top bar: participants named up top */}
-      <div className="flex items-center justify-between gap-3 px-4 md:px-8 h-16 border-b border-ink/10 flex-shrink-0">
+      <header className="flex items-center justify-between gap-3 px-4 md:px-8 h-16 border-b border-ink/10 flex-shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <div
             className="w-8 h-8 flex items-center justify-center flex-none"
@@ -533,6 +571,7 @@ export default function SessionPage({
                   label="Leaderboard"
                   badge={`#${myRank}`}
                   badgeColor="#f59e0b"
+                  badgeTextColor="#1a1306"
                 >
                   <LeaderboardIcon />
                 </ToolButton>
@@ -540,9 +579,11 @@ export default function SessionPage({
             </>
           )}
           <ThemeToggle />
+          <span aria-hidden className="hidden sm:block w-px h-7 bg-ink/15 mx-1" />
           <button
-            onClick={() => void endCall()}
-            disabled={finishing}
+            ref={endTriggerRef}
+            onClick={requestEnd}
+            disabled={finishing || pendingEnd !== null}
             className="tool-btn px-3.5 py-2 min-h-[40px] text-xs font-semibold font-display disabled:opacity-60 whitespace-nowrap"
             style={{
               background: "rgba(244,63,94,0.12)",
@@ -553,13 +594,14 @@ export default function SessionPage({
             End Call
           </button>
         </div>
-      </div>
+      </header>
 
       {/* Body */}
       <div className="flex flex-1 overflow-hidden">
         {/* Transcript: left panel */}
         {showTranscript && (
           <aside
+            aria-label="Transcript"
             className={`${mdUp ? "w-80 flex-none border-r border-ink/10" : "fixed inset-0 z-50 safe-area"} flex flex-col overflow-hidden`}
             style={{ background: "var(--surface-3)" }}
           >
@@ -583,7 +625,14 @@ export default function SessionPage({
                 </button>
               </div>
             </div>
-            <div ref={scrollRef} className="flex-1 overflow-auto px-4 py-4 space-y-4">
+            <div
+              ref={scrollRef}
+              role="log"
+              aria-label="Conversation so far"
+              aria-live="off"
+              tabIndex={0}
+              className="flex-1 overflow-auto px-4 py-4 space-y-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--brand)]"
+            >
               {messages.map((t, i) => {
                 const you = t.speaker === "You";
                 const ordinal = you && i >= openingLength ? playerOrdinalAt(i) : -1;
@@ -646,7 +695,10 @@ export default function SessionPage({
           </aside>
         )}
 
-        <div className="flex-1 flex flex-col overflow-y-auto md:overflow-hidden px-4 md:px-8 py-4 md:py-5 gap-3 md:gap-4">
+        <main
+          aria-label="Conversation"
+          className="flex-1 flex flex-col overflow-y-auto md:overflow-hidden px-4 md:px-8 py-4 md:py-5 gap-3 md:gap-4"
+        >
           {/* RolePlay topic banner */}
           <div className="border border-ink/10 flex-none px-5 py-4" style={{ background: "var(--surface)" }}>
             <div className="flex items-center gap-2 mb-1.5">
@@ -663,9 +715,9 @@ export default function SessionPage({
                 Live
               </span>
             </div>
-            <h2 className="font-display font-bold text-ink text-lg md:text-xl tracking-tight leading-snug">
+            <h1 className="font-display font-bold text-ink text-lg md:text-xl tracking-tight leading-snug">
               {scenario.title}
-            </h2>
+            </h1>
             <p className="hidden sm:block text-ink/70 text-sm mt-1 truncate">
               Protect the deal and the relationship under price pressure.
             </p>
@@ -678,10 +730,10 @@ export default function SessionPage({
           >
             {/* NPC frame */}
             <div
-              className="relative overflow-hidden flex flex-col items-center justify-center min-h-[200px]"
+              className="relative overflow-hidden flex flex-col items-center justify-center min-h-[200px] pt-12 pb-5 md:pt-10"
               style={{ background: "var(--surface-3)" }}
             >
-              <div className="relative flex flex-col items-center gap-5 z-10">
+              <div className="relative flex flex-col items-center gap-3 md:gap-2 z-10 shrink-0">
                 <div className="relative">
                   {speaking && (
                     <div
@@ -694,7 +746,7 @@ export default function SessionPage({
                     />
                   )}
                   <div
-                    className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden flex items-center justify-center"
+                    className="w-24 h-24 md:w-20 md:h-20 xl:w-24 xl:h-24 rounded-full overflow-hidden flex items-center justify-center"
                     style={{
                       background: "var(--accent)",
                       border: speaking ? "2px solid var(--brand)" : "2px solid rgb(var(--ink) / 0.12)",
@@ -713,13 +765,30 @@ export default function SessionPage({
                   </div>
                 </div>
                 <VoiceWave active={speaking} color="var(--brand)" className="w-44" />
-                <p
-                  aria-live="polite"
-                  className="text-xs font-display uppercase tracking-widest text-ink/75 h-4"
-                >
+                <p className="text-xs font-display uppercase tracking-widest text-ink/75 h-4">
                   {speaking ? "Speaking" : isRecording ? "Listening" : "Waiting for you"}
                 </p>
               </div>
+              {/* Live caption: what the persona just said, always on, on every viewport */}
+              {lastPersonaLine && (
+                <div
+                  key={lastPersonaLine.index}
+                  role="region"
+                  aria-label={`${persona.name}, latest line`}
+                  tabIndex={0}
+                  className="relative z-10 mt-3 w-full max-w-xl px-5 text-center max-h-36 min-h-0 shrink overflow-y-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  <span className="sr-only">{persona.name} says: </span>
+                  <p
+                    key={lastPersonaLine.index}
+                    className="caption-in text-ink text-[17px] md:text-base xl:text-[17px] leading-snug"
+                  >
+                    {lastPersonaLine.text}
+                  </p>
+                </div>
+              )}
               <div
                 className="absolute top-3 left-3 px-2.5 py-1 flex items-center gap-2"
                 style={{
@@ -736,7 +805,7 @@ export default function SessionPage({
 
             {/* User frame */}
             <div
-              className="relative overflow-hidden flex flex-col items-center justify-center min-h-[200px] md:min-h-[240px]"
+              className={`relative overflow-hidden flex-col items-center justify-center min-h-[200px] md:min-h-[240px] ${cameraOn || isRecording ? "flex" : "hidden md:flex"}`}
               style={{ background: "var(--surface-3)" }}
             >
               {cameraOn ? (
@@ -755,7 +824,7 @@ export default function SessionPage({
                   />
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-3 opacity-60 pb-14">
+                <div className="flex flex-col items-center gap-3 pb-14">
                   <div className="w-20 h-20 rounded-full bg-ink/5 border border-ink/10 flex items-center justify-center">
                     <svg
                       width="30"
@@ -773,7 +842,7 @@ export default function SessionPage({
                       />
                     </svg>
                   </div>
-                  <span className="text-ink/70 text-sm font-medium">Camera Off</span>
+                  <span className="text-ink/80 text-sm font-medium">Camera off</span>
                 </div>
               )}
               <div
@@ -1081,7 +1150,7 @@ export default function SessionPage({
               )}
             </p>
           </div>
-        </div>
+        </main>
 
         {/* Right column: objectives + leaderboard */}
         {(showObjectives || showLeaderboard) && (
@@ -1091,6 +1160,7 @@ export default function SessionPage({
           >
             {showObjectives && (
               <aside
+                aria-label="Objectives"
                 className={`flex flex-col overflow-hidden ${showLeaderboard ? "border-b border-ink/10" : "flex-1"}`}
               >
                 <div className="px-4 py-3 border-b border-ink/10 flex items-center justify-between flex-none">
@@ -1234,7 +1304,7 @@ export default function SessionPage({
               </aside>
             )}
             {showLeaderboard && (
-              <aside className="flex-1 flex flex-col overflow-hidden">
+              <aside aria-label="Cohort leaderboard" className="flex-1 flex flex-col overflow-hidden">
                 <div className="px-4 py-3 border-b border-ink/10 flex items-center justify-between flex-none">
                   <span className="font-display font-semibold text-ink text-sm tracking-tight">
                     Cohort Leaderboard
@@ -1359,6 +1429,101 @@ export default function SessionPage({
           </div>
         </div>
       )}
+      {confirmEnd && (
+        <div
+          className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4"
+          style={{
+            background: "color-mix(in srgb, var(--bg) 70%, transparent)",
+            backdropFilter: "blur(4px)",
+          }}
+          onClick={closeConfirm}
+        >
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="end-title"
+            aria-describedby="end-desc"
+            className="w-full max-w-md border border-ink/15 p-6 shadow-2xl"
+            style={{ background: "var(--surface)" }}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") return closeConfirm();
+              if (e.key !== "Tab") return;
+              const items = [...e.currentTarget.querySelectorAll<HTMLButtonElement>("button")];
+              const i = items.indexOf(document.activeElement as HTMLButtonElement);
+              const next = e.shiftKey
+                ? i <= 0
+                  ? items.length - 1
+                  : i - 1
+                : i === items.length - 1
+                  ? 0
+                  : i + 1;
+              e.preventDefault();
+              items[next]?.focus();
+            }}
+          >
+            <h2 id="end-title" className="font-display font-semibold text-ink text-xl mb-2">
+              End the assessment?
+            </h2>
+            <p id="end-desc" className="text-ink/80 text-sm leading-relaxed mb-6">
+              You have {confirmEnd} left. This is your only attempt: once it ends, your transcript is scored
+              and the assessment cannot be resumed or retaken.
+            </p>
+            <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
+              <button
+                onClick={() => void endCall()}
+                className="px-5 py-3 text-sm font-semibold border min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
+                style={{
+                  color: "var(--danger)",
+                  borderColor: "color-mix(in srgb, var(--danger) 55%, transparent)",
+                }}
+              >
+                End and score
+              </button>
+              <button
+                ref={keepTalkingRef}
+                onClick={closeConfirm}
+                className="px-5 py-3 text-sm font-semibold text-white min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand)]"
+                style={{ background: "var(--accent)" }}
+              >
+                Keep talking
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {pendingEnd !== null && (
+        <div className="fixed inset-x-0 bottom-24 z-[70] flex justify-center px-4 pointer-events-none">
+          <div
+            className="pointer-events-auto flex flex-wrap items-center gap-3 pl-5 pr-2 py-2 border border-ink/15 shadow-2xl"
+            style={{ background: "var(--surface)" }}
+          >
+            <p role="status" className="text-ink text-sm">
+              Call ended. Scoring in{" "}
+              <span className="tabular-nums font-semibold" aria-hidden>
+                {pendingEnd} s
+              </span>
+              <span className="sr-only">a few seconds</span>.
+            </p>
+            <button
+              autoFocus
+              onClick={() => setPendingEnd(null)}
+              className="px-4 py-2 text-sm font-semibold text-white min-h-[40px] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand)]"
+              style={{ background: "var(--accent)" }}
+            >
+              Resume call
+            </button>
+            <button
+              onClick={() => void endCall()}
+              className="px-3 py-2 text-sm font-semibold text-ink/85 min-h-[40px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
+            >
+              Score now
+            </button>
+          </div>
+        </div>
+      )}
+
       {finishing && (
         <div
           role="status"

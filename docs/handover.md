@@ -42,7 +42,7 @@ Stack: React 19, TypeScript, Vite 8, Tailwind CSS v4, Zod 4, `@anthropic-ai/sdk`
 - `src/domain/` - pure, deterministic:
   - `scenario.ts` Zod schemas. A scenario is `stimulus` (persona, hidden interests, opening, critical incidents, mock lines) plus `instrument` (skills, indicators with anchors and coaching copy, objectives, claim rung, evidence summary, peer baseline). `validateScenario` checks cross references.
   - `scoring.ts` consequence tables (`BAND_POINTS`, `NOT_OBSERVED_POINTS`), indicator and skill scoring, overall score and coverage, objective completion, per turn XP, streak and badge rules, level thresholds, practice hints.
-  - `report.ts` report assembly from engine output plus narrative, transcript tagging from evidence, report ids.
+  - `report.ts` report assembly from engine output plus narrative, and transcript marks: every marked turn lists each indicator it touched with its band (gaps first), never a bare Strength label. Adequate hits are not marked.
   - `descriptive.ts` transcript derived conversation metrics (talk share, questions, offers, filler). Descriptive only, never scored.
   - `instrumentStatus.ts` the four rung claim ladder and what each rung requires.
 - `src/providers/` - `types.ts` (interfaces and Zod request and response schemas shared with the server), `mock.ts` (offline persona, heuristic classifier, template writer), `http.ts` (calls `/api/*`, validates responses, falls back to mock), `index.ts` (selection).
@@ -74,6 +74,13 @@ Novice 1-2 `#b5472f`, Emerging 3-4 `#e07b2e`, Competent 5-6 `#efc23a`, Proficien
 - Skill score = rounded mean of indicator points, clamped to 1 to 10. Overall = weighted mean of skill scores, rounded. Pass mark is per scenario (8 here).
 - Objective complete = an Adequate or better band on one of its listed indicators. XP: 25 for on topic, 45 per newly met objective, a length bonus capped at 20, times 1.5 from the third strong reply in a row. Off topic turns earn nothing and reset the streak.
 - Conversation metrics and language analysis are descriptive and never enter the score. Audio is scored by transcript only; no voice or facial emotion inference anywhere.
+
+## Participant safeguards (do not remove)
+
+- **Live caption.** The latest persona line is always shown under the persona on every viewport, as a polite live region. The transcript log is keyboard reachable and does not announce, so lines are read once.
+- **Ending a call.** Conversation AI asks for confirmation before ending the single attempt (focus starts on Keep talking, Escape cancels). AI RolePlay gives a five second Resume window before scoring. Timer expiry ends an assessment without asking.
+- **Phone brief.** On small screens the Conversation AI brief collapses (scene and instructions open) and a sticky Review and begin bar leads to the confirmation.
+- **Landmarks.** Every screen has a main landmark; the call screen has an h1 and labelled side panels.
 
 ## What is still mocked (needed before production)
 

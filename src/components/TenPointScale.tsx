@@ -74,9 +74,8 @@ export default function TenPointScale({
                       key={n}
                       className="h-9 flex items-center justify-center text-xs font-display font-bold tabular-nums rounded-md"
                       style={{
-                        background: b.color,
-                        opacity: on ? 1 : 0.32,
-                        color: on ? readableOn(b.color) : "transparent",
+                        background: on ? b.color : `color-mix(in srgb, ${b.color} 30%, var(--surface))`,
+                        color: on ? readableOn(b.color) : "rgb(var(--ink) / 0.85)",
                         outline: here ? `2px solid rgb(var(--ink))` : "none",
                         outlineOffset: 2,
                       }}

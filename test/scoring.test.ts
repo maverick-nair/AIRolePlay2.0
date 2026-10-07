@@ -234,6 +234,10 @@ describe("report assembly", () => {
     const tagged = tagTranscript(report);
     expect(tagged.filter((t) => t.tag).length).toBe(1);
     expect(tagged[5].tag).toBe("strength");
+    expect(tagged[5].marks).toEqual([
+      { indicatorId: "strategy.conditional-concession", label: expect.any(String), band: "Strong" },
+    ]);
+    expect(tagged[5].marks[0].label).not.toBe("strategy.conditional-concession");
     expect(report.scores.skills.find((s) => s.id === "strategy")!.indicators[1].band).toBe("Strong");
     expect(narrative.language).toBeNull();
   });
@@ -256,5 +260,62 @@ describe("practice run cap", () => {
     expect(practiceRunsLeft(4, 5)).toBe(1);
     expect(practiceRunsLeft(5, 5)).toBe(0);
     expect(practiceRunsLeft(7, 5)).toBe(0);
+  });
+});
+
+describe("transcript marks", () => {
+  it("names every indicator and shows a mixed turn as both", () => {
+    const transcript = [...scenario.stimulus.opening, { speaker: "You", time: "3:00", text: "x" }];
+    const report = assembleReport({
+      id: "T-2",
+      scenario,
+      mode: "practice",
+      completedAt: "2026-10-04T10:00:00.000Z",
+      durationSeconds: 300,
+      transcript,
+      classifications: [
+        {
+          turnIndex: 5,
+          onTopic: true,
+          hits: [
+            { indicatorId: "objection.composure", band: "Strong", quote: "x", note: "" },
+            { indicatorId: "strategy.anchor", band: "Weak", quote: "x", note: "" },
+            { indicatorId: "listening.build", band: "Adequate", quote: "x", note: "" },
+          ],
+        },
+      ],
+      narrative: {
+        overall: ["x"],
+        recommendations: [{ title: "x", detail: "x" }],
+        skillFeedback: {},
+        language: null,
+        meta: { provider: "mock", model: null, promptVersion: "v1" },
+      },
+      stats: { startXp: 0, endXp: 0, badges: [], bestStreak: 0, objectives: 0, startRank: 4, endRank: 4 },
+      agreement: null,
+    });
+    const turn = tagTranscript(report)[5];
+    expect(turn.tag).toBe("mixed");
+    expect(turn.marks.map((m) => m.band)).toEqual(["Weak", "Strong"]);
+    expect(turn.marks.every((m) => m.indicatorId !== m.label)).toBe(true);
+  });
+});
+
+describe("heuristic classifier regressions", () => {
+  it("never rewards an unconditional price match", () => {
+    const c = classifyHeuristically(scenario, "We can match their price.", 5);
+    expect(c.hits.some((h) => h.band === "Strong")).toBe(false);
+    expect(c.hits.find((h) => h.indicatorId === "strategy.conditional-concession")?.band).toBe("Weak");
+    expect(c.hits.find((h) => h.indicatorId === "strategy.anchor")?.band).toBe("Weak");
+  });
+  it("still credits a conditional trade and genuine collaboration", () => {
+    const c = classifyHeuristically(
+      scenario,
+      "If you can commit to three years, we can match their price.",
+      5,
+    );
+    expect(c.hits.find((h) => h.indicatorId === "strategy.conditional-concession")?.band).toBe("Strong");
+    const t = classifyHeuristically(scenario, "Let's work together on a plan your CFO can sign.", 5);
+    expect(t.hits.find((h) => h.indicatorId === "relationship.tone")?.band).toBe("Strong");
   });
 });

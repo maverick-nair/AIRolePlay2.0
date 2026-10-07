@@ -127,7 +127,7 @@ export default async function buildReportPdf(report: Report, scenario: Scenario)
   heading("Transcript");
   tagTranscript(report).forEach((l) => {
     text(
-      `${l.time}  ${l.speaker}${l.tag ? `  [${l.tag === "strength" ? "Strength" : "Missed opportunity"}]` : ""}`,
+      `${l.time}  ${l.speaker}${l.marks.length ? `  [${l.marks.map((m) => `${m.band}: ${m.label}`).join("; ")}]` : ""}`,
       9,
       "bold",
       [90, 84, 78],

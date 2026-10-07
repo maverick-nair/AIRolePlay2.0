@@ -11,6 +11,7 @@ import EmailDialog from "../components/EmailDialog";
 import SkillScore from "../components/SkillScore";
 import SkillRadar from "../components/SkillRadar";
 import BandChip, { BAND_COLORS } from "../components/BandChip";
+import MarkList from "../components/MarkList";
 import AttemptTrend from "../components/AttemptTrend";
 import { bandFor, cefrColor } from "../lib/score";
 import { readableOn } from "../lib/color";
@@ -18,7 +19,7 @@ import buildReportPdf, { pdfName } from "../lib/buildReportPdf";
 import { KNOLSKAPE_BANDS } from "../data/bands";
 import { BADGES } from "../data/badges";
 import { PEER_THRESHOLD, PLAYERS_COMPLETED } from "../data/scenario";
-import { formatDuration, tagTranscript, type Report } from "../domain/report";
+import { formatDuration, TAG_LABEL, tagTranscript, type Report } from "../domain/report";
 import type { Band, Scenario } from "../domain/scenario";
 import { CLAIM_LADDER } from "../domain/instrumentStatus";
 import { formatTalkShare } from "../domain/descriptive";
@@ -211,7 +212,7 @@ export default function SummaryPage({
         </div>
       </nav>
 
-      <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-6 animate-fade-in-up">
+      <main className="max-w-[1400px] mx-auto px-4 md:px-8 py-6 animate-fade-in-up">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-5">
           <div>
@@ -1181,14 +1182,22 @@ export default function SummaryPage({
                         <span className="text-ink/75 text-xs tabular-nums w-10 flex-none pt-0.5">
                           {l.time}
                         </span>
-                        <span className="flex-1">
+                        <span className="flex-1 min-w-0 flex flex-col gap-1.5">
                           <span
                             className="block text-xs font-semibold"
-                            style={{ color: l.tag === "strength" ? "var(--ok)" : "var(--danger)" }}
+                            style={{
+                              color:
+                                l.tag === "strength"
+                                  ? "var(--ok)"
+                                  : l.tag === "gap"
+                                    ? "var(--danger)"
+                                    : "rgb(var(--ink) / 0.85)",
+                            }}
                           >
-                            {l.tag === "strength" ? "Strength" : "Missed opportunity"}
+                            {l.tag && TAG_LABEL[l.tag]}
                           </span>
                           <span className="text-ink/85 leading-snug line-clamp-2">{l.text}</span>
+                          <MarkList marks={l.marks} />
                         </span>
                       </li>
                     ))}
@@ -1213,18 +1222,8 @@ export default function SummaryPage({
                       <div className="flex items-center gap-2">
                         <span className="text-ink/80 text-xs font-bold font-display">{t.speaker}</span>
                         <span className="text-ink/70 text-[11px] tabular-nums">{t.time}</span>
-                        {t.tag && (
-                          <span
-                            className="px-2 py-0.5 rounded-full text-[11px] font-semibold"
-                            style={{
-                              background: t.tag === "strength" ? "#2f7a34" : "#b5472f",
-                              color: "#ffffff",
-                            }}
-                          >
-                            {t.tag === "strength" ? "Strength" : "Missed opportunity"}
-                          </span>
-                        )}
                       </div>
+                      <MarkList marks={t.marks} align={you ? "end" : "start"} />
                       <div
                         className="max-w-[85%] px-5 py-3.5 rounded-2xl text-[15px] leading-relaxed"
                         style={
@@ -1282,7 +1281,7 @@ export default function SummaryPage({
             This assessment allowed one attempt. The report is saved and cannot be retaken.
           </p>
         )}
-      </div>
+      </main>
       {party && <ConfettiBurst pieces={120} />}
       {emailOpen && (
         <EmailDialog

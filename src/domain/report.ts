@@ -1,5 +1,5 @@
 import { describeTranscript, type DescriptiveMetrics } from "./descriptive";
-import type { Mode, Scenario, SessionTurn, TurnClassification } from "./scenario";
+import type { Band, Mode, Scenario, SessionTurn, TurnClassification } from "./scenario";
 import { scoreSession, type ScoreSummary } from "./scoring";
 import type { ReportNarrative, ReportRequest } from "../providers/types";
 
@@ -86,19 +86,45 @@ export function assembleReport(input: {
   };
 }
 
-// Transcript turns tagged from the evidence, for the transcript tab and the PDF.
-export type TaggedTurn = SessionTurn & { tag?: "strength" | "gap" };
+// Transcript turns marked from the evidence, for the transcript tab and the PDF. A turn is never
+// summarised by one bare label: every mark names the indicator and the band it reached, so a turn
+// that holds both a strength and a gap shows both. Adequate hits are not key moments and are left out.
+export type TurnMark = { indicatorId: string; label: string; band: Band };
+export type TurnTag = "strength" | "gap" | "mixed";
+export type TaggedTurn = SessionTurn & { tag?: TurnTag; marks: TurnMark[] };
+
+const MARK_ORDER: Record<Band, number> = { Harmful: 0, Weak: 1, Strong: 2, Adequate: 3 };
 
 export function tagTranscript(report: Report): TaggedTurn[] {
-  const byTurn = new Map<number, "strength" | "gap">();
+  const labels = new Map<string, string>();
+  for (const s of report.scores.skills) for (const i of s.indicators) labels.set(i.indicatorId, i.label);
+  const byTurn = new Map<number, TurnMark[]>();
   for (const c of report.classifications) {
-    const hasHarm = c.hits.some((h) => h.band === "Weak" || h.band === "Harmful");
-    const hasStrong = c.hits.some((h) => h.band === "Strong");
-    if (hasHarm) byTurn.set(c.turnIndex, "gap");
-    else if (hasStrong) byTurn.set(c.turnIndex, "strength");
+    const marks = c.hits
+      .filter((h) => h.band !== "Adequate")
+      .map((h) => ({
+        indicatorId: h.indicatorId,
+        label: labels.get(h.indicatorId) ?? h.indicatorId,
+        band: h.band,
+      }))
+      .sort((a, b) => MARK_ORDER[a.band] - MARK_ORDER[b.band]);
+    if (marks.length) byTurn.set(c.turnIndex, [...(byTurn.get(c.turnIndex) ?? []), ...marks]);
   }
-  return report.transcript.map((t, i) => (byTurn.has(i) ? { ...t, tag: byTurn.get(i) } : { ...t }));
+  return report.transcript.map((t, i) => {
+    const marks = byTurn.get(i) ?? [];
+    if (!marks.length) return { ...t, marks };
+    const hasGap = marks.some((m) => m.band === "Weak" || m.band === "Harmful");
+    const hasStrong = marks.some((m) => m.band === "Strong");
+    const tag: TurnTag = hasGap && hasStrong ? "mixed" : hasGap ? "gap" : "strength";
+    return { ...t, tag, marks };
+  });
 }
+
+export const TAG_LABEL: Record<TurnTag, string> = {
+  strength: "Strength",
+  gap: "Missed opportunity",
+  mixed: "Strength and gap",
+};
 
 export function formatDuration(seconds: number) {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
