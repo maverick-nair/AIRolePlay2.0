@@ -437,6 +437,9 @@ export default function SessionPage({
   }
   const canRewindLast = isPractice && snapshots.length > 0 && !speaking && !finishing;
   const rewindLast = () => canRewindLast && rewindTo(snapshots.length - 1);
+  // When a reply misses and a hint fires at the same moment, they share one card instead of two.
+  const hintInSheet =
+    !!hint && !!chip?.behaviour && (chip.behaviour.band === "Weak" || chip.behaviour.band === "Harmful");
 
   // Practice only: a hint on request, even when automatic hints are off.
   function requestHint() {
@@ -623,7 +626,7 @@ export default function SessionPage({
         <div className="flex items-center gap-2 md:gap-3 flex-none">
           {isPractice && (
             <div
-              className="hidden sm:flex items-center gap-1.5 px-2"
+              className="hidden sm:flex items-center gap-1 w-32 px-1"
               role="img"
               aria-label={`${objectivesDone} of ${objectives.length} objectives complete`}
               data-anchor="objectives"
@@ -631,11 +634,8 @@ export default function SessionPage({
               {objectives.map((o, i) => (
                 <span
                   key={o.id}
-                  className="w-2.5 h-2.5 rounded-full transition-colors"
-                  style={{
-                    background: metObjectives[i] ? "var(--ok)" : "transparent",
-                    border: `1.5px solid ${metObjectives[i] ? "var(--ok)" : "rgb(var(--ink) / 0.45)"}`,
-                  }}
+                  className="h-2.5 flex-1 rounded-full transition-colors duration-300"
+                  style={{ background: metObjectives[i] ? "var(--ok)" : "var(--edge)" }}
                 />
               ))}
             </div>
@@ -889,20 +889,32 @@ export default function SessionPage({
             style={{ background: "var(--bg)" }}
           >
             <div className="max-w-3xl mx-auto">
-              {hint && isPractice && (
+              {hint && isPractice && !hintInSheet && (
                 <div
                   role="status"
                   aria-live="polite"
-                  className="flex items-start gap-2 mb-2 px-3 py-2 text-sm animate-fade-in-up"
-                  style={{
-                    background: "rgb(var(--accent-rgb) / 0.12)",
-                    border: "1px solid rgb(var(--accent-rgb) / 0.4)",
-                  }}
+                  className="sheet-in flex items-start gap-3 mb-2 px-4 py-2.5 text-sm border-2 rounded-[var(--radius)]"
+                  style={{ background: "var(--surface)", borderColor: "var(--edge)" }}
                 >
-                  <span className="font-semibold uppercase tracking-wider text-xs mt-0.5 text-brand">
-                    Hint
+                  <svg
+                    aria-hidden
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    className="mt-0.5 flex-none text-brand"
+                  >
+                    <path
+                      d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8V16h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3z"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <span className="flex-1 text-ink">
+                    <span className="font-semibold">Hint </span>
+                    {hint}
                   </span>
-                  <span className="flex-1 text-ink/90">{hint}</span>
                   <button
                     onClick={() => setHint(null)}
                     aria-label="Dismiss hint"
@@ -925,39 +937,101 @@ export default function SessionPage({
                 <div
                   role="status"
                   aria-live="polite"
-                  className="mb-2 px-3 py-2 text-sm animate-fade-in-up border border-ink/15"
-                  style={{ background: "var(--surface)" }}
+                  className={`sheet-in mb-2 px-4 py-3 border-2 rounded-[var(--radius)] ${
+                    !chip.behaviour
+                      ? ""
+                      : chip.behaviour.band === "Strong" || chip.behaviour.band === "Adequate"
+                        ? "sheet-ok"
+                        : "sheet-warn"
+                  }`}
+                  style={
+                    chip.behaviour ? undefined : { background: "var(--surface)", borderColor: "var(--edge)" }
+                  }
                 >
-                  <div className="flex flex-wrap items-center gap-2">
-                    {chip.behaviour ? (
-                      <>
-                        <BandChip band={chip.behaviour.band} />
-                        <span className="font-medium text-ink">{chip.behaviour.label}</span>
-                      </>
-                    ) : (
-                      <span className="font-medium text-ink">{chip.note}</span>
-                    )}
-                    <span className="text-ink/75 tabular-nums">
-                      {chip.gain > 0 ? `+${chip.gain} XP` : "No XP"}
+                  <div className="flex flex-wrap sm:flex-nowrap items-start gap-x-3 gap-y-2">
+                    <span
+                      aria-hidden
+                      className="mt-0.5 w-8 h-8 flex-none rounded-full flex items-center justify-center text-white"
+                      style={{
+                        background: !chip.behaviour
+                          ? "rgb(var(--ink) / 0.35)"
+                          : chip.behaviour.band === "Strong" || chip.behaviour.band === "Adequate"
+                            ? "var(--ok)"
+                            : "var(--warn)",
+                        color: "var(--surface)",
+                      }}
+                    >
+                      {chip.behaviour &&
+                      (chip.behaviour.band === "Weak" || chip.behaviour.band === "Harmful") ? (
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                          <path d="M7 3v5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+                          <circle cx="7" cy="11" r="1.2" fill="currentColor" />
+                        </svg>
+                      ) : (
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                          <path
+                            d="M3 7.5l2.5 2.5L11 4.5"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      )}
                     </span>
-                    {chip.behaviour?.why && (
-                      <button
-                        onClick={() => setWhyOpen((v) => !v)}
-                        aria-expanded={whyOpen}
-                        className="ml-auto text-xs font-semibold text-brand px-1 min-h-[28px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-                      >
-                        {whyOpen ? "Hide why" : "Why?"}
-                      </button>
-                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="sheet-title font-display font-bold text-base leading-tight">
+                        {!chip.behaviour
+                          ? "On topic"
+                          : chip.behaviour.band === "Strong"
+                            ? "Strong reply"
+                            : chip.behaviour.band === "Adequate"
+                              ? "Good reply"
+                              : "Not quite"}
+                        <span className="ml-2 text-sm font-semibold text-ink/80 tabular-nums whitespace-nowrap">
+                          {chip.gain > 0 ? `+${chip.gain} XP` : "No XP"}
+                        </span>
+                      </p>
+                      <p className="text-sm text-ink mt-0.5">
+                        {chip.behaviour ? chip.behaviour.label : chip.note}
+                      </p>
+                      {hintInSheet && (
+                        <p className="text-sm text-ink/85 mt-1 leading-relaxed">
+                          <span className="font-semibold">Hint </span>
+                          {hint}
+                        </p>
+                      )}
+                      {whyOpen && chip.behaviour?.why && (
+                        <p className="mt-1.5 text-sm text-ink/85 leading-relaxed">{chip.behaviour.why}</p>
+                      )}
+                    </div>
+                    <div className="flex flex-none items-center gap-2 w-full sm:w-auto pl-11 sm:pl-0">
+                      {chip.behaviour?.why && (
+                        <button
+                          onClick={() => setWhyOpen((v) => !v)}
+                          aria-expanded={whyOpen}
+                          className="btn-secondary h-9 px-3 text-sm font-semibold rounded-[var(--radius)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
+                        >
+                          {whyOpen ? "Hide why" : "Why?"}
+                        </button>
+                      )}
+                      {chip.behaviour &&
+                        (chip.behaviour.band === "Weak" || chip.behaviour.band === "Harmful") &&
+                        canRewindLast && (
+                          <button
+                            onClick={rewindLast}
+                            className="btn-primary h-9 px-3 text-sm font-semibold rounded-[var(--radius)] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand)]"
+                          >
+                            Try again
+                          </button>
+                        )}
+                    </div>
                   </div>
-                  {whyOpen && chip.behaviour?.why && (
-                    <p className="mt-1.5 text-ink/85 leading-relaxed">{chip.behaviour.why}</p>
-                  )}
                 </div>
               )}
 
               <div
-                className="flex items-end gap-2 p-2 transition-colors"
+                className="flex items-end gap-2 p-2 transition-colors rounded-[var(--radius)]"
                 style={{
                   background: "var(--surface)",
                   border: isRecording
@@ -988,7 +1062,7 @@ export default function SessionPage({
                   }
                   aria-pressed={isRecording}
                   aria-keyshortcuts="Space"
-                  className="h-12 px-4 flex-none flex items-center gap-2 text-sm font-semibold select-none touch-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
+                  className="btn-primary h-12 px-4 flex-none flex items-center gap-2 text-sm font-semibold select-none touch-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
                   style={{
                     background: isRecording ? "var(--danger)" : "var(--accent)",
                     color: "#ffffff",
@@ -1065,7 +1139,7 @@ export default function SessionPage({
                 <button
                   onClick={() => setCameraOn((v) => !v)}
                   aria-pressed={cameraOn}
-                  className="h-9 px-3 inline-flex items-center gap-2 text-sm border border-ink/15 text-ink/85 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
+                  className="h-9 px-3 inline-flex items-center gap-2 text-sm font-medium btn-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
                 >
                   <svg
                     width="16"
@@ -1085,7 +1159,7 @@ export default function SessionPage({
                 <button
                   onClick={() => setMuted((v) => !v)}
                   aria-pressed={muted}
-                  className="h-9 px-3 inline-flex items-center gap-2 text-sm border border-ink/15 text-ink/85 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
+                  className="h-9 px-3 inline-flex items-center gap-2 text-sm font-medium btn-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
                 >
                   <svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden>
                     <path d="M5 7H3v4h2l4 3V4L5 7z" fill="currentColor" />
@@ -1118,7 +1192,7 @@ export default function SessionPage({
                     <button
                       onClick={requestHint}
                       aria-keyshortcuts="H"
-                      className="h-9 px-3 inline-flex items-center gap-2 text-sm border border-ink/15 text-ink/85 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
+                      className="h-9 px-3 inline-flex items-center gap-2 text-sm font-medium btn-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
                     >
                       Hint <kbd className="kbd">H</kbd>
                     </button>
@@ -1129,7 +1203,7 @@ export default function SessionPage({
                       }}
                       aria-pressed={showCriteria}
                       aria-keyshortcuts="W"
-                      className="h-9 px-3 inline-flex items-center gap-2 text-sm border text-ink/85 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
+                      className="h-9 px-3 inline-flex items-center gap-2 text-sm font-medium btn-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
                       style={{
                         borderColor: showCriteria ? "rgb(var(--accent-rgb) / 0.6)" : "rgb(var(--ink) / 0.15)",
                       }}
@@ -1140,7 +1214,7 @@ export default function SessionPage({
                       onClick={rewindLast}
                       disabled={!canRewindLast}
                       aria-keyshortcuts="R"
-                      className="h-9 px-3 inline-flex items-center gap-2 text-sm border border-ink/15 text-ink/85 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
+                      className="h-9 px-3 inline-flex items-center gap-2 text-sm font-medium btn-secondary disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
                     >
                       <span>
                         Rewind<span className="hidden sm:inline"> last turn</span>

@@ -211,19 +211,12 @@ export default function SummaryPage({
   const eyebrow = "text-ink/75 text-xs font-bold tracking-widest uppercase";
 
   return (
-    <div
-      className="relative isolate min-h-full overflow-auto"
-      style={{
-        background:
-          "radial-gradient(ellipse 70% 50% at 50% 0%, rgb(var(--accent-rgb) / 0.14) 0%, transparent 60%)",
-      }}
-    >
-      <div aria-hidden className="box-pattern" />
+    <div className="relative isolate min-h-full overflow-auto" style={{ background: "var(--bg)" }}>
       <nav className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 md:px-8 py-3 border-b border-ink/10">
         <div className="flex items-center gap-2.5">
           <div
             className="w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg,var(--accent),var(--accent-2))" }}
+            style={{ background: "var(--accent)" }}
           >
             <span className="text-white text-xs font-bold font-display">{product.mark}</span>
           </div>
@@ -300,7 +293,7 @@ export default function SummaryPage({
               >
                 {isAssessment
                   ? "One attempt, standardised persona"
-                  : `Run ${attemptIndex + 1} of ${attempts.length}`}
+                  : `Run ${attemptIndex + 1} of ${scenario.maxPracticeAttempts}`}
               </span>
               {isAssessment && feedbackOnly && (
                 <span className="px-1.5 py-0.5 rounded text-xs font-semibold tracking-wider normal-case border border-ink/25 text-ink/85">
@@ -402,11 +395,7 @@ export default function SummaryPage({
                 className="tool-btn flex-1 basis-[calc(50%-0.375rem)] sm:basis-0 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs md:text-sm font-semibold min-h-[44px] whitespace-nowrap"
                 style={
                   active
-                    ? {
-                        background: "linear-gradient(135deg,var(--accent),var(--accent-2))",
-                        color: "#ffffff",
-                        boxShadow: "0 6px 20px rgb(var(--accent-rgb) / 0.35)",
-                      }
+                    ? { background: "var(--accent)", color: "#ffffff" }
                     : { background: "transparent", color: "rgb(var(--ink) / 0.75)" }
                 }
               >
@@ -424,6 +413,71 @@ export default function SummaryPage({
             aria-labelledby="tab-overview"
             className="animate-fade-in-up space-y-4"
           >
+            {/* AI RolePlay: a run complete moment, like finishing a lesson */}
+            {!isAssessment && (
+              <section
+                aria-labelledby="complete-heading"
+                className="rounded-2xl border-2 p-5 md:p-6 flex flex-wrap items-center gap-x-6 gap-y-4"
+                style={{
+                  background: scores.passed ? "var(--ok-tint)" : "var(--surface)",
+                  borderColor: scores.passed
+                    ? "color-mix(in srgb, var(--ok) 40%, transparent)"
+                    : "var(--edge)",
+                }}
+              >
+                <span
+                  aria-hidden
+                  className="w-16 h-16 flex-none rounded-full flex items-center justify-center"
+                  style={{
+                    background: scores.passed ? "var(--ok)" : "var(--accent)",
+                    color: "var(--surface)",
+                    boxShadow: `0 4px 0 ${scores.passed ? "color-mix(in srgb, var(--ok) 70%, black)" : "var(--accent-press)"}`,
+                  }}
+                >
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M5 12.5l4.5 4.5L19 7.5"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+                <div className="flex-1 min-w-[14rem]">
+                  <p className={eyebrow}>
+                    Run {attemptIndex + 1} of {scenario.maxPracticeAttempts}
+                  </p>
+                  <h2
+                    id="complete-heading"
+                    className="font-display font-bold text-ink text-2xl md:text-3xl mt-0.5"
+                  >
+                    {scores.passed ? "Run complete. You met the pass mark." : "Run complete."}
+                  </h2>
+                  <p className="text-ink/80 text-sm mt-1">
+                    {scores.passed
+                      ? "Keep the moves that worked and try a harder persona next run."
+                      : `You scored ${scores.overall} against a pass mark of ${scenario.passScore}. Your next move is below.`}
+                  </p>
+                </div>
+                <ul className="flex flex-wrap gap-2" aria-label="This run">
+                  {[
+                    `+${Math.max(0, stats.endXp - stats.startXp)} XP`,
+                    `Best streak ${stats.bestStreak}`,
+                    `${stats.objectives} of ${scenario.instrument.objectives.length} objectives`,
+                  ].map((t) => (
+                    <li
+                      key={t}
+                      className="px-3 py-1.5 rounded-full text-sm font-semibold text-ink border-2 tabular-nums"
+                      style={{ background: "var(--surface)", borderColor: "var(--edge)" }}
+                    >
+                      {t}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
             {/* Conversation AI: the result in one sentence, before anything else */}
             {isAssessment && (
               <section
@@ -546,8 +600,7 @@ export default function SummaryPage({
                     {canPractiseAgain ? (
                       <button
                         onClick={onPractiseAgain}
-                        className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-display font-semibold text-sm text-white min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand)]"
-                        style={{ background: "var(--accent)" }}
+                        className="btn btn-primary font-display focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand)]"
                       >
                         Practise again
                       </button>
@@ -953,12 +1006,7 @@ export default function SummaryPage({
                                         <span className="text-ink/75 text-xs font-semibold tabular-nums">
                                           {report.transcript[e.turnIndex]?.time}
                                         </span>
-                                        <span
-                                          className="text-xs font-semibold"
-                                          style={{ color: BAND_COLORS[e.band] }}
-                                        >
-                                          {e.band}
-                                        </span>
+                                        <BandChip band={e.band} />
                                       </div>
                                       <blockquote className="text-ink text-sm italic leading-relaxed">
                                         "{e.quote}"
@@ -1342,8 +1390,7 @@ export default function SummaryPage({
           <div className="flex justify-center mt-6">
             <button
               onClick={onPractiseAgain}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl font-display font-semibold text-sm text-white min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand)]"
-              style={{ background: "var(--accent)" }}
+              className="btn btn-primary font-display px-7 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand)]"
             >
               Practise again
             </button>

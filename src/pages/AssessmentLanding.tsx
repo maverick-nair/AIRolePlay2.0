@@ -8,17 +8,62 @@ import type { Product } from "../products";
 import BuildStamp from "../components/BuildStamp";
 import useMediaQuery from "../lib/useMediaQuery";
 
+// Thin line icons, one per brief block: straight segments and simple geometry, drawn on a 24 grid.
+const ICONS: Record<string, ReactNode> = {
+  scene: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="1.5" />
+      <path d="M3 15l5-4 4 3 3-2 6 4" />
+    </>
+  ),
+  role: (
+    <>
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5" />
+    </>
+  ),
+  goal: (
+    <>
+      <circle cx="12" cy="12" r="8" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="12" cy="12" r="0.8" />
+    </>
+  ),
+  challenge: (
+    <>
+      <path d="M6 21V4" />
+      <path d="M6 4h11l-2.5 4L17 12H6" />
+    </>
+  ),
+  skills: (
+    <>
+      <rect x="4" y="4" width="7" height="7" rx="1" />
+      <rect x="13" y="4" width="7" height="7" rx="1" />
+      <rect x="4" y="13" width="7" height="7" rx="1" />
+      <rect x="13" y="13" width="7" height="7" rx="1" />
+    </>
+  ),
+  instructions: (
+    <>
+      <path d="M9 6h11M9 12h11M9 18h11" />
+      <path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2" />
+    </>
+  ),
+};
+
 // One numbered section of the brief. From md up it is a plain card; on phones it collapses so the
 // page is short, with the scene and the instructions open by default.
 function BriefSection({
   n,
   title,
+  icon,
   defaultOpen,
   collapsible,
   children,
 }: {
   n: string;
   title: string;
+  icon: keyof typeof ICONS;
   defaultOpen: boolean;
   collapsible: boolean;
   children: ReactNode;
@@ -26,8 +71,8 @@ function BriefSection({
   return (
     <details
       open={collapsible ? defaultOpen : true}
-      className="group border border-ink/15 p-5"
-      style={{ background: "var(--surface)" }}
+      className="group border rounded-[var(--radius)] p-5 md:p-6"
+      style={{ background: "var(--surface)", borderColor: "var(--edge)" }}
     >
       <summary
         className={`list-none flex items-baseline gap-3 [&::-webkit-details-marker]:hidden ${collapsible ? "cursor-pointer" : "cursor-default"} focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]`}
@@ -36,9 +81,25 @@ function BriefSection({
           if (!collapsible) e.preventDefault();
         }}
       >
-        <h2 className="flex-1 flex items-baseline gap-3">
-          <span className="text-xs font-semibold tracking-[0.2em] text-brand tabular-nums">{n}</span>
-          <span className="font-display font-semibold text-ink text-xl tracking-tight">{title}</span>
+        <h2 className="flex-1 flex items-center gap-3">
+          <svg
+            aria-hidden
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="flex-none text-brand"
+          >
+            {ICONS[icon]}
+          </svg>
+          <span className="text-xs font-semibold tracking-[0.2em] text-ink/75 tabular-nums">{n}</span>
+          <span className="font-display font-semibold text-ink text-xl tracking-tight leading-tight">
+            {title}
+          </span>
         </h2>
         {collapsible && (
           <svg
@@ -122,8 +183,6 @@ export default function AssessmentLanding({
 
   return (
     <div className="relative isolate min-h-full overflow-auto" style={{ background: "transparent" }}>
-      <div aria-hidden className="box-pattern" />
-
       {/* Product bar */}
       <nav
         className="sticky top-0 z-20 flex items-center justify-between px-6 md:px-10 h-14 border-b border-ink/15"
@@ -151,8 +210,8 @@ export default function AssessmentLanding({
 
       {/* Brief header: title left, meta right, one row */}
       <main className={lgUp ? "" : "pb-24"}>
-        <header className="max-w-7xl mx-auto px-6 md:px-10 pt-7 pb-5 animate-fade-in-up">
-          <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-4 border-b border-ink/20 pb-5">
+        <header className="max-w-7xl mx-auto px-6 md:px-10 pt-6 pb-5 animate-fade-in-up">
+          <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-4">
             <div className="max-w-4xl">
               <p className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-2">
                 <span className="text-xs font-semibold tracking-[0.2em] text-brand uppercase">
@@ -185,21 +244,90 @@ export default function AssessmentLanding({
           </div>
         </header>
 
+        {/* Three steps, in order. Each links to its part of the page; the last fills in once confirmed. */}
+        {!completed && (
+          <nav aria-label="Steps before you begin" className="max-w-7xl mx-auto px-6 md:px-10 pb-5">
+            <ol className="grid grid-cols-3 gap-2 sm:gap-4">
+              {[
+                { href: "#brief", label: "Read the brief", short: "Brief", done: false },
+                { href: "#devices", label: "Check your devices", short: "Devices", done: false },
+                { href: "#begin", label: "Confirm and begin", short: "Begin", done: confirmed },
+              ].map((st, i) => (
+                <li key={st.href}>
+                  <a
+                    href={st.href}
+                    className="flex items-center gap-2 sm:gap-3 rounded-[var(--radius)] border px-2.5 sm:px-3 py-2.5 h-full hover:border-[var(--brand)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
+                    style={{
+                      background: "var(--surface)",
+                      borderColor: st.done ? "var(--brand)" : "var(--edge)",
+                    }}
+                  >
+                    <span
+                      className="w-7 h-7 flex-none rounded-full flex items-center justify-center text-sm font-semibold tabular-nums border"
+                      style={
+                        st.done
+                          ? { background: "var(--accent)", borderColor: "var(--accent)", color: "#ffffff" }
+                          : { borderColor: "rgb(var(--ink) / 0.4)", color: "rgb(var(--ink))" }
+                      }
+                    >
+                      {st.done ? (
+                        <svg aria-hidden width="12" height="12" viewBox="0 0 14 14" fill="none">
+                          <path
+                            d="M3 7.5l2.5 2.5L11 4.5"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      ) : (
+                        i + 1
+                      )}
+                    </span>
+                    <span className="text-sm font-medium text-ink leading-tight">
+                      <span className="sm:hidden">{st.short}</span>
+                      <span className="hidden sm:inline">{st.label}</span>
+                      {st.done && <span className="sr-only"> (done)</span>}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        )}
+
         <div className="max-w-7xl mx-auto px-6 md:px-10 pb-10 grid lg:grid-cols-12 gap-5 items-start animate-fade-in-up">
-          <div className="lg:col-span-8 space-y-5">
+          <div id="brief" className="lg:col-span-8 space-y-5 scroll-mt-20">
             <div className="grid md:grid-cols-3 gap-5">
-              <BriefSection n="01" title="The scene" defaultOpen collapsible={collapsible}>
+              <BriefSection n="01" title="The scene" icon="scene" defaultOpen collapsible={collapsible}>
                 <p className="text-ink/80 text-sm leading-relaxed">{player.scene}</p>
               </BriefSection>
-              <BriefSection n="02" title="Your role" defaultOpen={false} collapsible={collapsible}>
+              <BriefSection
+                n="02"
+                title="Your role"
+                icon="role"
+                defaultOpen={false}
+                collapsible={collapsible}
+              >
                 <p className="text-ink/80 text-sm leading-relaxed">{player.role}</p>
               </BriefSection>
-              <BriefSection n="03" title="Your goal" defaultOpen={false} collapsible={collapsible}>
+              <BriefSection
+                n="03"
+                title="Your goal"
+                icon="goal"
+                defaultOpen={false}
+                collapsible={collapsible}
+              >
                 <p className="text-ink/80 text-sm leading-relaxed">{player.goal}</p>
               </BriefSection>
             </div>
 
-            <BriefSection n="04" title="The challenge" defaultOpen={false} collapsible={collapsible}>
+            <BriefSection
+              n="04"
+              title="The challenge"
+              icon="challenge"
+              defaultOpen={false}
+              collapsible={collapsible}
+            >
               <div className="grid md:grid-cols-2 gap-x-8 gap-y-3">
                 <p className="text-ink/80 text-sm leading-relaxed">{player.challenge}</p>
                 <div>
@@ -219,7 +347,13 @@ export default function AssessmentLanding({
               </div>
             </BriefSection>
 
-            <BriefSection n="06" title="Instructions" defaultOpen collapsible={collapsible}>
+            <BriefSection
+              n="06"
+              title="Instructions"
+              icon="instructions"
+              defaultOpen
+              collapsible={collapsible}
+            >
               <div className="grid md:grid-cols-2 gap-x-8 gap-y-5">
                 <ol className="space-y-2">
                   {INSTRUCTIONS.map((t, i) => (
@@ -232,7 +366,7 @@ export default function AssessmentLanding({
                 <p className="md:col-start-1 text-ink/85 text-sm leading-relaxed pt-2 border-t border-ink/15 md:order-none">
                   Need more time? Extended time is available on request from your administrator.
                 </p>
-                <div className="md:col-start-2 md:row-start-1 md:row-span-2">
+                <div id="devices" className="md:col-start-2 md:row-start-1 md:row-span-2 scroll-mt-20">
                   <h3 className="font-display font-semibold text-ink text-base mb-1">
                     Audio and video access test
                   </h3>
@@ -247,10 +381,13 @@ export default function AssessmentLanding({
 
           {/* Candidate card: a 1:1 portrait beside a text panel of the same size */}
           <aside className="lg:col-span-4 space-y-5">
-            <div className="border border-ink/15 grid grid-cols-2" style={{ background: "var(--surface)" }}>
+            <div
+              className="border rounded-[var(--radius)] overflow-hidden grid grid-cols-2"
+              style={{ background: "var(--surface)", borderColor: "var(--edge)" }}
+            >
               <figure
-                className="relative aspect-square overflow-hidden border-r border-ink/15"
-                style={{ background: "var(--surface-2)" }}
+                className="relative aspect-square overflow-hidden border-r"
+                style={{ background: "var(--surface-2)", borderColor: "var(--edge)" }}
               >
                 <img
                   src={PORTRAIT_SRC}
@@ -270,8 +407,8 @@ export default function AssessmentLanding({
             <section
               id="begin"
               ref={beginRef}
-              className="border p-5 scroll-mt-20"
-              style={{ background: "var(--surface)", borderColor: "rgb(var(--accent-rgb) / 0.6)" }}
+              className="border-2 rounded-[var(--radius)] p-5 md:p-6 scroll-mt-20"
+              style={{ background: "var(--surface)", borderColor: "var(--brand)" }}
             >
               {completed ? (
                 <>
@@ -288,8 +425,7 @@ export default function AssessmentLanding({
                   </p>
                   <button
                     onClick={() => onViewReport(completed)}
-                    className="w-full inline-flex items-center justify-center gap-3 px-6 py-3.5 font-semibold text-white text-sm tracking-wide focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]"
-                    style={{ background: "var(--accent)" }}
+                    className="w-full btn btn-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]"
                   >
                     Open the report
                   </button>
@@ -313,8 +449,7 @@ export default function AssessmentLanding({
                   <button
                     onClick={onBegin}
                     disabled={!confirmed}
-                    className="w-full inline-flex items-center justify-center gap-3 px-6 py-3.5 font-semibold text-white text-sm tracking-wide transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)] disabled:cursor-not-allowed"
-                    style={{ background: confirmed ? "var(--accent)" : "rgb(var(--ink) / 0.35)" }}
+                    className="w-full btn btn-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]"
                   >
                     Begin the assessment
                   </button>
@@ -324,7 +459,13 @@ export default function AssessmentLanding({
                 </>
               )}
             </section>
-            <BriefSection n="05" title="Skills mapped" defaultOpen={false} collapsible={collapsible}>
+            <BriefSection
+              n="05"
+              title="Skills mapped"
+              icon="skills"
+              defaultOpen={false}
+              collapsible={collapsible}
+            >
               <ul className="space-y-3">
                 {scenario.instrument.skills.map((sk, i) => (
                   <li key={sk.id} className="grid grid-cols-[1.75rem_1fr] gap-x-2">
@@ -360,8 +501,7 @@ export default function AssessmentLanding({
           </p>
           <button
             onClick={() => (completed ? onViewReport(completed) : goToBegin())}
-            className="px-5 py-3 text-sm font-semibold text-white min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand)]"
-            style={{ background: "var(--accent)" }}
+            className="btn btn-primary px-5 min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand)]"
           >
             {completed ? "Open the report" : "Review and begin"}
           </button>

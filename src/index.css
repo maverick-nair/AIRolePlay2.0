@@ -36,89 +36,95 @@ body,
   }
 }
 
-/* Theme tokens: dark is the default. `.light` on <html> flips them. */
+/* Theme tokens. Two products, two design languages, one set of token names.
+   AI RolePlay borrows the lesson side of Brilliant: a clean light canvas first, a warm coral accent,
+   tactile buttons that press down, green for a strong reply and amber for "not quite".
+   Conversation AI borrows the calm, structured side: a dark ground first, flat precise controls,
+   a cool blue accent and no game layer. Every pair below is checked for WCAG AA. */
 :root {
-  /* Design language: AI RolePlay is round, warm and playful; Conversation AI overrides these below. */
   --font-body: "DM Sans Variable", "DM Sans", system-ui, sans-serif;
-  --radius: 14px;
+  --radius: 16px;
   --ink: 255 255 255; /* foreground channels, used as rgb(var(--ink) / a) */
-  --bg: #0e0d0c; /* warm near-black ground */
-  --surface: #161412; /* panels / cards */
-  --surface-2: #1d1a17; /* nested cells */
-  --surface-3: #110f0e; /* video frames */
-  --brand: #ff8a4c; /* accent text: 7.9:1 on surface */
-  --accent: #c2410c; /* solid fills behind white text: 5.2:1 */
-  --accent-hover: #9a3412;
-  --accent-2: #b8320f; /* gradient partner, also passes with white text */
-  --accent-rgb: 234 88 12;
-  --tile: #ff7a2e;
-  --tile-opacity: 0.16;
+  --bg: #0c0e16;
+  --surface: #151826;
+  --surface-2: #1c2030;
+  --surface-3: #10131d;
+  --edge: #2a2f42; /* tile and button borders, and the 3D press edge */
+  --brand: #fc6e51; /* accent text: 6.3:1 on surface */
+  --accent: #c93d1f; /* fills behind white text: 5.0:1 */
+  --accent-hover: #b3361b;
+  --accent-press: #7f2611; /* the bottom edge of a primary button */
+  --accent-2: #b3361b;
+  --accent-rgb: 252 110 81;
+  --ok: #4ade80;
+  --ok-tint: #132a1f;
+  --warn: #fdba74;
+  --warn-tint: #2a1c12;
   --danger: #fb7185;
-  --ok: #34d399;
-  /* Ember glow: orange and red pools bleeding into warm black. */
-  --bg-gradient:
-    radial-gradient(1000px 640px at 50% -12%, rgba(255, 106, 26, 0.26), transparent 62%),
-    radial-gradient(760px 560px at 104% 4%, rgba(220, 38, 38, 0.16), transparent 58%),
-    radial-gradient(900px 700px at -6% 110%, rgba(251, 146, 60, 0.08), transparent 60%);
+  --bg-gradient: none;
 }
 
 :root.light {
-  --ink: 24 20 17;
-  --bg: #f4f2ef;
-  --surface: rgba(255, 255, 255, 0.95);
-  --surface-2: rgba(250, 247, 244, 0.97);
-  --surface-3: rgba(252, 249, 246, 0.92);
-  --brand: #b8320f; /* accent text: 5.4:1 on ground */
-  --accent: #c2410c;
-  --accent-hover: #9a3412;
-  --accent-2: #b8320f;
-  --accent-rgb: 234 88 12;
-  --tile: #ffffff;
-  --tile-opacity: 0.55;
+  --ink: 23 21 19;
+  --bg: #faf9f7;
+  --surface: #ffffff;
+  --surface-2: #f4f2ef;
+  --surface-3: #fbfaf8;
+  --edge: #e4e0da;
+  --brand: #b5361a; /* accent text: 6.0:1 on white */
+  --accent: #c93d1f;
+  --accent-hover: #b3361b;
+  --accent-press: #8f2a13;
+  --accent-2: #b3361b;
+  --accent-rgb: 201 61 31;
+  --ok: #166534; /* 6.4:1 on its tint */
+  --ok-tint: #e8f7ee;
+  --warn: #9a3412; /* 6.7:1 on its tint */
+  --warn-tint: #fff4e5;
   --danger: #be123c;
-  --ok: #047857;
-  /* Warm daylight: soft apricot and peach washes, kept pale so ink stays legible. */
-  --bg-gradient:
-    radial-gradient(1000px 680px at 50% -14%, rgba(255, 159, 94, 0.34), transparent 60%),
-    radial-gradient(820px 600px at 108% 2%, rgba(255, 196, 150, 0.3), transparent 56%),
-    radial-gradient(900px 760px at -8% 112%, rgba(254, 215, 170, 0.28), transparent 58%),
-    linear-gradient(170deg, #fbf4ee 0%, #f6f1ec 50%, #f4f2ef 100%);
+  --bg-gradient: none;
 }
 
-/* Conversation AI (the assessment product) keeps every token name and takes a cooler accent, so the
-   two products read as siblings and are never mistaken for each other. Contrast checked for AA. */
 :root[data-product="conversation-ai"] {
   --font-display: "Newsreader Variable", "Newsreader", Georgia, serif;
   --font-body: "Instrument Sans Variable", "Instrument Sans", system-ui, sans-serif;
-  --radius: 0px;
+  --radius: 6px;
   --ink: 232 236 246;
-  --bg: #0b1020; /* slate navy paper, not the ember black */
+  --bg: #0b1020;
   --surface: #121a30;
   --surface-2: #182240;
   --surface-3: #0e1529;
-  --tile-opacity: 0;
-  --brand: #8ab4ff; /* accent text on the navy ground: 8.6:1 */
-  --accent: #1d4ed8; /* solid fills behind white text: 6.3:1 */
+  --edge: #263257;
+  --brand: #8ab4ff; /* accent text: 8.3:1 on surface */
+  --accent: #1d4ed8; /* fills behind white text: 6.3:1 */
   --accent-hover: #1e40af;
+  --accent-press: #1e3a8a;
   --accent-2: #1e3a8a;
   --accent-rgb: 59 130 246;
-  --tile: #3b82f6;
-  /* A single quiet band at the top; the rest is flat paper. */
-  --bg-gradient: linear-gradient(180deg, rgba(59, 130, 246, 0.14) 0%, transparent 320px);
+  --ok: #4ade80;
+  --ok-tint: #10261d;
+  --warn: #fdba74;
+  --warn-tint: #261a12;
+  --bg-gradient: none;
 }
 :root.light[data-product="conversation-ai"] {
   --ink: 15 23 42;
   --bg: #f5f7fb;
   --surface: #ffffff;
-  --brand: #1d4ed8; /* accent text on the light ground: 6.1:1 */
-  --accent: #1d4ed8;
-  --accent-hover: #1e40af;
-  --accent-2: #1e3a8a;
-  --accent-rgb: 59 130 246;
-  --tile: #ffffff;
   --surface-2: #f3f6fb;
   --surface-3: #f8fafd;
-  --bg-gradient: linear-gradient(180deg, rgba(147, 197, 253, 0.28) 0%, transparent 320px);
+  --edge: #d9e0ec;
+  --brand: #1d4ed8; /* accent text: 6.1:1 */
+  --accent: #1d4ed8;
+  --accent-hover: #1e40af;
+  --accent-press: #1e3a8a;
+  --accent-2: #1e3a8a;
+  --accent-rgb: 59 130 246;
+  --ok: #166534;
+  --ok-tint: #e8f7ee;
+  --warn: #9a3412;
+  --warn-tint: #fff4e5;
+  --danger: #be123c;
 }
 
 body {
@@ -297,12 +303,12 @@ body {
 
 .glass {
   background: var(--surface);
-  border: 1px solid rgb(var(--ink) / 0.08);
+  border: 1px solid var(--edge);
 }
 
 .glass-strong {
   background: var(--surface);
-  border: 1px solid rgb(var(--ink) / 0.12);
+  border: 1px solid var(--edge);
 }
 
 .gradient-text {
@@ -329,121 +335,6 @@ body {
   box-shadow:
     0 0 40px rgba(16, 185, 129, 0.3),
     0 0 80px rgba(16, 185, 129, 0.1);
-}
-
-/* Soft mosaic of boxes behind hero and report content, after the orange reference.
-   Colour comes from --tile; the SVG only supplies each box's alpha. */
-.box-pattern {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  overflow: hidden;
-}
-.box-pattern::before,
-.box-pattern::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-}
-.box-pattern::before {
-  background: var(--tile);
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='576'%3E%3Crect x='2' y='2' width='68' height='68' rx='3' fill='black' fill-opacity='0.5'/%3E%3Crect x='74' y='2' width='68' height='68' rx='3' fill='black' fill-opacity='0.15'/%3E%3Crect x='146' y='2' width='68' height='68' rx='3' fill='black' fill-opacity='0.7'/%3E%3Crect x='434' y='2' width='68' height='68' rx='3' fill='black' fill-opacity='0.5'/%3E%3Crect x='578' y='2' width='68' height='68' rx='3' fill='black' fill-opacity='0.25'/%3E%3Crect x='74' y='74' width='68' height='68' rx='3' fill='black' fill-opacity='0.7'/%3E%3Crect x='146' y='74' width='68' height='68' rx='3' fill='black' fill-opacity='0.7'/%3E%3Crect x='290' y='74' width='68' height='68' rx='3' fill='black' fill-opacity='0.25'/%3E%3Crect x='434' y='74' width='68' height='68' rx='3' fill='black' fill-opacity='0.7'/%3E%3Crect x='650' y='74' width='68' height='68' rx='3' fill='black' fill-opacity='0.25'/%3E%3Crect x='74' y='146' width='68' height='68' rx='3' fill='black' fill-opacity='0.7'/%3E%3Crect x='218' y='146' width='68' height='68' rx='3' fill='black' fill-opacity='0.25'/%3E%3Crect x='362' y='146' width='68' height='68' rx='3' fill='black' fill-opacity='0.15'/%3E%3Crect x='434' y='146' width='68' height='68' rx='3' fill='black' fill-opacity='0.35'/%3E%3Crect x='506' y='146' width='68' height='68' rx='3' fill='black' fill-opacity='0.7'/%3E%3Crect x='578' y='146' width='68' height='68' rx='3' fill='black' fill-opacity='0.15'/%3E%3Crect x='2' y='218' width='68' height='68' rx='3' fill='black' fill-opacity='0.35'/%3E%3Crect x='74' y='218' width='68' height='68' rx='3' fill='black' fill-opacity='0.15'/%3E%3Crect x='218' y='218' width='68' height='68' rx='3' fill='black' fill-opacity='0.25'/%3E%3Crect x='290' y='218' width='68' height='68' rx='3' fill='black' fill-opacity='0.5'/%3E%3Crect x='578' y='218' width='68' height='68' rx='3' fill='black' fill-opacity='0.25'/%3E%3Crect x='650' y='218' width='68' height='68' rx='3' fill='black' fill-opacity='0.9'/%3E%3Crect x='2' y='290' width='68' height='68' rx='3' fill='black' fill-opacity='0.7'/%3E%3Crect x='74' y='290' width='68' height='68' rx='3' fill='black' fill-opacity='0.5'/%3E%3Crect x='146' y='290' width='68' height='68' rx='3' fill='black' fill-opacity='0.9'/%3E%3Crect x='218' y='290' width='68' height='68' rx='3' fill='black' fill-opacity='0.9'/%3E%3Crect x='290' y='290' width='68' height='68' rx='3' fill='black' fill-opacity='0.5'/%3E%3Crect x='362' y='290' width='68' height='68' rx='3' fill='black' fill-opacity='0.35'/%3E%3Crect x='434' y='290' width='68' height='68' rx='3' fill='black' fill-opacity='0.25'/%3E%3Crect x='506' y='290' width='68' height='68' rx='3' fill='black' fill-opacity='0.15'/%3E%3Crect x='578' y='290' width='68' height='68' rx='3' fill='black' fill-opacity='0.25'/%3E%3Crect x='2' y='362' width='68' height='68' rx='3' fill='black' fill-opacity='0.35'/%3E%3Crect x='74' y='362' width='68' height='68' rx='3' fill='black' fill-opacity='0.9'/%3E%3Crect x='146' y='362' width='68' height='68' rx='3' fill='black' fill-opacity='0.5'/%3E%3Crect x='218' y='362' width='68' height='68' rx='3' fill='black' fill-opacity='0.9'/%3E%3Crect x='290' y='362' width='68' height='68' rx='3' fill='black' fill-opacity='0.35'/%3E%3Crect x='506' y='362' width='68' height='68' rx='3' fill='black' fill-opacity='0.7'/%3E%3Crect x='578' y='362' width='68' height='68' rx='3' fill='black' fill-opacity='0.15'/%3E%3Crect x='650' y='362' width='68' height='68' rx='3' fill='black' fill-opacity='0.5'/%3E%3Crect x='2' y='434' width='68' height='68' rx='3' fill='black' fill-opacity='0.15'/%3E%3Crect x='74' y='434' width='68' height='68' rx='3' fill='black' fill-opacity='0.9'/%3E%3Crect x='146' y='434' width='68' height='68' rx='3' fill='black' fill-opacity='0.7'/%3E%3Crect x='362' y='434' width='68' height='68' rx='3' fill='black' fill-opacity='0.5'/%3E%3Crect x='434' y='434' width='68' height='68' rx='3' fill='black' fill-opacity='0.5'/%3E%3Crect x='506' y='434' width='68' height='68' rx='3' fill='black' fill-opacity='0.5'/%3E%3Crect x='578' y='434' width='68' height='68' rx='3' fill='black' fill-opacity='0.9'/%3E%3Crect x='650' y='434' width='68' height='68' rx='3' fill='black' fill-opacity='0.9'/%3E%3Crect x='146' y='506' width='68' height='68' rx='3' fill='black' fill-opacity='0.35'/%3E%3Crect x='218' y='506' width='68' height='68' rx='3' fill='black' fill-opacity='0.9'/%3E%3Crect x='434' y='506' width='68' height='68' rx='3' fill='black' fill-opacity='0.35'/%3E%3Crect x='506' y='506' width='68' height='68' rx='3' fill='black' fill-opacity='0.9'/%3E%3Crect x='578' y='506' width='68' height='68' rx='3' fill='black' fill-opacity='0.35'/%3E%3Crect x='650' y='506' width='68' height='68' rx='3' fill='black' fill-opacity='0.7'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='576'%3E%3Crect x='2' y='2' width='68' height='68' rx='3' fill='black' fill-opacity='0.5'/%3E%3Crect x='74' y='2' width='68' height='68' rx='3' fill='black' fill-opacity='0.15'/%3E%3Crect x='146' y='2' width='68' height='68' rx='3' fill='black' fill-opacity='0.7'/%3E%3Crect x='434' y='2' width='68' height='68' rx='3' fill='black' fill-opacity='0.5'/%3E%3Crect x='578' y='2' width='68' height='68' rx='3' fill='black' fill-opacity='0.25'/%3E%3Crect x='74' y='74' width='68' height='68' rx='3' fill='black' fill-opacity='0.7'/%3E%3Crect x='146' y='74' width='68' height='68' rx='3' fill='black' fill-opacity='0.7'/%3E%3Crect x='290' y='74' width='68' height='68' rx='3' fill='black' fill-opacity='0.25'/%3E%3Crect x='434' y='74' width='68' height='68' rx='3' fill='black' fill-opacity='0.7'/%3E%3Crect x='650' y='74' width='68' height='68' rx='3' fill='black' fill-opacity='0.25'/%3E%3Crect x='74' y='146' width='68' height='68' rx='3' fill='black' fill-opacity='0.7'/%3E%3Crect x='218' y='146' width='68' height='68' rx='3' fill='black' fill-opacity='0.25'/%3E%3Crect x='362' y='146' width='68' height='68' rx='3' fill='black' fill-opacity='0.15'/%3E%3Crect x='434' y='146' width='68' height='68' rx='3' fill='black' fill-opacity='0.35'/%3E%3Crect x='506' y='146' width='68' height='68' rx='3' fill='black' fill-opacity='0.7'/%3E%3Crect x='578' y='146' width='68' height='68' rx='3' fill='black' fill-opacity='0.15'/%3E%3Crect x='2' y='218' width='68' height='68' rx='3' fill='black' fill-opacity='0.35'/%3E%3Crect x='74' y='218' width='68' height='68' rx='3' fill='black' fill-opacity='0.15'/%3E%3Crect x='218' y='218' width='68' height='68' rx='3' fill='black' fill-opacity='0.25'/%3E%3Crect x='290' y='218' width='68' height='68' rx='3' fill='black' fill-opacity='0.5'/%3E%3Crect x='578' y='218' width='68' height='68' rx='3' fill='black' fill-opacity='0.25'/%3E%3Crect x='650' y='218' width='68' height='68' rx='3' fill='black' fill-opacity='0.9'/%3E%3Crect x='2' y='290' width='68' height='68' rx='3' fill='black' fill-opacity='0.7'/%3E%3Crect x='74' y='290' width='68' height='68' rx='3' fill='black' fill-opacity='0.5'/%3E%3Crect x='146' y='290' width='68' height='68' rx='3' fill='black' fill-opacity='0.9'/%3E%3Crect x='218' y='290' width='68' height='68' rx='3' fill='black' fill-opacity='0.9'/%3E%3Crect x='290' y='290' width='68' height='68' rx='3' fill='black' fill-opacity='0.5'/%3E%3Crect x='362' y='290' width='68' height='68' rx='3' fill='black' fill-opacity='0.35'/%3E%3Crect x='434' y='290' width='68' height='68' rx='3' fill='black' fill-opacity='0.25'/%3E%3Crect x='506' y='290' width='68' height='68' rx='3' fill='black' fill-opacity='0.15'/%3E%3Crect x='578' y='290' width='68' height='68' rx='3' fill='black' fill-opacity='0.25'/%3E%3Crect x='2' y='362' width='68' height='68' rx='3' fill='black' fill-opacity='0.35'/%3E%3Crect x='74' y='362' width='68' height='68' rx='3' fill='black' fill-opacity='0.9'/%3E%3Crect x='146' y='362' width='68' height='68' rx='3' fill='black' fill-opacity='0.5'/%3E%3Crect x='218' y='362' width='68' height='68' rx='3' fill='black' fill-opacity='0.9'/%3E%3Crect x='290' y='362' width='68' height='68' rx='3' fill='black' fill-opacity='0.35'/%3E%3Crect x='506' y='362' width='68' height='68' rx='3' fill='black' fill-opacity='0.7'/%3E%3Crect x='578' y='362' width='68' height='68' rx='3' fill='black' fill-opacity='0.15'/%3E%3Crect x='650' y='362' width='68' height='68' rx='3' fill='black' fill-opacity='0.5'/%3E%3Crect x='2' y='434' width='68' height='68' rx='3' fill='black' fill-opacity='0.15'/%3E%3Crect x='74' y='434' width='68' height='68' rx='3' fill='black' fill-opacity='0.9'/%3E%3Crect x='146' y='434' width='68' height='68' rx='3' fill='black' fill-opacity='0.7'/%3E%3Crect x='362' y='434' width='68' height='68' rx='3' fill='black' fill-opacity='0.5'/%3E%3Crect x='434' y='434' width='68' height='68' rx='3' fill='black' fill-opacity='0.5'/%3E%3Crect x='506' y='434' width='68' height='68' rx='3' fill='black' fill-opacity='0.5'/%3E%3Crect x='578' y='434' width='68' height='68' rx='3' fill='black' fill-opacity='0.9'/%3E%3Crect x='650' y='434' width='68' height='68' rx='3' fill='black' fill-opacity='0.9'/%3E%3Crect x='146' y='506' width='68' height='68' rx='3' fill='black' fill-opacity='0.35'/%3E%3Crect x='218' y='506' width='68' height='68' rx='3' fill='black' fill-opacity='0.9'/%3E%3Crect x='434' y='506' width='68' height='68' rx='3' fill='black' fill-opacity='0.35'/%3E%3Crect x='506' y='506' width='68' height='68' rx='3' fill='black' fill-opacity='0.9'/%3E%3Crect x='578' y='506' width='68' height='68' rx='3' fill='black' fill-opacity='0.35'/%3E%3Crect x='650' y='506' width='68' height='68' rx='3' fill='black' fill-opacity='0.7'/%3E%3C/svg%3E");
-  -webkit-mask-size: 720px 576px;
-  mask-size: 720px 576px;
-  filter: blur(3px);
-  opacity: var(--tile-opacity);
-}
-/* Faint grid lines tie the boxes together; the fade keeps body copy on a quiet ground. */
-.box-pattern::after {
-  background-image:
-    linear-gradient(rgb(var(--ink) / 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(var(--ink) / 0.05) 1px, transparent 1px);
-  background-size: 72px 72px;
-}
-.box-pattern {
-  -webkit-mask-image: radial-gradient(120% 75% at 50% 0%, #000 30%, transparent 85%);
-  mask-image: radial-gradient(120% 75% at 50% 0%, #000 30%, transparent 85%);
-}
-
-/* ---------- Live box field (landing) ---------- */
-.box-field {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  overflow: hidden;
-  --mx: -999px;
-  --my: -999px;
-  --spot: 0;
-  -webkit-mask-image: radial-gradient(120% 75% at 50% 0%, #000 30%, transparent 85%);
-  mask-image: radial-gradient(120% 75% at 50% 0%, #000 30%, transparent 85%);
-}
-.box-cell {
-  position: absolute;
-  width: 68px;
-  height: 68px;
-  margin: 2px;
-  border-radius: 3px;
-  background: var(--tile);
-  opacity: 0;
-  animation-name: box-wave;
-  animation-iteration-count: infinite;
-  animation-timing-function: ease-in-out;
-}
-.box-cell--live {
-  animation-name: box-breathe, box-wave;
-}
-@keyframes box-breathe {
-  0%,
-  100% {
-    opacity: 0;
-    transform: scale(0.92);
-  }
-  45%,
-  60% {
-    opacity: calc(var(--tile-opacity) * 2.2);
-    transform: scale(1);
-  }
-}
-@keyframes box-wave {
-  0%,
-  82%,
-  100% {
-    box-shadow: none;
-  }
-  90% {
-    opacity: calc(var(--tile-opacity) * 1.4);
-    box-shadow: inset 0 0 0 1px rgb(var(--accent-rgb) / 0.35);
-  }
-}
-.box-spot {
-  position: absolute;
-  inset: 0;
-  opacity: var(--spot);
-  transition: opacity 0.4s ease;
-  background: radial-gradient(
-    220px circle at var(--mx) var(--my),
-    rgb(var(--accent-rgb) / 0.22),
-    transparent 70%
-  );
-  -webkit-mask-image:
-    repeating-linear-gradient(90deg, transparent 0 2px, #000 2px 70px, transparent 70px 72px),
-    repeating-linear-gradient(0deg, transparent 0 2px, #000 2px 70px, transparent 70px 72px);
-  -webkit-mask-composite: source-in;
-  mask-image:
-    repeating-linear-gradient(90deg, transparent 0 2px, #000 2px 70px, transparent 70px 72px),
-    repeating-linear-gradient(0deg, transparent 0 2px, #000 2px 70px, transparent 70px 72px);
-  mask-composite: intersect;
-}
-@media (prefers-reduced-motion: reduce) {
-  .box-cell {
-    animation: none;
-  }
-  .box-spot {
-    display: none;
-  }
 }
 
 /* ---------- Gamification motion ---------- */
@@ -586,9 +477,6 @@ body {
   ) {
   border-radius: var(--radius);
 }
-[data-product="roleplay"] .box-pattern::before {
-  filter: blur(6px);
-}
 
 /* Conversation AI: an assessment paper. Serif headings, sharp edges, ruled ground, no motion flourishes. */
 [data-product="conversation-ai"]
@@ -598,17 +486,6 @@ body {
 [data-product="conversation-ai"] .glass,
 [data-product="conversation-ai"] .glass-strong {
   border-color: rgb(var(--ink) / 0.16);
-}
-[data-product="conversation-ai"] .box-pattern::before {
-  display: none;
-}
-[data-product="conversation-ai"] .box-pattern::after {
-  background-image: linear-gradient(rgb(var(--ink) / 0.07) 1px, transparent 1px);
-  background-size: 100% 32px;
-}
-[data-product="conversation-ai"] .box-pattern {
-  -webkit-mask-image: linear-gradient(#000 0%, #000 60%, transparent 100%);
-  mask-image: linear-gradient(#000 0%, #000 60%, transparent 100%);
 }
 [data-product="conversation-ai"] .tool-btn:hover,
 [data-product="conversation-ai"] .tool-btn:active {
@@ -719,4 +596,120 @@ body {
     transform: translateX(24px);
     opacity: 0;
   }
+}
+
+/* ---------- Components shared by both products ---------- */
+/* Buttons. One shape per product: AI RolePlay buttons sit on a darker bottom edge and press down
+   into it, like a physical key; Conversation AI buttons are flat and precise. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0 1.5rem;
+  border-radius: var(--radius);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.2;
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.08s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #ffffff;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+.btn-secondary {
+  background: var(--surface);
+  color: rgb(var(--ink));
+  border: 2px solid var(--edge);
+}
+.btn-secondary:hover:not(:disabled) {
+  border-color: rgb(var(--ink) / 0.35);
+}
+[data-product="roleplay"] .btn-primary {
+  box-shadow: 0 4px 0 var(--accent-press);
+}
+[data-product="roleplay"] .btn-primary:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--accent-press);
+}
+[data-product="roleplay"] .btn-secondary {
+  box-shadow: 0 3px 0 var(--edge);
+}
+[data-product="roleplay"] .btn-secondary:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--edge);
+}
+[data-product="conversation-ai"] .btn {
+  font-weight: 600;
+}
+[data-product="conversation-ai"] .btn-secondary {
+  border-width: 1.5px;
+}
+
+/* Choice tiles (difficulty, options). A thick border that turns accent when chosen. */
+.choice {
+  border: 2px solid var(--edge);
+  background: var(--surface);
+  border-radius: var(--radius);
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    transform 0.08s ease,
+    box-shadow 0.08s ease;
+}
+.choice:hover {
+  border-color: rgb(var(--ink) / 0.3);
+}
+.choice[aria-checked="true"] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 9%, var(--surface));
+}
+[data-product="roleplay"] .choice {
+  box-shadow: 0 3px 0 var(--edge);
+}
+[data-product="roleplay"] .choice[aria-checked="true"] {
+  box-shadow: 0 3px 0 var(--accent-press);
+}
+[data-product="roleplay"] .choice:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--edge);
+}
+
+/* The feedback sheet under the composer, after each practice reply. */
+.sheet-ok {
+  background: var(--ok-tint);
+  border-color: color-mix(in srgb, var(--ok) 35%, transparent);
+}
+.sheet-warn {
+  background: var(--warn-tint);
+  border-color: color-mix(in srgb, var(--warn) 35%, transparent);
+}
+.sheet-ok .sheet-title {
+  color: var(--ok);
+}
+.sheet-warn .sheet-title {
+  color: var(--warn);
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+}
+.sheet-in {
+  animation: sheet-up 0.22s ease-out;
 }

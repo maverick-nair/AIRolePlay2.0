@@ -1,8 +1,6 @@
 import { useRef, useState } from "react";
 import ThemeToggle from "../components/ThemeToggle";
-import BoxField from "../components/BoxField";
 import SectionLabel from "../components/SectionLabel";
-import BadgeMedal from "../components/BadgeMedal";
 import { PORTRAIT_SRC } from "../data/scenario";
 import { BADGES } from "../data/badges";
 import type { Report } from "../domain/report";
@@ -43,7 +41,6 @@ export default function PracticeLanding({
   const [hints, setHints] = useState(true);
   const brief = useRef<HTMLDialogElement>(null);
   const best = attempts.length ? Math.max(...attempts.map((a) => a.scores.overall)) : null;
-  const last = attempts[attempts.length - 1];
   const maxRuns = scenario.maxPracticeAttempts;
   const exhausted = runsLeft <= 0;
   const rung = CLAIM_LADDER[scenario.instrument.claimRung];
@@ -54,17 +51,20 @@ export default function PracticeLanding({
   const level = levelFor(xp);
   const nextLevel = LEVELS[LEVELS.indexOf(level) + 1];
   const earned = new Set(attempts.flatMap((a) => a.stats?.badges ?? []));
+  const startLabel = exhausted
+    ? `All ${maxRuns} runs used`
+    : attempts.length === 0
+      ? "Start practising"
+      : `Start run ${attempts.length + 1}`;
   const start = () => {
     if (!exhausted) onStart({ difficulty, hints });
   };
 
   const chip =
-    "inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-[14px] border border-ink/15 text-ink/85";
+    "inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-[var(--radius)] border border-ink/15 text-ink/85";
 
   return (
     <div className="relative isolate min-h-full overflow-auto" style={{ background: "transparent" }}>
-      <div aria-hidden className="box-pattern" />
-      <BoxField />
       <nav
         className="sticky top-0 z-20 flex items-center justify-between px-4 sm:px-6 md:px-10 h-14 border-b border-ink/10"
         style={{ background: "color-mix(in srgb, var(--bg) 85%, transparent)", backdropFilter: "blur(8px)" }}
@@ -84,7 +84,7 @@ export default function PracticeLanding({
       <main className="max-w-6xl mx-auto px-4 sm:px-6 md:px-10 pt-5 md:pt-10 pb-12 animate-fade-in-up">
         <div className="grid md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-4 sm:gap-6 md:gap-10 items-center">
           {/* The persona you are about to meet */}
-          <figure className="relative w-24 sm:w-full sm:max-w-[22rem] md:max-w-none sm:mx-auto aspect-square overflow-hidden rounded-[14px] border border-ink/10">
+          <figure className="relative w-24 sm:w-full sm:max-w-[22rem] md:max-w-none sm:mx-auto aspect-square overflow-hidden rounded-[var(--radius)] border border-ink/10">
             <img
               src={PORTRAIT_SRC}
               alt={persona.portraitAlt}
@@ -109,7 +109,7 @@ export default function PracticeLanding({
 
           <div className="flex flex-col">
             <p
-              className="self-start inline-flex items-center gap-2 mb-3 px-3 py-1 text-sm font-medium rounded-[14px]"
+              className="self-start inline-flex items-center gap-2 mb-3 px-3 py-1 text-sm font-medium rounded-[var(--radius)]"
               style={{ background: "rgb(var(--accent-rgb) / 0.12)", color: "var(--brand)" }}
             >
               <span aria-hidden className="w-1.5 h-1.5 rounded-full bg-brand" />
@@ -146,11 +146,7 @@ export default function PracticeLanding({
                       aria-checked={on}
                       onClick={() => setDifficulty(d.id)}
                       title={d.desc}
-                      className="text-left px-3 py-2 border rounded-[14px] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] min-h-[44px]"
-                      style={{
-                        background: on ? "rgb(var(--accent-rgb) / 0.12)" : "var(--surface)",
-                        borderColor: on ? "rgb(var(--accent-rgb) / 0.6)" : "rgb(var(--ink) / 0.15)",
-                      }}
+                      className="choice text-left px-3 py-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand)] min-h-[44px]"
                     >
                       <span className="block font-display font-semibold text-ink text-sm">{d.label}</span>
                       <span className="hidden sm:block text-ink/75 text-xs leading-snug">{d.desc}</span>
@@ -173,10 +169,9 @@ export default function PracticeLanding({
               <button
                 onClick={start}
                 disabled={exhausted}
-                className="group inline-flex items-center justify-center gap-3 px-7 py-3.5 rounded-[14px] font-display font-semibold text-white text-base transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] disabled:cursor-not-allowed min-h-[48px]"
-                style={{ background: exhausted ? "rgb(var(--ink) / 0.35)" : "var(--accent)" }}
+                className="group btn btn-primary px-7 font-display text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
               >
-                {exhausted ? `All ${maxRuns} runs used` : "Start practising"}
+                {startLabel}
                 {!exhausted && (
                   <svg
                     width="16"
@@ -198,7 +193,7 @@ export default function PracticeLanding({
               </button>
               <button
                 onClick={() => brief.current?.showModal()}
-                className="inline-flex items-center px-5 py-3.5 rounded-[14px] font-display font-semibold text-ink text-base border border-ink/20 hover:border-ink/40 min-h-[48px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
+                className="btn btn-secondary px-5 font-display text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
               >
                 Read the brief
               </button>
@@ -216,7 +211,7 @@ export default function PracticeLanding({
               <li
                 key={sk.id}
                 title={sk.desc}
-                className="px-3 py-1.5 rounded-[14px] text-sm text-ink border border-ink/15"
+                className="px-3 py-1.5 rounded-[var(--radius)] text-sm text-ink border border-ink/15"
                 style={{ background: "var(--surface)" }}
               >
                 {sk.name}
@@ -225,34 +220,38 @@ export default function PracticeLanding({
           </ul>
         </section>
 
-        {/* Progress: only what saved runs earned */}
+        {/* Your path: the five runs as a course path. Done runs open their report; the next one is lit. */}
         <section
-          aria-labelledby="progress-heading"
-          className="mt-6 rounded-[14px] border border-ink/10 p-5 grid sm:grid-cols-[1fr_auto] gap-4 items-center"
-          style={{ background: "var(--surface)" }}
+          aria-labelledby="path-heading"
+          className="mt-8 rounded-[var(--radius)] border-2 p-5 sm:p-6"
+          style={{ background: "var(--surface)", borderColor: "var(--edge)" }}
         >
-          <div>
-            <h2 id="progress-heading" className="font-display font-semibold text-ink text-lg">
-              {attempts.length === 0 ? "Your first run sets your baseline" : "Your progress on this scenario"}
-            </h2>
-            {attempts.length === 0 ? (
-              <p className="text-ink/80 text-sm mt-1 leading-relaxed max-w-2xl">
-                After it, this shows your level, XP and best score, and every report stays here to reopen. XP
-                comes from the behaviours you show, not from how much you say.
+          <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+            <div>
+              <h2 id="path-heading" className="font-display font-bold text-ink text-xl">
+                Your path
+              </h2>
+              <p className="text-ink/80 text-sm mt-1 leading-relaxed max-w-xl">
+                {attempts.length === 0
+                  ? "Your first run sets your baseline. XP comes from the behaviours you show, not from how much you say."
+                  : exhausted
+                    ? `All ${maxRuns} runs done. Best score ${best}/10. Open any run to see its report.`
+                    : `${attempts.length} of ${maxRuns} runs done. Best score ${best}/10. Open any run to see its report.`}
               </p>
-            ) : (
-              <dl className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-4">
+            </div>
+            {attempts.length > 0 && (
+              <dl className="flex gap-6">
                 <div>
                   <dt className="text-ink/75 text-xs uppercase tracking-widest">Level</dt>
                   <dd className="font-display font-bold text-ink text-lg">{level.name}</dd>
                   <dd
-                    className="mt-1.5 h-1 w-full max-w-[8rem] overflow-hidden"
-                    style={{ background: "rgb(var(--ink) / 0.12)" }}
+                    className="mt-1 h-1.5 w-20 rounded-full overflow-hidden"
+                    style={{ background: "var(--edge)" }}
                     aria-hidden
                   >
                     <span
-                      className="block h-full"
-                      style={{ width: `${levelProgress(xp)}%`, background: "var(--brand)" }}
+                      className="block h-full rounded-full"
+                      style={{ width: `${levelProgress(xp)}%`, background: "var(--accent)" }}
                     />
                   </dd>
                 </div>
@@ -266,13 +265,6 @@ export default function PracticeLanding({
                   )}
                 </div>
                 <div>
-                  <dt className="text-ink/75 text-xs uppercase tracking-widest">Best score</dt>
-                  <dd className="font-display font-bold text-ink text-lg tabular-nums">{best}/10</dd>
-                  <dd className="text-ink/75 text-xs">
-                    {attempts.length} of {maxRuns} runs
-                  </dd>
-                </div>
-                <div>
                   <dt className="text-ink/75 text-xs uppercase tracking-widest">Badges</dt>
                   <dd className="font-display font-bold text-ink text-lg tabular-nums">
                     {earned.size}/{BADGES.length}
@@ -281,26 +273,87 @@ export default function PracticeLanding({
               </dl>
             )}
           </div>
-          <div className="flex flex-col items-start sm:items-end gap-2">
-            {last && (
-              <button
-                onClick={() => onViewReport(last)}
-                className="text-brand font-display font-semibold text-sm hover:underline underline-offset-4 min-h-[36px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-              >
-                Open your last report ({last.scores.overall}/10)
-              </button>
-            )}
-            <ul className="flex gap-1.5" aria-label="Badges">
-              {BADGES.map((b) => (
-                <li key={b.id} title={`${b.name}: ${b.desc}`}>
-                  <BadgeMedal mark={b.mark} earned={earned.has(b.id)} size={26} />
-                  <span className="sr-only">
-                    {b.name}, {earned.has(b.id) ? "earned" : "not earned yet"}
+
+          <ol
+            className="mt-6 grid gap-2"
+            style={{ gridTemplateColumns: `repeat(${maxRuns}, minmax(0, 1fr))` }}
+          >
+            {Array.from({ length: maxRuns }, (_, i) => {
+              const run = attempts[i];
+              const current = !run && i === attempts.length && !exhausted;
+              const passed = run ? run.scores.overall >= scenario.passScore : false;
+              const node =
+                "w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center font-display font-bold text-lg tabular-nums";
+              return (
+                <li key={i} className="relative flex flex-col items-center text-center">
+                  {i > 0 && (
+                    <span
+                      aria-hidden
+                      className="absolute top-6 sm:top-7 right-1/2 w-full h-1 -translate-y-1/2 rounded-full"
+                      style={{ background: run || current ? "var(--ok)" : "var(--edge)", zIndex: 0 }}
+                    />
+                  )}
+                  {run ? (
+                    <button
+                      onClick={() => onViewReport(run)}
+                      aria-label={`Run ${i + 1}, scored ${run.scores.overall} of 10. Open its report`}
+                      className={`relative z-10 ${node} border-2 transition-transform hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand)]`}
+                      style={{
+                        background: passed ? "var(--ok-tint)" : "var(--warn-tint)",
+                        borderColor: passed ? "var(--ok)" : "var(--warn)",
+                        color: passed ? "var(--ok)" : "var(--warn)",
+                      }}
+                    >
+                      <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <path
+                          d="M5 12.5l4.5 4.5L19 7.5"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  ) : (
+                    <span
+                      className={`relative z-10 ${node} border-2`}
+                      style={
+                        current
+                          ? {
+                              background: "var(--accent)",
+                              borderColor: "var(--accent)",
+                              color: "#ffffff",
+                              boxShadow:
+                                "0 4px 0 var(--accent-press), 0 0 0 6px rgb(var(--accent-rgb) / 0.16)",
+                            }
+                          : {
+                              background: "var(--surface-2)",
+                              borderColor: "var(--edge)",
+                              color: "rgb(var(--ink) / 0.75)",
+                            }
+                      }
+                    >
+                      {i + 1}
+                    </span>
+                  )}
+                  <span
+                    className={`mt-2 text-xs leading-tight ${current ? "font-bold text-brand" : "text-ink/80"}`}
+                  >
+                    {run ? (
+                      <>
+                        Run {i + 1}
+                        <span className="block text-ink/75">{run.scores.overall}/10</span>
+                      </>
+                    ) : current ? (
+                      "Up next"
+                    ) : (
+                      `Run ${i + 1}`
+                    )}
                   </span>
                 </li>
-              ))}
-            </ul>
-          </div>
+              );
+            })}
+          </ol>
         </section>
       </main>
 
@@ -322,7 +375,7 @@ export default function PracticeLanding({
             <button
               onClick={() => brief.current?.close()}
               aria-label="Close the brief"
-              className="w-10 h-10 inline-flex items-center justify-center rounded-[14px] border border-ink/15 text-ink/85 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
+              className="w-10 h-10 inline-flex items-center justify-center rounded-[var(--radius)] border border-ink/15 text-ink/85 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
                 <path
@@ -392,7 +445,7 @@ export default function PracticeLanding({
               </ul>
             </section>
             <section
-              className="rounded-[14px] border border-ink/10 p-4"
+              className="rounded-[var(--radius)] border border-ink/10 p-4"
               style={{ background: "var(--surface)" }}
             >
               <p className="text-ink/75 text-xs uppercase tracking-widest mb-1">Feedback status</p>
@@ -410,10 +463,9 @@ export default function PracticeLanding({
               start();
             }}
             disabled={exhausted}
-            className="mt-6 w-full inline-flex items-center justify-center px-6 py-3.5 rounded-[14px] font-display font-semibold text-white min-h-[48px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 disabled:cursor-not-allowed"
-            style={{ background: exhausted ? "rgb(var(--ink) / 0.35)" : "var(--accent)" }}
+            className="mt-6 w-full btn btn-primary font-display focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2"
           >
-            {exhausted ? `All ${maxRuns} runs used` : "Start practising"}
+            {startLabel}
           </button>
         </div>
       </dialog>
