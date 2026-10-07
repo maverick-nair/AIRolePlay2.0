@@ -88,7 +88,7 @@ export default function AssessmentLanding({
       {/* Brief header: title left, meta right, one row */}
       <header className="max-w-7xl mx-auto px-6 md:px-10 pt-7 pb-5 animate-fade-in-up">
         <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-4 border-b border-ink/20 pb-5">
-          <div className="max-w-3xl">
+          <div className="max-w-4xl">
             <p className="text-[11px] font-semibold tracking-[0.2em] text-brand mb-2 uppercase">
               Assessment brief · {scenario.category}
             </p>
