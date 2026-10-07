@@ -4,7 +4,7 @@ import BoxField from "../components/BoxField";
 import SectionLabel from "../components/SectionLabel";
 import RollingNumber from "../components/RollingNumber";
 import BadgeMedal from "../components/BadgeMedal";
-import { PLAYERS_COMPLETED, PORTRAIT_SRC, SCENE_SRC } from "../data/scenario";
+import { PLAYERS_COMPLETED, PORTRAIT_SRC } from "../data/scenario";
 import { BADGES } from "../data/badges";
 import type { Report } from "../domain/report";
 import type { Difficulty, Scenario } from "../domain/scenario";
@@ -20,8 +20,9 @@ const DIFFICULTIES: { id: Difficulty; label: string; desc: string }[] = [
   { id: "hardball", label: "Hardball", desc: "Impatient, sceptical, concedes nothing for free." },
 ];
 
-// AI RolePlay landing: the practice product. There is no assessment here; the learner chooses how
-// hard the persona pushes, whether hints appear, and starts as many runs as they like.
+// AI RolePlay landing: the practice product. Built to fit a laptop viewport (about 1500 by 750):
+// the first screen holds the title, the start controls, the player card and the scene; the brief,
+// skills, objectives and run setup follow in one more screen. No assessment lives here.
 export default function PracticeLanding({
   product,
   scenario,
@@ -47,6 +48,7 @@ export default function PracticeLanding({
   const totalXp = scenario.instrument.objectives.reduce((a, o) => a + o.xp, 0);
   const minutes = Math.round(scenario.durationSeconds / 60);
   const persona = scenario.stimulus.persona;
+  const player = scenario.stimulus.player;
   const start = () => {
     if (!exhausted) onStart({ difficulty, hints });
   };
@@ -57,6 +59,7 @@ export default function PracticeLanding({
       height="16"
       viewBox="0 0 16 16"
       fill="none"
+      aria-hidden
       className="transition-transform duration-200 group-hover:translate-x-0.5"
     >
       <path
@@ -69,12 +72,73 @@ export default function PracticeLanding({
     </svg>
   );
 
+  const StartButton = () => (
+    <button
+      onClick={start}
+      disabled={exhausted}
+      className="group inline-flex items-center justify-center gap-3 px-7 py-3.5 font-display font-semibold text-white text-sm tracking-wide transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] disabled:cursor-not-allowed"
+      style={{ background: exhausted ? "rgb(var(--ink) / 0.35)" : "var(--accent)" }}
+      onMouseEnter={(e) => {
+        if (!exhausted) e.currentTarget.style.background = "var(--accent-hover)";
+      }}
+      onMouseLeave={(e) => {
+        if (!exhausted) e.currentTarget.style.background = "var(--accent)";
+      }}
+    >
+      {exhausted ? `All ${maxRuns} runs used` : "Start practising"}
+      {!exhausted && <Arrow />}
+    </button>
+  );
+
+  const stats = [
+    {
+      k: "Level",
+      v: "Competent",
+      sub: (
+        <span
+          className="block mt-1.5 h-1 w-full overflow-hidden"
+          style={{ background: "rgb(var(--ink) / 0.12)" }}
+        >
+          <span className="block h-full" style={{ width: "28%", background: "var(--brand)" }} />
+        </span>
+      ),
+    },
+    {
+      k: "Season XP",
+      v: <RollingNumber value={560} />,
+      sub: <span className="text-ink/75 text-xs">140 XP to Proficient</span>,
+    },
+    {
+      k: "Practice Runs",
+      v: (
+        <span>
+          {attempts.length}
+          <span className="text-ink/70 text-sm font-medium">/{maxRuns}</span>
+        </span>
+      ),
+      sub: (
+        <span className="text-ink/75 text-xs">
+          {exhausted
+            ? `All runs used. Best ${best}/10`
+            : best === null
+              ? `${runsLeft} runs available`
+              : `Best ${best}/10, ${runsLeft} left`}
+        </span>
+      ),
+    },
+    {
+      k: "Season Rank",
+      v: "#4",
+      sub: <span className="text-ink/75 text-xs">of {PLAYERS_COMPLETED} players</span>,
+    },
+  ];
+
   return (
     <div className="relative isolate min-h-full overflow-auto" style={{ background: "transparent" }}>
       <div aria-hidden className="box-pattern" />
       <BoxField />
       <nav
-        className="sticky top-0 z-20 flex items-center justify-between px-6 md:px-10 h-16 border-b border-ink/10"
+        className="sticky top-0 z-20 flex items-center justify-between px-6 md:px-10 h-14 border-b border-ink/10"
         style={{ background: "color-mix(in srgb, var(--bg) 85%, transparent)", backdropFilter: "blur(8px)" }}
       >
         <div className="flex items-center gap-3">
@@ -97,50 +161,28 @@ export default function PracticeLanding({
         </div>
       </nav>
 
-      {/* Hero: text 70% / portrait 30% */}
-      <header className="max-w-7xl mx-auto px-6 md:px-10 pt-16 md:pt-24 pb-14 animate-fade-in-up">
-        <div className="grid md:grid-cols-10 gap-10 md:gap-12 items-center">
-          <div className="md:col-span-7">
+      {/* First screen: title and start on the left, persona and scene on the right */}
+      <header className="max-w-7xl mx-auto px-6 md:px-10 pt-8 md:pt-10 pb-6 animate-fade-in-up">
+        <div className="grid lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
+          <div className="lg:col-span-7 flex flex-col">
             <div
-              className="inline-flex items-center gap-2.5 mb-7 px-3 py-1 text-xs font-medium font-display tracking-wide"
+              className="inline-flex items-center gap-2.5 mb-4 px-3 py-1 text-xs font-medium font-display tracking-wide"
               style={{ background: "rgb(var(--accent-rgb) / 0.12)", color: "var(--brand)" }}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-brand" />
               {scenario.category}
             </div>
-            <h1 className="font-display font-bold text-4xl md:text-6xl text-ink tracking-tight leading-[1.03] mb-6">
-              The Renewal
-              <br />
+            <h1 className="font-display font-bold text-4xl md:text-[2.75rem] text-ink tracking-tight leading-[1.02] mb-3">
+              The Renewal <br className="hidden md:block" />
               with {persona.name}
             </h1>
-            <p className="text-ink/70 text-sm leading-relaxed max-w-xl mb-9">
+            <p className="text-ink/70 text-sm leading-relaxed max-w-xl mb-4">
               {product.tagline} Step in as the account executive on a seven-figure renewal. A tough
               procurement lead, a cheaper rival quote, and a Friday deadline. Try it, rewind it, try it again.
             </p>
-            <div className="flex flex-wrap items-center gap-4">
-              <button
-                onClick={start}
-                disabled={exhausted}
-                className="group inline-flex items-center gap-3 px-8 py-4 font-display font-semibold text-white text-sm tracking-wide transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] disabled:cursor-not-allowed"
-                style={{ background: exhausted ? "rgb(var(--ink) / 0.35)" : "var(--accent)" }}
-                onMouseEnter={(e) => {
-                  if (!exhausted) e.currentTarget.style.background = "var(--accent-hover)";
-                }}
-                onMouseLeave={(e) => {
-                  if (!exhausted) e.currentTarget.style.background = "var(--accent)";
-                }}
-              >
-                {exhausted ? `All ${maxRuns} runs used` : "Start practising"}
-                {!exhausted && <Arrow />}
-              </button>
-              <a
-                href="#setup"
-                className="group inline-flex items-center gap-3 px-6 py-4 font-display font-semibold text-ink text-sm tracking-wide border border-ink/20 transition-colors hover:border-[var(--brand)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-              >
-                Set up the persona
-                <Arrow />
-              </a>
-              <div className="flex items-center gap-5 text-ink/75 text-sm font-display">
+            <div className="flex flex-wrap items-center gap-3 mb-5">
+              <StartButton />
+              <div className="flex items-center gap-4 text-ink/75 text-sm font-display">
                 <span>About {minutes} min</span>
                 <span className="w-px h-3.5 bg-ink/15" />
                 <span>{scenario.instrument.objectives.length} Objectives</span>
@@ -149,142 +191,147 @@ export default function PracticeLanding({
               </div>
             </div>
 
-            {/* Player card */}
-            <div
-              className="mt-10 grid grid-cols-2 sm:grid-cols-4 border border-ink/15 max-w-2xl"
+            {/* Run setup: difficulty, hints, runs left */}
+            <section
+              id="setup"
+              className="scroll-mt-16 border border-ink/15 p-4 mb-4"
               style={{ background: "var(--surface)" }}
             >
-              {[
-                {
-                  k: "Level",
-                  v: "Competent",
-                  sub: (
-                    <span className="block mt-2 h-1 w-full" style={{ background: "rgb(var(--ink) / 0.12)" }}>
-                      <span className="block h-full" style={{ width: "30%", background: "var(--brand)" }} />
-                    </span>
-                  ),
-                },
-                {
-                  k: "Season XP",
-                  v: <RollingNumber value={560} />,
-                  sub: <span className="text-ink/75 text-xs">140 XP to Proficient</span>,
-                },
-                {
-                  k: "Practice Runs",
-                  v: (
-                    <span>
-                      {attempts.length}
-                      <span className="text-ink/70 text-base font-medium">/{maxRuns}</span>
-                    </span>
-                  ),
-                  sub: (
-                    <span className="text-ink/75 text-xs">
-                      {exhausted
-                        ? `All runs used. Best ${best}/10`
-                        : best === null
-                          ? `${runsLeft} runs available`
-                          : `Best ${best}/10, ${runsLeft} left`}
-                    </span>
-                  ),
-                },
-                {
-                  k: "Season Rank",
-                  v: "#4",
-                  sub: <span className="text-ink/75 text-xs">of {PLAYERS_COMPLETED} players</span>,
-                },
-              ].map((c, i) => (
+              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-3">
+                <h2 className="font-display font-semibold text-ink text-sm tracking-tight">
+                  Set up this run
+                </h2>
+                <p className="text-ink/75 text-xs" role="status">
+                  {exhausted
+                    ? `All ${maxRuns} practice runs on this scenario are used. Your reports stay available below.`
+                    : `Up to ${maxRuns} runs on this scenario, ${runsLeft} left. Retry any turn, criteria on request, nothing here is a grade.`}
+                  {last && (
+                    <>
+                      {" "}
+                      Last run scored <span className="text-ink font-semibold">{last.scores.overall}/10</span>
+                      .{" "}
+                      <button
+                        onClick={() => onViewReport(last)}
+                        className="text-brand font-display font-semibold hover:underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] rounded"
+                      >
+                        Open that report
+                      </button>
+                    </>
+                  )}
+                </p>
+              </div>
+              <div className="grid sm:grid-cols-[1fr_auto] gap-4 items-end">
+                <fieldset>
+                  <legend className="text-ink/75 text-[11px] font-display uppercase tracking-widest mb-2">
+                    Persona difficulty
+                  </legend>
+                  <div className="grid grid-cols-3 gap-2" role="radiogroup">
+                    {DIFFICULTIES.map((d) => {
+                      const on = difficulty === d.id;
+                      return (
+                        <button
+                          key={d.id}
+                          role="radio"
+                          aria-checked={on}
+                          onClick={() => setDifficulty(d.id)}
+                          className="text-left px-3 py-2 border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] min-h-[44px]"
+                          style={{
+                            background: on ? "rgb(var(--accent-rgb) / 0.12)" : "var(--surface-2)",
+                            borderColor: on ? "rgb(var(--accent-rgb) / 0.6)" : "rgb(var(--ink) / 0.12)",
+                          }}
+                        >
+                          <span className="block font-display font-semibold text-ink text-sm">{d.label}</span>
+                          <span className="block text-ink/75 text-[11px] leading-snug">{d.desc}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+                <label className="flex items-center gap-2.5 text-xs text-ink/85 cursor-pointer pb-1 sm:max-w-[12rem] leading-snug">
+                  <input
+                    type="checkbox"
+                    checked={hints}
+                    onChange={(e) => setHints(e.target.checked)}
+                    className="w-4 h-4 accent-[var(--accent)] flex-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
+                  />
+                  Show hints when a turn misses an opportunity
+                </label>
+              </div>
+            </section>
+
+            {/* Player card */}
+            <div
+              className="grid grid-cols-2 sm:grid-cols-4 border border-ink/15"
+              style={{ background: "var(--surface)" }}
+            >
+              {stats.map((c, i) => (
                 <div
                   key={c.k}
-                  className={`p-4 ${i ? "border-l border-ink/10" : ""} ${i === 2 ? "max-sm:border-l-0 max-sm:border-t" : ""} ${i === 3 ? "max-sm:border-t" : ""}`}
+                  className={`px-3.5 py-3 ${i ? "border-l border-ink/10" : ""} ${i === 2 ? "max-sm:border-l-0 max-sm:border-t" : ""} ${i === 3 ? "max-sm:border-t" : ""}`}
                 >
-                  <p className="text-ink/75 text-[11px] font-display uppercase tracking-widest mb-1">{c.k}</p>
-                  <p className="font-display font-bold text-ink text-lg">{c.v}</p>
+                  <p className="text-ink/75 text-[11px] font-display uppercase tracking-widest mb-0.5">
+                    {c.k}
+                  </p>
+                  <p className="font-display font-bold text-ink text-lg leading-tight">{c.v}</p>
                   {c.sub}
                 </div>
               ))}
             </div>
-            <div className="mt-4 flex flex-wrap items-center gap-3 max-w-2xl">
-              <span className="text-ink/75 text-xs font-display uppercase tracking-widest mr-1">
+            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+              <span className="text-ink/75 text-[11px] font-display uppercase tracking-widest mr-1">
                 Badges up for grabs
               </span>
               {BADGES.map((b) => (
-                <span key={b.id} className="flex items-center gap-2 text-xs text-ink/85" title={b.desc}>
-                  <BadgeMedal mark={b.mark} earned={false} size={26} />
-                  <span className="hidden md:inline">{b.name}</span>
+                <span key={b.id} className="flex items-center gap-1.5 text-xs text-ink/85" title={b.desc}>
+                  <BadgeMedal mark={b.mark} earned={false} size={24} />
+                  <span className="hidden 2xl:inline">{b.name}</span>
                 </span>
               ))}
             </div>
           </div>
 
-          <div className="md:col-span-3">
-            <figure
-              className="relative aspect-[3/4] w-full overflow-hidden"
-              style={{ background: "var(--surface-2)" }}
-            >
+          {/* Persona and scene in one card */}
+          <aside
+            className="lg:col-span-5 min-h-[16rem] grid grid-cols-[9rem_1fr] sm:grid-cols-[12rem_1fr] border border-ink/10 overflow-hidden"
+            style={{ background: "var(--surface)" }}
+          >
+            <figure className="relative overflow-hidden" style={{ background: "var(--surface-2)" }}>
               <img
                 src={PORTRAIT_SRC}
                 alt={persona.portraitAlt}
-                className="portrait-img w-full h-full object-cover"
+                className="portrait-img absolute inset-0 w-full h-full object-cover object-top"
               />
-              <div
-                className="absolute inset-0"
-                style={{
-                  background:
-                    "linear-gradient(to top, color-mix(in srgb, var(--bg) 92%, transparent) 0%, color-mix(in srgb, var(--bg) 70%, transparent) 30%, transparent 55%)",
-                }}
-              />
-              <figcaption className="absolute bottom-0 left-0 right-0 p-4">
-                <p className="font-display font-semibold text-ink text-sm">{persona.name}</p>
-                <p className="text-ink/80 text-xs mt-0.5">
-                  {persona.role}, {persona.organisation} · Your client
-                </p>
-              </figcaption>
             </figure>
-          </div>
+            <div className="p-5 flex flex-col">
+              <p className="font-display font-semibold text-ink text-base leading-tight">{persona.name}</p>
+              <p className="text-ink/75 text-xs mb-4">
+                {persona.role}, {persona.organisation} · Your client
+              </p>
+              <p className="font-display text-[11px] font-semibold tracking-[0.2em] text-brand mb-1.5">
+                THE SCENE
+              </p>
+              <p className="text-ink/85 text-sm leading-relaxed">{player.scene}</p>
+            </div>
+          </aside>
         </div>
       </header>
 
-      {/* Scene band */}
-      <section className="max-w-7xl mx-auto px-6 md:px-10 pb-14">
-        <div
-          className="relative min-h-64 w-full overflow-hidden border border-ink/10 flex items-center"
-          style={{ background: "var(--surface-2)" }}
-        >
-          <img
-            src={SCENE_SRC}
-            alt="A modern glass-walled meeting room"
-            className="scene-img absolute inset-0 w-full h-full object-cover"
-          />
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(to right, var(--bg) 0%, color-mix(in srgb, var(--bg) 97%, transparent) 55%, color-mix(in srgb, var(--bg) 35%, transparent) 100%)",
-            }}
-          />
-          <div className="relative flex flex-col justify-center px-7 md:px-10 py-8 max-w-xl">
-            <p className="font-display text-xs font-semibold tracking-[0.2em] text-brand mb-2">THE SCENE</p>
-            <p className="text-ink text-sm leading-relaxed">{scenario.stimulus.player.scene}</p>
-          </div>
-        </div>
-      </section>
-
-      <div className="max-w-7xl mx-auto px-6 md:px-10 pb-16 animate-fade-in-up">
+      <div className="max-w-7xl mx-auto px-6 md:px-10 pb-10 space-y-5 animate-fade-in-up">
         {/* Briefing */}
         <div
-          className="grid md:grid-cols-3 border border-ink/10 mb-6"
+          className="grid md:grid-cols-3 border border-ink/10"
           style={{ background: "rgb(var(--ink) / 0.08)", gap: 1 }}
         >
-          <section className="p-7" style={{ background: "var(--surface)" }}>
+          <section className="p-5" style={{ background: "var(--surface)" }}>
             <SectionLabel index="01">Your Role</SectionLabel>
-            <p className="text-ink/80 text-sm leading-relaxed">{scenario.stimulus.player.role}</p>
+            <p className="text-ink/80 text-sm leading-relaxed">{player.role}</p>
           </section>
-          <section className="p-7" style={{ background: "var(--surface)" }}>
+          <section className="p-5" style={{ background: "var(--surface)" }}>
             <SectionLabel index="02">Your Goal</SectionLabel>
-            <p className="text-ink/80 text-sm leading-relaxed">{scenario.stimulus.player.goal}</p>
+            <p className="text-ink/80 text-sm leading-relaxed">{player.goal}</p>
           </section>
           <section
-            className="p-7"
+            className="p-5"
             style={{ background: "rgba(244,63,94,0.05)", boxShadow: "inset 0 0 0 1px rgba(244,63,94,0.25)" }}
           >
             <div className="flex items-baseline gap-3 mb-5">
@@ -296,22 +343,22 @@ export default function PracticeLanding({
                 The Challenge
               </h2>
             </div>
-            <p className="text-ink/85 text-sm leading-relaxed">{scenario.stimulus.player.challenge}</p>
+            <p className="text-ink/85 text-sm leading-relaxed">{player.challenge}</p>
           </section>
         </div>
 
         {/* Skills + Objectives */}
-        <div className="grid md:grid-cols-12 gap-6 mb-6">
+        <div className="grid lg:grid-cols-12 gap-5">
           <section
-            className="md:col-span-7 border border-ink/10 p-7 flex flex-col"
+            className="lg:col-span-8 border border-ink/10 p-5 flex flex-col"
             style={{ background: "var(--surface)" }}
           >
             <SectionLabel index="04">Skills you are practising</SectionLabel>
-            <ul className="flex-1 grid sm:grid-cols-2 auto-rows-fr gap-3">
+            <ul className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
               {scenario.instrument.skills.map((sk, i) => (
                 <li
                   key={sk.id}
-                  className="group relative flex flex-col gap-3 p-4 border border-ink/10 transition-colors hover:border-[var(--brand)]"
+                  className="group relative flex flex-col gap-2 p-3.5 border border-ink/10 transition-colors hover:border-[var(--brand)]"
                   style={{ background: "var(--surface-2)" }}
                 >
                   <span className="flex items-center justify-between">
@@ -323,7 +370,9 @@ export default function PracticeLanding({
                     </span>
                   </span>
                   <span>
-                    <span className="block font-display font-semibold text-ink text-sm mb-1">{sk.name}</span>
+                    <span className="block font-display font-semibold text-ink text-sm mb-0.5">
+                      {sk.name}
+                    </span>
                     <span className="block text-ink/75 text-xs leading-relaxed">{sk.desc}</span>
                   </span>
                   <details className="mt-auto">
@@ -342,30 +391,27 @@ export default function PracticeLanding({
                 </li>
               ))}
             </ul>
-            <p className="text-ink/70 text-xs mt-4 leading-relaxed">
+            <p className="text-ink/70 text-xs mt-3 leading-relaxed">
               In practice the criteria are yours to see. Each behaviour has written anchors for Strong,
               Adequate, Weak and Harmful, and the report shows them beside your own words.
             </p>
           </section>
           <section
-            className="md:col-span-5 border border-ink/10 p-7 flex flex-col"
+            className="lg:col-span-4 border border-ink/10 p-5 flex flex-col"
             style={{ background: "var(--surface)" }}
           >
             <SectionLabel index="05">Objectives</SectionLabel>
-            <p className="text-ink/75 text-xs leading-relaxed mb-3">
-              Three quests with XP. Reveal what counts during the call with "Show what counts".
-            </p>
-            <ul className="mb-7">
+            <ul>
               {scenario.instrument.objectives.map((o) => (
                 <li
                   key={o.id}
-                  className="flex items-baseline justify-between gap-4 py-3 border-t border-ink/10 first:border-t-0"
+                  className="flex items-baseline justify-between gap-4 py-2.5 border-t border-ink/10 first:border-t-0"
                 >
-                  <span className="flex items-start gap-3 text-sm leading-relaxed">
+                  <span className="flex items-start gap-3 text-sm leading-snug">
                     <span className="mt-1.5 w-1.5 h-1.5 flex-none bg-brand" />
                     <span>
                       <span className="block font-display font-semibold text-ink">{o.label}</span>
-                      <span className="block text-ink/75">{o.sub}</span>
+                      <span className="block text-ink/75 text-xs mt-0.5">{o.sub}</span>
                     </span>
                   </span>
                   <span className="font-display font-semibold text-brand text-sm tabular-nums whitespace-nowrap">
@@ -374,114 +420,24 @@ export default function PracticeLanding({
                 </li>
               ))}
             </ul>
-            <div
-              className="mt-auto rounded-xl p-4 border border-ink/10"
-              style={{ background: "var(--surface-2)" }}
-            >
-              <p className="text-ink/75 text-[11px] font-display uppercase tracking-widest mb-1">
-                Feedback status
-              </p>
-              <p className="font-display font-semibold text-ink text-sm">
-                Rung {scenario.instrument.claimRung} of 4: {rung.title}
-              </p>
-              <p className="text-ink/75 text-xs mt-1 leading-relaxed">
-                Practice scores are for you. {rung.fitFor}
-              </p>
+            <div className="mt-auto pt-4">
+              <div
+                className="rounded-xl p-3.5 border border-ink/10"
+                style={{ background: "var(--surface-2)" }}
+              >
+                <p className="text-ink/75 text-[11px] font-display uppercase tracking-widest mb-1">
+                  Feedback status
+                </p>
+                <p className="font-display font-semibold text-ink text-sm">
+                  Rung {scenario.instrument.claimRung} of 4: {rung.title}
+                </p>
+                <p className="text-ink/75 text-xs mt-1 leading-relaxed">
+                  Practice scores are for you. {rung.fitFor}
+                </p>
+              </div>
             </div>
           </section>
         </div>
-
-        {/* Practice setup */}
-        <section
-          id="setup"
-          className="scroll-mt-20 border border-ink/10 p-7 grid md:grid-cols-12 gap-6"
-          style={{ background: "var(--surface)" }}
-        >
-          <div className="md:col-span-5">
-            <SectionLabel index="06">Set up this run</SectionLabel>
-            <ul className="space-y-1.5 text-sm text-ink/80">
-              {[
-                "Retry any of your turns. The persona rewinds with you.",
-                "Criteria available on request, hints as you go.",
-                "Choose how hard the persona pushes.",
-                "Each run adds a point to your trend. Nothing here is a grade.",
-                `Up to ${maxRuns} runs on this scenario. ${exhausted ? "You have used them all." : `${runsLeft} left.`}`,
-              ].map((t) => (
-                <li key={t} className="flex gap-2.5">
-                  <span aria-hidden className="mt-2 w-1 h-1 rounded-full bg-[var(--ok)] flex-none" />
-                  {t}
-                </li>
-              ))}
-            </ul>
-            {last && (
-              <p className="text-ink/75 text-xs mt-5">
-                Last run scored <span className="text-ink font-semibold">{last.scores.overall}/10</span>.{" "}
-                <button
-                  onClick={() => onViewReport(last)}
-                  className="text-brand font-display font-semibold hover:underline underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] rounded"
-                >
-                  Open that report
-                </button>
-              </p>
-            )}
-          </div>
-          <div className="md:col-span-7 flex flex-col gap-5">
-            <fieldset>
-              <legend className="text-ink/75 text-[11px] font-display uppercase tracking-widest mb-2">
-                Persona difficulty
-              </legend>
-              <div className="grid grid-cols-3 gap-2" role="radiogroup">
-                {DIFFICULTIES.map((d) => {
-                  const on = difficulty === d.id;
-                  return (
-                    <button
-                      key={d.id}
-                      role="radio"
-                      aria-checked={on}
-                      onClick={() => setDifficulty(d.id)}
-                      className="text-left p-3 border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] min-h-[44px]"
-                      style={{
-                        background: on ? "rgb(var(--accent-rgb) / 0.12)" : "var(--surface-2)",
-                        borderColor: on ? "rgb(var(--accent-rgb) / 0.6)" : "rgb(var(--ink) / 0.12)",
-                      }}
-                    >
-                      <span className="block font-display font-semibold text-ink text-sm">{d.label}</span>
-                      <span className="block text-ink/75 text-[11px] leading-snug mt-0.5">{d.desc}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </fieldset>
-            <label className="flex items-center gap-3 text-sm text-ink/85 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={hints}
-                onChange={(e) => setHints(e.target.checked)}
-                className="w-4 h-4 accent-[var(--accent)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-              />
-              Show hints in the moment when a turn misses an opportunity
-            </label>
-            <div className="mt-auto">
-              {exhausted ? (
-                <p className="text-ink/80 text-sm leading-relaxed" role="status">
-                  You have used all {maxRuns} practice runs on this scenario. Your reports stay available from
-                  the trend above.
-                </p>
-              ) : (
-                <button
-                  onClick={start}
-                  className="group inline-flex items-center justify-center gap-3 px-6 py-3.5 font-display font-semibold text-white text-sm tracking-wide transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]"
-                  style={{ background: "var(--accent)" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--accent-hover)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "var(--accent)")}
-                >
-                  Start practising
-                  <Arrow />
-                </button>
-              )}
-            </div>
-          </div>
-        </section>
       </div>
       <BuildStamp product={product.name} />
     </div>

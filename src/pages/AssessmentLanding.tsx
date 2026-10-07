@@ -7,10 +7,10 @@ import type { Scenario } from "../domain/scenario";
 import type { Product } from "../products";
 import BuildStamp from "../components/BuildStamp";
 
-// Conversation AI landing: an assessment brief laid out like a paper. Six blocks on one sheet:
-// the scene, your role, your goal, the challenge and objectives, skills mapped, and instructions
-// with a microphone and camera test. A sticky candidate card holds the confirmation and Begin.
-// No gamification, no difficulty choice, no hints, no indicators before the conversation.
+// Conversation AI landing: an assessment brief built to fit a laptop viewport (about 1500 by 750).
+// Six blocks on a dense sheet: the scene, your role, your goal, the challenge with its objectives,
+// skills mapped (name and one liner) and instructions with a microphone and camera test. A sticky
+// candidate card holds the confirmation and Begin. No gamification, no hints, no indicators shown.
 export default function AssessmentLanding({
   product,
   scenario,
@@ -38,18 +38,22 @@ export default function AssessmentLanding({
 
   const INSTRUCTIONS = [
     `Find a quiet place and allow the full ${minutes} minutes in one sitting.`,
-    "Test your microphone and camera below. Both are optional; you can type every reply.",
+    "Test your microphone and camera. Both are optional; you can type every reply.",
     `Speak or type to ${persona.name.split(" ")[0]} as you would in a real call. Only your transcript is scored.`,
     "You have one attempt. The call ends when you end it or when the time runs out, and the report is saved.",
-    "Tick the confirmation on the right, then press Begin the assessment.",
+    "Tick the confirmation, then press Begin the assessment.",
   ];
 
-  const Rule = () => <hr className="border-0 border-t border-ink/15 my-8" />;
   const Heading = ({ n, children }: { n: string; children: string }) => (
-    <h2 className="flex items-baseline gap-4 mb-4">
-      <span className="text-xs font-semibold tracking-[0.2em] text-brand tabular-nums">{n}</span>
-      <span className="font-display font-semibold text-ink text-2xl tracking-tight">{children}</span>
+    <h2 className="flex items-baseline gap-3 mb-3">
+      <span className="text-[11px] font-semibold tracking-[0.2em] text-brand tabular-nums">{n}</span>
+      <span className="font-display font-semibold text-ink text-xl tracking-tight">{children}</span>
     </h2>
+  );
+  const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+    <section className={`border border-ink/15 p-5 ${className}`} style={{ background: "var(--surface)" }}>
+      {children}
+    </section>
   );
 
   return (
@@ -81,102 +85,117 @@ export default function AssessmentLanding({
         </div>
       </nav>
 
-      {/* Brief header */}
-      <header className="max-w-6xl mx-auto px-6 md:px-10 pt-12 md:pt-16 pb-8 animate-fade-in-up">
-        <p className="text-xs font-semibold tracking-[0.2em] text-brand mb-4 uppercase">
-          Assessment brief · {scenario.category}
-        </p>
-        <h1 className="font-display font-semibold text-4xl md:text-6xl text-ink tracking-tight leading-[1.02] mb-6 max-w-4xl">
-          {scenario.title}
-        </h1>
-        <p className="text-ink/75 text-base leading-relaxed max-w-3xl mb-8">
-          {product.tagline} You will hold one conversation with {persona.name}, {persona.role} at{" "}
-          {persona.organisation}.
-        </p>
-        <dl className="flex flex-wrap border-y border-ink/20 py-4 gap-x-10 gap-y-4">
-          {META.map(([k, v]) => (
-            <div key={k}>
-              <dt className="text-ink/70 text-[11px] uppercase tracking-widest mb-1">{k}</dt>
-              <dd className="font-display font-semibold text-ink text-lg tabular-nums">{v}</dd>
-            </div>
-          ))}
-        </dl>
+      {/* Brief header: title left, meta right, one row */}
+      <header className="max-w-7xl mx-auto px-6 md:px-10 pt-7 pb-5 animate-fade-in-up">
+        <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-4 border-b border-ink/20 pb-5">
+          <div className="max-w-3xl">
+            <p className="text-[11px] font-semibold tracking-[0.2em] text-brand mb-2 uppercase">
+              Assessment brief · {scenario.category}
+            </p>
+            <h1 className="font-display font-semibold text-3xl md:text-4xl text-ink tracking-tight leading-[1.05] mb-2">
+              {scenario.title}
+            </h1>
+            <p className="text-ink/75 text-sm leading-relaxed">
+              {product.tagline} One conversation with {persona.name}, {persona.role} at {persona.organisation}
+              .
+            </p>
+          </div>
+          <dl className="flex flex-wrap gap-x-8 gap-y-3">
+            {META.map(([k, v]) => (
+              <div key={k}>
+                <dt className="text-ink/70 text-[11px] uppercase tracking-widest mb-0.5">{k}</dt>
+                <dd className="font-display font-semibold text-ink text-lg tabular-nums leading-tight">
+                  {v}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 md:px-10 pb-16 grid lg:grid-cols-12 gap-8 items-start animate-fade-in-up">
-        {/* The paper */}
-        <article
-          className="lg:col-span-8 border border-ink/15 px-7 md:px-10 py-8"
-          style={{ background: "var(--surface)" }}
-        >
-          <Heading n="01">The scene</Heading>
-          <p className="text-ink/80 text-[15px] leading-relaxed">{player.scene}</p>
-          <Rule />
-          <Heading n="02">Your role</Heading>
-          <p className="text-ink/80 text-[15px] leading-relaxed">{player.role}</p>
-          <Rule />
-          <Heading n="03">Your goal</Heading>
-          <p className="text-ink/80 text-[15px] leading-relaxed">{player.goal}</p>
-          <Rule />
-          <Heading n="04">The challenge</Heading>
-          <p className="text-ink/80 text-[15px] leading-relaxed mb-5">{player.challenge}</p>
-          <p className="text-ink/70 text-[11px] uppercase tracking-widest mb-3">Objectives to achieve</p>
-          <ol className="space-y-3">
-            {scenario.instrument.objectives.map((o, i) => (
-              <li key={o.id} className="grid grid-cols-[2rem_1fr] gap-x-3">
-                <span className="text-ink/60 text-xs tabular-nums pt-1">{i + 1}.</span>
-                <span>
-                  <span className="block font-display font-semibold text-ink text-base">{o.label}</span>
-                  <span className="block text-ink/80 text-sm leading-relaxed">{o.sub}</span>
-                </span>
-              </li>
-            ))}
-          </ol>
-          <Rule />
-          <Heading n="05">Skills mapped</Heading>
-          <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
-            {scenario.instrument.skills.map((sk, i) => (
-              <li key={sk.id} className="grid grid-cols-[2rem_1fr] gap-x-3">
-                <span className="text-brand text-xs font-semibold tabular-nums pt-1">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <span>
-                  <span className="block font-display font-semibold text-ink text-base">{sk.name}</span>
-                  <span className="block text-ink/80 text-sm leading-relaxed">{sk.desc}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-          <Rule />
-          <Heading n="06">Instructions</Heading>
-          <ol className="space-y-2.5 mb-8">
-            {INSTRUCTIONS.map((t, i) => (
-              <li key={t} className="grid grid-cols-[2rem_1fr] gap-x-3">
-                <span className="text-ink/60 text-xs tabular-nums pt-0.5">{i + 1}.</span>
-                <span className="text-ink/80 text-[15px] leading-relaxed">{t}</span>
-              </li>
-            ))}
-          </ol>
-          <h3 className="font-display font-semibold text-ink text-lg mb-1">Audio and video access test</h3>
-          <p className="text-ink/70 text-sm leading-relaxed mb-2">
-            Check that your browser can reach your microphone and camera before you begin.
-          </p>
-          <DeviceCheck />
-        </article>
+      <div className="max-w-7xl mx-auto px-6 md:px-10 pb-10 grid lg:grid-cols-12 gap-5 items-start animate-fade-in-up">
+        <div className="lg:col-span-8 space-y-5">
+          <div className="grid md:grid-cols-3 gap-5">
+            <Card>
+              <Heading n="01">The scene</Heading>
+              <p className="text-ink/80 text-sm leading-relaxed">{player.scene}</p>
+            </Card>
+            <Card>
+              <Heading n="02">Your role</Heading>
+              <p className="text-ink/80 text-sm leading-relaxed">{player.role}</p>
+            </Card>
+            <Card>
+              <Heading n="03">Your goal</Heading>
+              <p className="text-ink/80 text-sm leading-relaxed">{player.goal}</p>
+            </Card>
+          </div>
+
+          <Card>
+            <Heading n="04">The challenge</Heading>
+            <div className="grid md:grid-cols-2 gap-x-8 gap-y-3">
+              <p className="text-ink/80 text-sm leading-relaxed">{player.challenge}</p>
+              <div>
+                <p className="text-ink/70 text-[11px] uppercase tracking-widest mb-2">
+                  Objectives to achieve
+                </p>
+                <ol className="space-y-1.5">
+                  {scenario.instrument.objectives.map((o, i) => (
+                    <li key={o.id} className="grid grid-cols-[1.5rem_1fr] gap-x-2 text-sm leading-snug">
+                      <span className="text-ink/60 text-xs tabular-nums pt-0.5">{i + 1}.</span>
+                      <span>
+                        <span className="font-display font-semibold text-ink">{o.label}</span>
+                        <span className="text-ink/75">: {o.sub}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <Heading n="06">Instructions</Heading>
+            <div className="grid md:grid-cols-2 gap-x-8 gap-y-5">
+              <ol className="space-y-2">
+                {INSTRUCTIONS.map((t, i) => (
+                  <li key={t} className="grid grid-cols-[1.5rem_1fr] gap-x-2">
+                    <span className="text-ink/60 text-xs tabular-nums pt-0.5">{i + 1}.</span>
+                    <span className="text-ink/80 text-sm leading-relaxed">{t}</span>
+                  </li>
+                ))}
+              </ol>
+              <div>
+                <h3 className="font-display font-semibold text-ink text-base mb-1">
+                  Audio and video access test
+                </h3>
+                <p className="text-ink/70 text-xs leading-relaxed mb-1">
+                  Check that your browser can reach your microphone and camera before you begin.
+                </p>
+                <DeviceCheck />
+              </div>
+            </div>
+          </Card>
+        </div>
 
         {/* Candidate card */}
-        <aside className="lg:col-span-4 lg:sticky lg:top-20 space-y-4">
-          <div className="border border-ink/15" style={{ background: "var(--surface)" }}>
-            <figure className="relative aspect-[5/4] overflow-hidden border-b border-ink/15">
+        <aside className="lg:col-span-4 space-y-5">
+          <div
+            className="border border-ink/15 grid grid-cols-[7rem_1fr]"
+            style={{ background: "var(--surface)" }}
+          >
+            <figure
+              className="relative overflow-hidden border-r border-ink/15"
+              style={{ background: "var(--surface-2)" }}
+            >
               <img
                 src={PORTRAIT_SRC}
                 alt={persona.portraitAlt}
-                className="portrait-img w-full h-full object-cover object-top"
+                className="portrait-img absolute inset-0 w-full h-full object-cover object-top"
               />
             </figure>
-            <div className="p-5">
+            <div className="p-4">
               <p className="text-ink/70 text-[11px] uppercase tracking-widest mb-1">Your counterpart</p>
-              <p className="font-display font-semibold text-ink text-xl">{persona.name}</p>
+              <p className="font-display font-semibold text-ink text-lg leading-tight">{persona.name}</p>
               <p className="text-ink/75 text-sm">
                 {persona.role}, {persona.organisation}
               </p>
@@ -211,7 +230,7 @@ export default function AssessmentLanding({
             ) : (
               <>
                 <h2 className="font-display font-semibold text-ink text-xl mb-3">Before you begin</h2>
-                <label className="flex items-start gap-3 text-sm text-ink/85 cursor-pointer mb-5">
+                <label className="flex items-start gap-3 text-sm text-ink/85 cursor-pointer mb-4">
                   <input
                     type="checkbox"
                     checked={confirmed}
@@ -237,6 +256,24 @@ export default function AssessmentLanding({
               </>
             )}
           </section>
+          <Card>
+            <Heading n="05">Skills mapped</Heading>
+            <ul className="space-y-3">
+              {scenario.instrument.skills.map((sk, i) => (
+                <li key={sk.id} className="grid grid-cols-[1.75rem_1fr] gap-x-2">
+                  <span className="text-brand text-[11px] font-semibold tabular-nums pt-1">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span>
+                    <span className="block font-display font-semibold text-ink text-[15px] leading-snug">
+                      {sk.name}
+                    </span>
+                    <span className="block text-ink/75 text-xs leading-relaxed">{sk.desc}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Card>
         </aside>
       </div>
       <BuildStamp product={product.name} />
