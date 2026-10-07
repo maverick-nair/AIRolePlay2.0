@@ -7,6 +7,7 @@ import type { Report } from "../domain/report";
 import type { Scenario } from "../domain/scenario";
 import { CLAIM_LADDER } from "../domain/instrumentStatus";
 import type { Product } from "../products";
+import BuildStamp from "../components/BuildStamp";
 
 // Conversation AI landing: the assessment product. No gamification, no difficulty choice, no hints.
 // The participant reads the brief and the rules, confirms them, and takes the one attempt.
@@ -287,6 +288,7 @@ export default function AssessmentLanding({
           )}
         </section>
       </div>
+      <BuildStamp product={product.name} />
     </div>
   );
 }

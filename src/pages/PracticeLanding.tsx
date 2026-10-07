@@ -10,6 +10,7 @@ import type { Report } from "../domain/report";
 import type { Difficulty, Scenario } from "../domain/scenario";
 import { CLAIM_LADDER } from "../domain/instrumentStatus";
 import type { Product } from "../products";
+import BuildStamp from "../components/BuildStamp";
 
 export type PracticeOptions = { difficulty: Difficulty; hints: boolean };
 
@@ -454,6 +455,7 @@ export default function PracticeLanding({
           </div>
         </section>
       </div>
+      <BuildStamp product={product.name} />
     </div>
   );
 }

@@ -2,11 +2,24 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath } from "node:url";
+import { execSync } from "node:child_process";
+
+// Short commit id shown in the landing footer so anyone can tell which build they are looking at.
+function buildId(): string {
+  try {
+    return execSync("git rev-parse --short HEAD", { stdio: ["ignore", "pipe", "ignore"] })
+      .toString()
+      .trim();
+  } catch {
+    return "dev";
+  }
+}
 
 // Two products, two entry pages: / is AI RolePlay (practice) and /assess/ is Conversation AI (assessment).
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  define: { "import.meta.env.VITE_BUILD": JSON.stringify(buildId()) },
   build: {
     rollupOptions: {
       input: {
