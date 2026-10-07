@@ -58,7 +58,7 @@ Stack: React 19, TypeScript, Vite 8, Tailwind CSS v4, Zod 4, `@anthropic-ai/sdk`
 
 ## Theme tokens (index.css)
 
-- `:root` = dark, `:root.light` = light.
+- `:root` = dark, `:root.light` = light. `data-product` on the root selects the product: AI RolePlay uses Bricolage Grotesque (display) and DM Sans (body) with a 14px radius; Conversation AI uses Newsreader (display) and Instrument Sans (body) with square corners. Fonts are self hosted from `@fontsource-variable` packages, never a third party font host. Portrait placeholders are always 1:1 with a text panel of the same size beside them.
 - `--ink` is RGB channels: use `rgb(var(--ink) / a)`. `--bg` is hex: use `color-mix(in srgb, var(--bg) X%, transparent)`, never `rgb(var(--bg)/a)`.
 - Dark: bg `#0e0d0c`, brand `#ff8a4c`, accent `#c2410c`. Light: bg `#f4f2ef`, brand `#b8320f`.
 - Secondary text must be `text-ink/70` or stronger (lower fails AA in light theme).

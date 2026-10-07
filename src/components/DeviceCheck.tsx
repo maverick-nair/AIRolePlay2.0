@@ -169,7 +169,7 @@ export default function DeviceCheck() {
           muted
           playsInline
           aria-label="Camera preview"
-          className="w-28 h-20 object-cover border border-ink/15"
+          className="w-24 h-24 object-cover border border-ink/15"
           style={{ background: "rgb(var(--ink) / 0.06)", display: cam === "ok" ? "block" : "none" }}
         />
         {cam !== "ok" && (

@@ -163,7 +163,7 @@ export default function PracticeLanding({
 
       {/* First screen: title and start on the left, persona and scene on the right */}
       <header className="max-w-7xl mx-auto px-6 md:px-10 pt-8 md:pt-10 pb-6 animate-fade-in-up">
-        <div className="grid lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
+        <div className="grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           <div className="lg:col-span-7 flex flex-col">
             <div
               className="self-start inline-flex items-center gap-2.5 mb-4 px-3 py-1 text-xs font-medium font-display tracking-wide"
@@ -172,7 +172,7 @@ export default function PracticeLanding({
               <span className="w-1.5 h-1.5 rounded-full bg-brand" />
               {scenario.category}
             </div>
-            <h1 className="font-display font-bold text-4xl md:text-[2.75rem] text-ink tracking-tight leading-[1.02] mb-3">
+            <h1 className="font-display font-bold text-4xl md:text-[3.25rem] text-ink tracking-[-0.02em] leading-[0.98] mb-3">
               The Renewal <br className="hidden md:block" />
               with {persona.name}
             </h1>
@@ -290,27 +290,30 @@ export default function PracticeLanding({
             </div>
           </div>
 
-          {/* Persona and scene in one card */}
+          {/* Persona and scene: a 1:1 portrait beside a text panel of the same size */}
           <aside
-            className="lg:col-span-5 min-h-[16rem] grid grid-cols-[9rem_1fr] sm:grid-cols-[12rem_1fr] border border-ink/10 overflow-hidden"
+            className="lg:col-span-5 self-start grid grid-cols-2 border border-ink/10 overflow-hidden"
             style={{ background: "var(--surface)" }}
           >
-            <figure className="relative overflow-hidden" style={{ background: "var(--surface-2)" }}>
+            <figure
+              className="relative aspect-square self-start overflow-hidden"
+              style={{ background: "var(--surface-2)" }}
+            >
               <img
                 src={PORTRAIT_SRC}
                 alt={persona.portraitAlt}
                 className="portrait-img absolute inset-0 w-full h-full object-cover object-top"
               />
             </figure>
-            <div className="p-5 flex flex-col">
-              <p className="font-display font-semibold text-ink text-base leading-tight">{persona.name}</p>
-              <p className="text-ink/75 text-xs mb-4">
+            <div className="min-h-full p-5 flex flex-col">
+              <p className="font-display font-semibold text-ink text-lg leading-tight">{persona.name}</p>
+              <p className="text-ink/75 text-xs mb-3">
                 {persona.role}, {persona.organisation} · Your client
               </p>
               <p className="font-display text-[11px] font-semibold tracking-[0.2em] text-brand mb-1.5">
                 THE SCENE
               </p>
-              <p className="text-ink/85 text-sm leading-relaxed">{player.scene}</p>
+              <p className="text-ink/85 text-[13px] leading-snug">{player.scene}</p>
             </div>
           </aside>
         </div>

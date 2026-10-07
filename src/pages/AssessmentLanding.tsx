@@ -92,7 +92,7 @@ export default function AssessmentLanding({
             <p className="text-[11px] font-semibold tracking-[0.2em] text-brand mb-2 uppercase">
               Assessment brief · {scenario.category}
             </p>
-            <h1 className="font-display font-semibold text-3xl md:text-4xl text-ink tracking-tight leading-[1.05] mb-2">
+            <h1 className="font-display font-semibold text-4xl md:text-[2.75rem] text-ink tracking-[-0.015em] leading-[1.05] mb-2">
               {scenario.title}
             </h1>
             <p className="text-ink/75 text-sm leading-relaxed">
@@ -177,14 +177,11 @@ export default function AssessmentLanding({
           </Card>
         </div>
 
-        {/* Candidate card */}
+        {/* Candidate card: a 1:1 portrait beside a text panel of the same size */}
         <aside className="lg:col-span-4 space-y-5">
-          <div
-            className="border border-ink/15 grid grid-cols-[7rem_1fr]"
-            style={{ background: "var(--surface)" }}
-          >
+          <div className="border border-ink/15 grid grid-cols-2" style={{ background: "var(--surface)" }}>
             <figure
-              className="relative overflow-hidden border-r border-ink/15"
+              className="relative aspect-square overflow-hidden border-r border-ink/15"
               style={{ background: "var(--surface-2)" }}
             >
               <img
@@ -193,10 +190,10 @@ export default function AssessmentLanding({
                 className="portrait-img absolute inset-0 w-full h-full object-cover object-top"
               />
             </figure>
-            <div className="p-4">
+            <div className="aspect-square p-4 flex flex-col justify-center">
               <p className="text-ink/70 text-[11px] uppercase tracking-widest mb-1">Your counterpart</p>
-              <p className="font-display font-semibold text-ink text-lg leading-tight">{persona.name}</p>
-              <p className="text-ink/75 text-sm">
+              <p className="font-display font-semibold text-ink text-xl leading-tight">{persona.name}</p>
+              <p className="text-ink/75 text-sm mt-1">
                 {persona.role}, {persona.organisation}
               </p>
             </div>
