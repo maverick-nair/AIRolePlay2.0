@@ -1,6 +1,9 @@
-import { useRef, useState } from "react";
-import ThemeToggle from "../components/ThemeToggle";
-import SectionLabel from "../components/SectionLabel";
+import { useState } from "react";
+import AppShell from "../components/AppShell";
+import Icon, { FlameGlyph, StarGlyph } from "../components/Icon";
+import Tabs, { tabPanelProps } from "../components/Tabs";
+import BadgeMedal from "../components/BadgeMedal";
+import BuildStamp from "../components/BuildStamp";
 import { PORTRAIT_SRC } from "../data/scenario";
 import { BADGES } from "../data/badges";
 import type { Report } from "../domain/report";
@@ -8,8 +11,8 @@ import type { Difficulty, Scenario } from "../domain/scenario";
 import { CLAIM_LADDER } from "../domain/instrumentStatus";
 import { LEVELS, levelFor, levelProgress } from "../domain/scoring";
 import { careerXp } from "../store/attempts";
+import { DAILY_GOAL_XP, dayStreak, weekStrip, weeklyQuests, xpToday } from "../lib/progress";
 import type { Product } from "../products";
-import BuildStamp from "../components/BuildStamp";
 
 export type PracticeOptions = { difficulty: Difficulty; hints: boolean };
 
@@ -19,9 +22,11 @@ const DIFFICULTIES: { id: Difficulty; label: string; desc: string }[] = [
   { id: "hardball", label: "Hardball", desc: "Impatient, sceptical, concedes nothing for free." },
 ];
 
-// AI RolePlay lobby: the persona, the stakes in one line, the facts of the run and one way in.
-// The full brief lives in a drawer, so the first screen is a decision, not a document. Progress
-// shows only what saved runs earned; there is no seeded XP, level or rank.
+type DetailTab = "brief" | "skills" | "objectives";
+
+// AI RolePlay home: a practice studio. The left column is the decision (who you will meet, how
+// hard, start); the right column holds the scenario details and the game layer. Streak, daily goal,
+// level, quests and badges come only from saved runs, so a first time learner starts at zero.
 export default function PracticeLanding({
   product,
   scenario,
@@ -39,8 +44,8 @@ export default function PracticeLanding({
 }) {
   const [difficulty, setDifficulty] = useState<Difficulty>("firm");
   const [hints, setHints] = useState(true);
-  const brief = useRef<HTMLDialogElement>(null);
-  const best = attempts.length ? Math.max(...attempts.map((a) => a.scores.overall)) : null;
+  const [tab, setTab] = useState<DetailTab>("brief");
+  const now = new Date();
   const maxRuns = scenario.maxPracticeAttempts;
   const exhausted = runsLeft <= 0;
   const rung = CLAIM_LADDER[scenario.instrument.claimRung];
@@ -51,425 +56,481 @@ export default function PracticeLanding({
   const level = levelFor(xp);
   const nextLevel = LEVELS[LEVELS.indexOf(level) + 1];
   const earned = new Set(attempts.flatMap((a) => a.stats?.badges ?? []));
-  const startLabel = exhausted
-    ? `All ${maxRuns} runs used`
-    : attempts.length === 0
-      ? "Start practising"
-      : `Start run ${attempts.length + 1}`;
+  const streak = dayStreak(attempts, now);
+  const today = xpToday(attempts, now);
+  const week = weekStrip(attempts, now);
+  const quests = weeklyQuests(attempts, now);
+  const last = attempts[attempts.length - 1];
+  const runNo = attempts.length + 1;
+  const startLabel = exhausted ? `All ${maxRuns} runs used` : `Start run ${runNo}`;
   const start = () => {
     if (!exhausted) onStart({ difficulty, hints });
   };
 
-  const chip =
-    "inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-[var(--radius)] border border-ink/15 text-ink/85";
-
   return (
-    <div className="relative isolate min-h-full overflow-auto" style={{ background: "transparent" }}>
-      <nav
-        className="sticky top-0 z-20 flex items-center justify-between px-4 sm:px-6 md:px-10 h-14 border-b border-ink/10"
-        style={{ background: "color-mix(in srgb, var(--bg) 85%, transparent)", backdropFilter: "blur(8px)" }}
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 flex items-center justify-center" style={{ background: "var(--accent)" }}>
-            <span className="text-white text-xs font-bold font-display leading-none">{product.mark}</span>
-          </div>
-          <span className="text-ink font-display font-semibold text-base tracking-tight">{product.name}</span>
-          <span className="hidden sm:inline text-ink/75 text-xs uppercase tracking-widest border-l border-ink/15 pl-3">
-            {product.line}
-          </span>
-        </div>
-        <ThemeToggle />
-      </nav>
-
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 md:px-10 pt-5 md:pt-10 pb-12 animate-fade-in-up">
-        <div className="grid md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-4 sm:gap-6 md:gap-10 items-center">
-          {/* The persona you are about to meet */}
-          <figure className="relative w-24 sm:w-full sm:max-w-[22rem] md:max-w-none sm:mx-auto aspect-square overflow-hidden rounded-[var(--radius)] border border-ink/10">
-            <img
-              src={PORTRAIT_SRC}
-              alt={persona.portraitAlt}
-              className="portrait-img absolute inset-0 w-full h-full object-cover object-top"
-              style={{ background: "var(--surface-2)" }}
-            />
-            <figcaption
-              className="hidden sm:block absolute inset-x-0 bottom-0 px-4 py-3"
-              style={{
-                background:
-                  "linear-gradient(transparent, color-mix(in srgb, var(--bg) 88%, transparent) 45%)",
-              }}
-            >
-              <span className="block font-display font-semibold text-ink text-lg leading-tight">
-                {persona.name}
-              </span>
-              <span className="block text-ink/85 text-sm">
-                {persona.role}, {persona.organisation}
-              </span>
-            </figcaption>
-          </figure>
-
-          <div className="flex flex-col">
-            <p
-              className="self-start inline-flex items-center gap-2 mb-3 px-3 py-1 text-sm font-medium rounded-[var(--radius)]"
-              style={{ background: "rgb(var(--accent-rgb) / 0.12)", color: "var(--brand)" }}
-            >
-              <span aria-hidden className="w-1.5 h-1.5 rounded-full bg-brand" />
-              {scenario.category}
-            </p>
-            <h1 className="font-display font-bold text-3xl sm:text-4xl md:text-5xl text-ink tracking-[-0.02em] leading-[1.02]">
+    <AppShell
+      product={product}
+      items={[
+        { id: "home", label: "Practice home", icon: "home", current: true, onSelect: () => {} },
+        ...(last
+          ? [
+              {
+                id: "report",
+                label: "Your latest report",
+                icon: "report",
+                onSelect: () => onViewReport(last),
+              },
+            ]
+          : []),
+      ]}
+    >
+      <div className="max-w-[1480px] p-3 sm:p-4 lg:p-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_400px] items-start">
+        <main className="flex flex-col gap-4 min-w-0">
+          {/* Header card */}
+          <section className="card p-5 sm:p-6" aria-labelledby="scenario-title">
+            <nav aria-label="Breadcrumb">
+              <ol className="flex flex-wrap items-center gap-1.5 text-sm text-ink/80">
+                <li>Practice</li>
+                <li aria-hidden>/</li>
+                <li>{scenario.category}</li>
+                <li aria-hidden>/</li>
+                <li aria-current="page" className="text-ink font-medium">
+                  Renewal
+                </li>
+              </ol>
+            </nav>
+            <h1 id="scenario-title" className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-ink">
               The Renewal with {persona.name}
             </h1>
-            <p className="text-ink/85 text-base md:text-lg leading-relaxed mt-3 max-w-2xl">
-              {player.challenge}
-            </p>
-
-            <ul className="flex flex-wrap gap-2 mt-4 sm:mt-5" aria-label="About this run">
-              <li className={chip}>About {minutes} min</li>
-              <li className={chip}>{DIFFICULTIES.find((d) => d.id === difficulty)?.label} persona</li>
-              <li className={chip}>
+            <ul
+              className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-ink/85"
+              aria-label="About this scenario"
+            >
+              <li className="flex items-center gap-1.5">
+                <Icon name="clock" size={17} /> About {minutes} min
+              </li>
+              <li className="flex items-center gap-1.5">
+                <Icon name="user" size={17} /> {persona.role}, {persona.organisation}
+              </li>
+              <li className="flex items-center gap-1.5">
+                <Icon name="attempts" size={17} />
                 {exhausted ? `All ${maxRuns} runs used` : `${runsLeft} of ${maxRuns} runs left`}
               </li>
-              <li className={`${chip} max-sm:hidden`}>{scenario.instrument.objectives.length} objectives</li>
+              <li className="flex items-center gap-1.5">
+                <Icon name="target" size={17} /> {scenario.instrument.objectives.length} objectives
+              </li>
             </ul>
+            <div className="mt-4 hidden sm:flex flex-wrap items-center gap-2">
+              <span className="text-sm text-ink/85 mr-1">Skills</span>
+              {scenario.instrument.skills.map((sk) => (
+                <span key={sk.id} className="chip">
+                  {sk.name}
+                </span>
+              ))}
+            </div>
+            <p className="mt-4 text-[15px] leading-relaxed text-ink/85 max-w-3xl">{player.challenge}</p>
+          </section>
 
-            {/* Run setup, compact: difficulty and hints */}
-            <fieldset className="mt-4 sm:mt-5">
-              <legend className="text-ink/75 text-xs uppercase tracking-widest mb-2">
-                Persona difficulty
-              </legend>
-              <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Persona difficulty">
-                {DIFFICULTIES.map((d) => {
-                  const on = difficulty === d.id;
+          {/* Stage: who you will meet and how hard */}
+          <section className="card p-4 sm:p-5" aria-labelledby="setup-heading">
+            <div className="grid gap-5 md:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
+              <figure className="relative aspect-square w-28 md:w-full overflow-hidden rounded-[var(--radius-sm)]">
+                <img
+                  src={PORTRAIT_SRC}
+                  alt={persona.portraitAlt}
+                  className="portrait-img absolute inset-0 w-full h-full object-cover object-top"
+                  style={{ background: "var(--surface-2)" }}
+                />
+                <figcaption
+                  className="absolute left-3 top-3 hidden md:flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium text-white"
+                  style={{ background: "rgb(15 15 18 / 0.72)" }}
+                >
+                  <span aria-hidden className="w-2 h-2 rounded-full bg-white" />
+                  {persona.name}
+                </figcaption>
+              </figure>
+
+              <div className="flex flex-col gap-4 min-w-0">
+                <div>
+                  <h2 id="setup-heading" className="text-xl font-bold text-ink">
+                    {exhausted ? "Practice complete" : `Set up run ${runNo}`}
+                  </h2>
+                  <p className="text-sm text-ink/80 mt-1">
+                    Pick how hard {persona.name.split(" ")[0]} pushes back. Your score always uses the same
+                    skills.
+                  </p>
+                </div>
+                <fieldset>
+                  <legend className="text-sm font-semibold text-ink mb-2">Persona difficulty</legend>
+                  <div
+                    role="radiogroup"
+                    aria-label="Persona difficulty"
+                    className="grid gap-2 sm:grid-cols-3"
+                  >
+                    {DIFFICULTIES.map((d) => {
+                      const on = difficulty === d.id;
+                      return (
+                        <button
+                          key={d.id}
+                          role="radio"
+                          aria-checked={on}
+                          onClick={() => setDifficulty(d.id)}
+                          className="choice text-left px-3 py-2.5 min-h-[44px] flex items-start gap-2"
+                        >
+                          <span
+                            aria-hidden
+                            className="mt-0.5 w-5 h-5 flex-none rounded-full flex items-center justify-center"
+                            style={
+                              on
+                                ? { background: "var(--accent)", color: "#fff" }
+                                : { border: "1.5px solid var(--line)" }
+                            }
+                          >
+                            {on && <Icon name="check" size={12} stroke={3} />}
+                          </span>
+                          <span>
+                            <span className="block font-semibold text-ink text-sm">{d.label}</span>
+                            <span className="hidden sm:block text-ink/80 text-xs leading-snug mt-0.5">
+                              {d.desc}
+                            </span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+                <label className="inline-flex items-center gap-2.5 text-sm text-ink cursor-pointer self-start min-h-[24px]">
+                  <input
+                    type="checkbox"
+                    checked={hints}
+                    onChange={(e) => setHints(e.target.checked)}
+                    className="w-5 h-5 accent-[var(--accent)]"
+                  />
+                  Show a hint when a reply misses an opportunity
+                </label>
+                <div className="flex flex-wrap items-center gap-3 mt-auto">
+                  <button onClick={start} disabled={exhausted} className="btn btn-primary px-6">
+                    {startLabel}
+                    {!exhausted && <Icon name="arrow" size={18} />}
+                  </button>
+                  <span className="text-sm text-ink/80">Every run is saved to your path.</span>
+                </div>
+              </div>
+            </div>
+
+            {/* The path of runs, drawn like a progress track */}
+            <div className="mt-6 pt-5 border-t" style={{ borderColor: "var(--edge)" }}>
+              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                <h2 className="text-base font-bold text-ink">Your path</h2>
+                <p className="text-sm text-ink/80">
+                  {attempts.length === 0
+                    ? "Your first run sets your baseline."
+                    : `${attempts.length} of ${maxRuns} runs. Best ${Math.max(...attempts.map((a) => a.scores.overall))}/10.`}
+                </p>
+              </div>
+              <ol className="mt-4 grid" style={{ gridTemplateColumns: `repeat(${maxRuns}, minmax(0, 1fr))` }}>
+                {Array.from({ length: maxRuns }, (_, i) => {
+                  const r = attempts[i];
+                  const current = !r && i === attempts.length && !exhausted;
+                  const passed = r ? r.scores.overall >= scenario.passScore : false;
+                  const node =
+                    "relative z-10 w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold";
                   return (
-                    <button
-                      key={d.id}
-                      role="radio"
-                      aria-checked={on}
-                      onClick={() => setDifficulty(d.id)}
-                      title={d.desc}
-                      className="choice text-left px-3 py-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand)] min-h-[44px]"
-                    >
-                      <span className="block font-display font-semibold text-ink text-sm">{d.label}</span>
-                      <span className="hidden sm:block text-ink/75 text-xs leading-snug">{d.desc}</span>
-                    </button>
+                    <li key={i} className="relative flex flex-col items-center text-center">
+                      {i > 0 && (
+                        <span
+                          aria-hidden
+                          className="absolute top-[22px] right-1/2 w-full h-1.5 -translate-y-1/2 rounded-full"
+                          style={{ background: r || current ? "var(--accent-ui)" : "var(--edge)" }}
+                        />
+                      )}
+                      {r ? (
+                        <button
+                          onClick={() => onViewReport(r)}
+                          aria-label={`Run ${i + 1}, scored ${r.scores.overall} of 10. Open its report`}
+                          className={`${node} text-white`}
+                          style={{ background: passed ? "var(--ok)" : "var(--accent)" }}
+                        >
+                          <Icon name="check" size={18} stroke={3} />
+                        </button>
+                      ) : (
+                        <span
+                          className={node}
+                          style={
+                            current
+                              ? {
+                                  background: "var(--surface)",
+                                  border: "3px solid var(--accent-ui)",
+                                  color: "var(--brand)",
+                                }
+                              : {
+                                  background: "var(--surface-2)",
+                                  border: "1.5px solid var(--line)",
+                                  color: "rgb(var(--ink) / 0.8)",
+                                }
+                          }
+                        >
+                          {current ? <Icon name="play" size={16} filled /> : <Icon name="lock" size={16} />}
+                        </span>
+                      )}
+                      <span
+                        className={`mt-2 text-xs leading-tight ${current ? "font-bold text-brand" : "text-ink/80"}`}
+                      >
+                        {r ? `Run ${i + 1} · ${r.scores.overall}/10` : current ? "Up next" : `Run ${i + 1}`}
+                      </span>
+                    </li>
                   );
                 })}
+              </ol>
+            </div>
+          </section>
+        </main>
+
+        <aside className="flex flex-col gap-4 min-w-0" aria-label="Scenario details and progress">
+          {/* Scenario details */}
+          <section className="card p-5" aria-labelledby="details-heading">
+            <h2 id="details-heading" className="text-xl font-bold text-ink mb-4">
+              Scenario details
+            </h2>
+            <Tabs
+              label="Scenario details"
+              idPrefix="details"
+              value={tab}
+              onChange={setTab}
+              tabs={[
+                { id: "brief", label: "Brief" },
+                { id: "skills", label: "Skills" },
+                { id: "objectives", label: "Objectives" },
+              ]}
+            />
+            <div className="mt-4">
+              {tab === "brief" && (
+                <div
+                  {...tabPanelProps("details", "brief")}
+                  className="flex flex-col gap-2 rounded-[var(--radius-sm)]"
+                >
+                  {[
+                    { t: "The scene", body: player.scene, open: true },
+                    { t: "Your role", body: player.role },
+                    { t: "Your goal", body: player.goal },
+                    { t: "The challenge", body: player.challenge },
+                  ].map((b) => (
+                    <details key={b.t} className="acc" open={b.open}>
+                      <summary>
+                        {b.t}
+                        <Icon name="chevron" size={18} className="acc-chevron" />
+                      </summary>
+                      <p className="acc-body text-sm leading-relaxed text-ink/85">{b.body}</p>
+                    </details>
+                  ))}
+                </div>
+              )}
+              {tab === "skills" && (
+                <div
+                  {...tabPanelProps("details", "skills")}
+                  className="flex flex-col gap-2 rounded-[var(--radius-sm)]"
+                >
+                  <p className="text-sm text-ink/80 mb-1">
+                    In practice the criteria are yours to see. Each behaviour has written anchors for Strong,
+                    Adequate, Weak and Harmful.
+                  </p>
+                  {scenario.instrument.skills.map((sk) => (
+                    <details key={sk.id} className="acc">
+                      <summary>
+                        <span>
+                          {sk.name} <span className="font-normal text-ink/80">· {sk.weight}%</span>
+                        </span>
+                        <Icon name="chevron" size={18} className="acc-chevron" />
+                      </summary>
+                      <div className="acc-body">
+                        <p className="text-sm text-ink/85 leading-relaxed">{sk.desc}</p>
+                        <ul className="mt-2 space-y-1">
+                          {sk.indicators.map((ind) => (
+                            <li key={ind.id} className="text-sm text-ink/85 flex gap-2">
+                              <span
+                                aria-hidden
+                                className="mt-2 w-1.5 h-1.5 rounded-full flex-none"
+                                style={{ background: "var(--accent-ui)" }}
+                              />
+                              {ind.label}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </details>
+                  ))}
+                </div>
+              )}
+              {tab === "objectives" && (
+                <div {...tabPanelProps("details", "objectives")} className="rounded-[var(--radius-sm)]">
+                  <ol className="flex flex-col gap-2">
+                    {scenario.instrument.objectives.map((o, i) => (
+                      <li key={o.id} className="acc px-4 py-3 flex items-start gap-3">
+                        <span className="chip w-7 h-7 flex-none justify-center px-0 font-bold">{i + 1}</span>
+                        <span className="flex-1">
+                          <span className="block font-semibold text-ink text-sm">{o.label}</span>
+                          <span className="block text-sm text-ink/80">{o.sub}</span>
+                        </span>
+                        <span className="text-sm font-semibold text-brand whitespace-nowrap">+{o.xp} XP</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+            </div>
+            <p className="mt-4 text-xs text-ink/80 leading-relaxed">
+              Feedback status: rung {scenario.instrument.claimRung} of 4, {rung.title.toLowerCase()}.{" "}
+              {rung.fitFor}
+            </p>
+          </section>
+
+          {/* Game layer */}
+          <section className="card p-5" aria-labelledby="progress-heading">
+            <h2 id="progress-heading" className="text-xl font-bold text-ink">
+              Your progress
+            </h2>
+            <dl className="mt-4 grid grid-cols-3 gap-2">
+              <div className="acc px-3 py-3">
+                <dt className="text-xs text-ink/80">Streak</dt>
+                <dd className="mt-1 flex items-center gap-1.5 text-lg font-bold text-ink">
+                  <FlameGlyph size={20} className="text-[var(--accent-ui)]" />
+                  {streak} {streak === 1 ? "day" : "days"}
+                </dd>
               </div>
-            </fieldset>
-            <label className="mt-3 inline-flex items-center gap-2.5 text-sm text-ink/85 cursor-pointer self-start">
-              <input
-                type="checkbox"
-                checked={hints}
-                onChange={(e) => setHints(e.target.checked)}
-                className="w-4 h-4 accent-[var(--accent)] flex-none"
+              <div className="acc px-3 py-3">
+                <dt className="text-xs text-ink/80">Total XP</dt>
+                <dd className="mt-1 flex items-center gap-1.5 text-lg font-bold text-ink tabular-nums">
+                  <StarGlyph size={20} className="text-[var(--xp)]" />
+                  {xp}
+                </dd>
+              </div>
+              <div className="acc px-3 py-3">
+                <dt className="text-xs text-ink/80">Level</dt>
+                <dd className="mt-1 text-lg font-bold text-ink leading-tight">{level.name}</dd>
+              </div>
+            </dl>
+            <p className="mt-3 text-xs text-ink/80">
+              {nextLevel ? `${nextLevel.floor - xp} XP to ${nextLevel.name}` : "Top level reached"}
+            </p>
+            <div
+              className="mt-1.5 h-2 rounded-full overflow-hidden"
+              style={{ background: "var(--edge)" }}
+              role="progressbar"
+              aria-label="Progress to the next level"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(levelProgress(xp))}
+            >
+              <div
+                className="h-full rounded-full"
+                style={{ width: `${levelProgress(xp)}%`, background: "var(--accent-ui)" }}
               />
-              Show hints when a turn misses an opportunity
-            </label>
-
-            <div className="mt-5 sm:mt-6 flex flex-wrap items-center gap-3">
-              <button
-                onClick={start}
-                disabled={exhausted}
-                className="group btn btn-primary px-7 font-display text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
-              >
-                {startLabel}
-                {!exhausted && (
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 16 16"
-                    fill="none"
-                    aria-hidden
-                    className="transition-transform group-hover:translate-x-0.5"
-                  >
-                    <path
-                      d="M3 8h10M9 4l4 4-4 4"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                )}
-              </button>
-              <button
-                onClick={() => brief.current?.showModal()}
-                className="btn btn-secondary px-5 font-display text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-              >
-                Read the brief
-              </button>
             </div>
-          </div>
-        </div>
 
-        {/* Skills, as chips. The criteria behind each one are in the brief. */}
-        <section aria-labelledby="skills-heading" className="mt-10">
-          <h2 id="skills-heading" className="text-ink/75 text-xs uppercase tracking-widest mb-3">
-            Skills you are practising
-          </h2>
-          <ul className="flex flex-wrap gap-2">
-            {scenario.instrument.skills.map((sk) => (
-              <li
-                key={sk.id}
-                title={sk.desc}
-                className="px-3 py-1.5 rounded-[var(--radius)] text-sm text-ink border border-ink/15"
-                style={{ background: "var(--surface)" }}
-              >
-                {sk.name}
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {/* Your path: the five runs as a course path. Done runs open their report; the next one is lit. */}
-        <section
-          aria-labelledby="path-heading"
-          className="mt-8 rounded-[var(--radius)] border-2 p-5 sm:p-6"
-          style={{ background: "var(--surface)", borderColor: "var(--edge)" }}
-        >
-          <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
-            <div>
-              <h2 id="path-heading" className="font-display font-bold text-ink text-xl">
-                Your path
-              </h2>
-              <p className="text-ink/80 text-sm mt-1 leading-relaxed max-w-xl">
-                {attempts.length === 0
-                  ? "Your first run sets your baseline. XP comes from the behaviours you show, not from how much you say."
-                  : exhausted
-                    ? `All ${maxRuns} runs done. Best score ${best}/10. Open any run to see its report.`
-                    : `${attempts.length} of ${maxRuns} runs done. Best score ${best}/10. Open any run to see its report.`}
-              </p>
+            <h3 className="mt-6 text-base font-bold text-ink flex items-baseline justify-between">
+              Daily goal
+              <span className="text-sm font-medium text-ink/80 tabular-nums">
+                {Math.min(today, DAILY_GOAL_XP)} of {DAILY_GOAL_XP} XP
+              </span>
+            </h3>
+            <div
+              className="mt-2 h-2 rounded-full overflow-hidden"
+              style={{ background: "var(--edge)" }}
+              role="progressbar"
+              aria-label="Daily goal"
+              aria-valuemin={0}
+              aria-valuemax={DAILY_GOAL_XP}
+              aria-valuenow={Math.min(today, DAILY_GOAL_XP)}
+            >
+              <div
+                className="h-full rounded-full"
+                style={{ width: `${Math.min(100, (today / DAILY_GOAL_XP) * 100)}%`, background: "var(--xp)" }}
+              />
             </div>
-            {attempts.length > 0 && (
-              <dl className="flex gap-6">
-                <div>
-                  <dt className="text-ink/75 text-xs uppercase tracking-widest">Level</dt>
-                  <dd className="font-display font-bold text-ink text-lg">{level.name}</dd>
-                  <dd
-                    className="mt-1 h-1.5 w-20 rounded-full overflow-hidden"
-                    style={{ background: "var(--edge)" }}
-                    aria-hidden
-                  >
-                    <span
-                      className="block h-full rounded-full"
-                      style={{ width: `${levelProgress(xp)}%`, background: "var(--accent)" }}
-                    />
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-ink/75 text-xs uppercase tracking-widest">XP</dt>
-                  <dd className="font-display font-bold text-ink text-lg tabular-nums">{xp}</dd>
-                  {nextLevel && (
-                    <dd className="text-ink/75 text-xs">
-                      {nextLevel.floor - xp} to {nextLevel.name}
-                    </dd>
-                  )}
-                </div>
-                <div>
-                  <dt className="text-ink/75 text-xs uppercase tracking-widest">Badges</dt>
-                  <dd className="font-display font-bold text-ink text-lg tabular-nums">
-                    {earned.size}/{BADGES.length}
-                  </dd>
-                </div>
-              </dl>
-            )}
-          </div>
-
-          <ol
-            className="mt-6 grid gap-2"
-            style={{ gridTemplateColumns: `repeat(${maxRuns}, minmax(0, 1fr))` }}
-          >
-            {Array.from({ length: maxRuns }, (_, i) => {
-              const run = attempts[i];
-              const current = !run && i === attempts.length && !exhausted;
-              const passed = run ? run.scores.overall >= scenario.passScore : false;
-              const node =
-                "w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center font-display font-bold text-lg tabular-nums";
-              return (
-                <li key={i} className="relative flex flex-col items-center text-center">
-                  {i > 0 && (
-                    <span
-                      aria-hidden
-                      className="absolute top-6 sm:top-7 right-1/2 w-full h-1 -translate-y-1/2 rounded-full"
-                      style={{ background: run || current ? "var(--ok)" : "var(--edge)", zIndex: 0 }}
-                    />
-                  )}
-                  {run ? (
-                    <button
-                      onClick={() => onViewReport(run)}
-                      aria-label={`Run ${i + 1}, scored ${run.scores.overall} of 10. Open its report`}
-                      className={`relative z-10 ${node} border-2 transition-transform hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand)]`}
-                      style={{
-                        background: passed ? "var(--ok-tint)" : "var(--warn-tint)",
-                        borderColor: passed ? "var(--ok)" : "var(--warn)",
-                        color: passed ? "var(--ok)" : "var(--warn)",
-                      }}
-                    >
-                      <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none">
-                        <path
-                          d="M5 12.5l4.5 4.5L19 7.5"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </button>
-                  ) : (
-                    <span
-                      className={`relative z-10 ${node} border-2`}
-                      style={
-                        current
-                          ? {
-                              background: "var(--accent)",
-                              borderColor: "var(--accent)",
-                              color: "#ffffff",
-                              boxShadow:
-                                "0 4px 0 var(--accent-press), 0 0 0 6px rgb(var(--accent-rgb) / 0.16)",
-                            }
-                          : {
-                              background: "var(--surface-2)",
-                              borderColor: "var(--edge)",
-                              color: "rgb(var(--ink) / 0.75)",
-                            }
-                      }
-                    >
-                      {i + 1}
-                    </span>
-                  )}
+            <ul className="mt-3 grid grid-cols-7 gap-1" aria-label="Practice days this week">
+              {week.map((d) => (
+                <li key={d.label} className="flex flex-col items-center gap-1">
                   <span
-                    className={`mt-2 text-xs leading-tight ${current ? "font-bold text-brand" : "text-ink/80"}`}
+                    aria-hidden
+                    className="w-8 h-8 rounded-full flex items-center justify-center"
+                    style={
+                      d.done
+                        ? { background: "var(--accent-ui)", color: "#fff" }
+                        : d.today
+                          ? { border: "2px solid var(--accent-ui)" }
+                          : { background: "var(--surface-2)", border: "1px solid var(--edge)" }
+                    }
                   >
-                    {run ? (
-                      <>
-                        Run {i + 1}
-                        <span className="block text-ink/75">{run.scores.overall}/10</span>
-                      </>
-                    ) : current ? (
-                      "Up next"
-                    ) : (
-                      `Run ${i + 1}`
-                    )}
+                    {d.done && <Icon name="check" size={14} stroke={3} />}
+                  </span>
+                  <span className={`text-xs ${d.today ? "font-bold text-ink" : "text-ink/80"}`} aria-hidden>
+                    {d.short}
+                  </span>
+                  <span className="sr-only">
+                    {d.label}
+                    {d.today ? ", today" : ""}: {d.done ? "practised" : "no run yet"}
                   </span>
                 </li>
-              );
-            })}
-          </ol>
-        </section>
-      </main>
+              ))}
+            </ul>
 
-      {/* The full brief, on request */}
-      <dialog
-        ref={brief}
-        aria-labelledby="brief-title"
-        className="brief-drawer m-0 ml-auto h-full max-h-none w-full max-w-xl p-0 border-l border-ink/15 text-ink"
-        style={{ background: "var(--bg)" }}
-        onClick={(e) => {
-          if (e.target === e.currentTarget) brief.current?.close();
-        }}
-      >
-        <div className="h-full overflow-y-auto p-5 sm:p-7">
-          <div className="flex items-center justify-between gap-4 mb-5">
-            <h2 id="brief-title" className="font-display font-bold text-2xl text-ink">
-              The brief
-            </h2>
-            <button
-              onClick={() => brief.current?.close()}
-              aria-label="Close the brief"
-              className="w-10 h-10 inline-flex items-center justify-center rounded-[var(--radius)] border border-ink/15 text-ink/85 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-                <path
-                  d="M2 2l10 10M12 2 2 12"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
-          </div>
-          <div className="space-y-6">
-            <section>
-              <SectionLabel index="01">The Scene</SectionLabel>
-              <p className="text-ink/85 text-sm leading-relaxed">{player.scene}</p>
-            </section>
-            <section>
-              <SectionLabel index="02">Your Role</SectionLabel>
-              <p className="text-ink/85 text-sm leading-relaxed">{player.role}</p>
-            </section>
-            <section>
-              <SectionLabel index="03">Your Goal</SectionLabel>
-              <p className="text-ink/85 text-sm leading-relaxed">{player.goal}</p>
-            </section>
-            <section>
-              <SectionLabel index="04">Objectives</SectionLabel>
-              <ul className="space-y-2.5">
-                {scenario.instrument.objectives.map((o) => (
-                  <li key={o.id} className="flex items-baseline justify-between gap-4 text-sm">
-                    <span>
-                      <span className="block font-semibold text-ink">{o.label}</span>
-                      <span className="block text-ink/80 text-sm">{o.sub}</span>
-                    </span>
-                    <span className="font-semibold text-brand tabular-nums whitespace-nowrap">
-                      +{o.xp} XP
-                    </span>
+            <h3 className="mt-6 text-base font-bold text-ink">Quests this week</h3>
+            <ul className="mt-2 flex flex-col gap-3">
+              {quests.map((q) => {
+                const done = q.progress >= q.target;
+                return (
+                  <li key={q.id}>
+                    <div className="flex justify-between gap-3 text-sm">
+                      <span className="text-ink flex items-center gap-1.5">
+                        {done && <Icon name="check" size={15} stroke={3} className="text-[var(--ok)]" />}
+                        {q.label}
+                      </span>
+                      <span className="text-ink/80 tabular-nums">
+                        {q.progress}/{q.target}
+                      </span>
+                    </div>
+                    <div
+                      className="mt-1.5 h-2 rounded-full overflow-hidden"
+                      style={{ background: "var(--edge)" }}
+                      role="progressbar"
+                      aria-label={q.label}
+                      aria-valuemin={0}
+                      aria-valuemax={q.target}
+                      aria-valuenow={q.progress}
+                    >
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${(q.progress / q.target) * 100}%`,
+                          background: done ? "var(--ok)" : "var(--accent-ui)",
+                        }}
+                      />
+                    </div>
                   </li>
-                ))}
-              </ul>
-            </section>
-            <section>
-              <SectionLabel index="05">What we look for</SectionLabel>
-              <p className="text-ink/80 text-sm leading-relaxed mb-3">
-                In practice the criteria are yours to see. Each behaviour has written anchors for Strong,
-                Adequate, Weak and Harmful, and the report shows them beside your own words.
-              </p>
-              <ul className="space-y-3">
-                {scenario.instrument.skills.map((sk) => (
-                  <li key={sk.id}>
-                    <details>
-                      <summary className="cursor-pointer text-sm font-semibold text-ink min-h-[32px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]">
-                        {sk.name}{" "}
-                        <span className="text-ink/75 font-normal">({sk.indicators.length} behaviours)</span>
-                      </summary>
-                      <p className="text-ink/80 text-sm mt-1 leading-relaxed">{sk.desc}</p>
-                      <ul className="mt-2 space-y-1">
-                        {sk.indicators.map((ind) => (
-                          <li key={ind.id} className="text-sm text-ink/80 leading-snug flex gap-2">
-                            <span aria-hidden className="mt-2 w-1 h-1 rounded-full bg-brand flex-none" />
-                            {ind.label}
-                          </li>
-                        ))}
-                      </ul>
-                    </details>
-                  </li>
-                ))}
-              </ul>
-            </section>
-            <section
-              className="rounded-[var(--radius)] border border-ink/10 p-4"
-              style={{ background: "var(--surface)" }}
-            >
-              <p className="text-ink/75 text-xs uppercase tracking-widest mb-1">Feedback status</p>
-              <p className="font-display font-semibold text-ink text-sm">
-                Rung {scenario.instrument.claimRung} of 4: {rung.title}
-              </p>
-              <p className="text-ink/80 text-sm mt-1 leading-relaxed">
-                Practice scores are for you. {rung.fitFor}
-              </p>
-            </section>
-          </div>
-          <button
-            onClick={() => {
-              brief.current?.close();
-              start();
-            }}
-            disabled={exhausted}
-            className="mt-6 w-full btn btn-primary font-display focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2"
-          >
-            {startLabel}
-          </button>
-        </div>
-      </dialog>
+                );
+              })}
+            </ul>
+
+            <h3 className="mt-6 text-base font-bold text-ink flex items-baseline justify-between">
+              Badges
+              <span className="text-sm font-medium text-ink/80 tabular-nums">
+                {earned.size} of {BADGES.length}
+              </span>
+            </h3>
+            <ul className="mt-3 grid grid-cols-6 gap-2">
+              {BADGES.map((b) => (
+                <li key={b.id} className="flex flex-col items-center" title={`${b.name}: ${b.desc}`}>
+                  <BadgeMedal mark={b.mark} earned={earned.has(b.id)} size={40} />
+                  <span className="sr-only">
+                    {b.name}, {earned.has(b.id) ? "earned" : "not earned yet"}. {b.desc}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </aside>
+      </div>
       <BuildStamp product={product.name} />
-    </div>
+    </AppShell>
   );
 }

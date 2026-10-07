@@ -17,6 +17,9 @@ import { providers } from "../providers";
 import { saveAttempt } from "../store/attempts";
 import type { Product } from "../products";
 import useMediaQuery from "../lib/useMediaQuery";
+import AppShell from "../components/AppShell";
+import Icon from "../components/Icon";
+import Tabs, { tabPanelProps } from "../components/Tabs";
 
 const OPENING_OFFSET_SECONDS = 125; // the authored opening ends at 2:05
 const HOLD_MS = 350; // a press on the mic longer than this is hold to talk; shorter is tap to toggle
@@ -34,6 +37,8 @@ type Snapshot = {
   turns: number;
   log: FeedbackEntry[];
 };
+
+type PanelTab = "coach" | "transcript";
 
 type FeedbackEntry = {
   id: number;
@@ -81,12 +86,27 @@ export default function SessionPage({
   const [cameraOn, setCameraOn] = useState(false);
   const [speaking, setSpeaking] = useState(true);
   // Drawers dock beside the stage on wide screens and open as full screen sheets on small ones.
-  const xlUp = useMediaQuery("(min-width: 1280px)");
   const lgUp = useMediaQuery("(min-width: 1024px)");
-  const [showTranscript, setShowTranscript] = useState(xlUp);
-  const [showCoach, setShowCoach] = useState(lgUp && isPractice);
-  useEffect(() => setShowTranscript(xlUp), [xlUp]);
-  useEffect(() => setShowCoach(lgUp && isPractice), [lgUp, isPractice]);
+  // One details panel beside the stage: docked open on a laptop, a sheet on request below that.
+  const [panelTab, setPanelTab] = useState<PanelTab>(isPractice ? "coach" : "transcript");
+  const [panelOpen, setPanelOpen] = useState(lgUp);
+  useEffect(() => setPanelOpen(lgUp), [lgUp]);
+  const panelCloseRef = useRef<HTMLButtonElement | null>(null);
+  const panelReturnRef = useRef<HTMLElement | null>(null);
+  const openPanel = (tab: PanelTab) => {
+    if (!lgUp && !panelOpen) panelReturnRef.current = document.activeElement as HTMLElement | null;
+    setPanelTab(tab);
+    setPanelOpen(true);
+  };
+  const closePanel = () => {
+    setPanelOpen(false);
+    if (!lgUp) panelReturnRef.current?.focus();
+  };
+  const togglePanel = (tab: PanelTab) => (panelOpen && panelTab === tab ? closePanel() : openPanel(tab));
+  // As a sheet the panel covers the call, so focus moves into it and returns on close.
+  useEffect(() => {
+    if (panelOpen && !lgUp) panelCloseRef.current?.focus();
+  }, [panelOpen, lgUp]);
   const [showCriteria, setShowCriteria] = useState(false);
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<SessionTurn[]>(scenario.stimulus.opening);
@@ -244,7 +264,7 @@ export default function SessionPage({
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [messages, showTranscript]);
+  }, [messages, panelOpen, panelTab]);
 
   const level = levelFor(xp).name;
   const levelPct = levelProgress(xp);
@@ -453,6 +473,13 @@ export default function SessionPage({
     setHint(ind?.coaching.hint ?? "Ask an open question about what the client needs to see.");
   }
 
+  // What counts: shows the criteria under each objective, and brings the coach into view to show them.
+  function toggleCriteria() {
+    if (!isPractice) return;
+    if (!showCriteria && !(panelOpen && panelTab === "coach")) openPanel("coach");
+    setShowCriteria((v) => !v);
+  }
+
   // ---------------- Ending ----------------
   // Ending a call is the one action that cannot be taken back. Conversation AI asks first, because
   // the attempt is single; AI RolePlay gives a five second window to resume instead of a dialog.
@@ -526,8 +553,8 @@ export default function SessionPage({
   // ---------------- Keyboard ----------------
   // Hold Space to talk (interrupting if the persona is mid line). In practice: H for a hint,
   // W for what counts, R to rewind the last turn. Ignored while typing or on a focused control.
-  const keys = useRef({ startRecording, stopRecording, requestHint, rewindLast });
-  keys.current = { startRecording, stopRecording, requestHint, rewindLast };
+  const keys = useRef({ startRecording, stopRecording, requestHint, rewindLast, toggleCriteria });
+  keys.current = { startRecording, stopRecording, requestHint, rewindLast, toggleCriteria };
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (isTypingTarget(e.target) || e.metaKey || e.ctrlKey || e.altKey) return;
@@ -539,7 +566,7 @@ export default function SessionPage({
       }
       if (!isPractice || e.repeat) return;
       if (e.key === "h" || e.key === "H") keys.current.requestHint();
-      if (e.key === "w" || e.key === "W") setShowCriteria((v) => !v);
+      if (e.key === "w" || e.key === "W") keys.current.toggleCriteria();
       if (e.key === "r" || e.key === "R") keys.current.rewindLast();
     };
     const up = (e: KeyboardEvent) => {
@@ -573,865 +600,845 @@ export default function SessionPage({
     </svg>
   );
 
-  const barButton = (
-    label: string,
-    active: boolean,
-    onClick: () => void,
-    icon: ReactNode,
-    extra?: ReactNode,
-  ) => (
+  const barButton = (label: string, active: boolean, onClick: () => void, icon: ReactNode) => (
     <button
       onClick={onClick}
       aria-pressed={active}
       aria-label={label}
-      className="relative h-10 px-3 flex items-center gap-2 text-sm font-medium border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
+      className="btn !px-3 border"
       style={{
-        background: active ? "rgb(var(--accent-rgb) / 0.14)" : "transparent",
-        borderColor: active ? "rgb(var(--accent-rgb) / 0.5)" : "rgb(var(--ink) / 0.15)",
-        color: active ? "var(--brand)" : "rgb(var(--ink) / 0.85)",
+        background: active ? "var(--accent-soft)" : "var(--surface)",
+        borderColor: active ? "var(--accent-ui)" : "var(--line)",
+        color: active ? "var(--accent-soft-ink)" : "rgb(var(--ink) / 0.85)",
       }}
     >
       {icon}
-      <span aria-hidden className="hidden md:inline">
+      <span aria-hidden className="hidden md:inline text-sm">
         {label}
       </span>
-      {extra}
     </button>
   );
 
-  const ringColor = state === "listening" ? "var(--danger)" : "var(--brand)";
+  const ringColor = state === "listening" ? "var(--danger)" : "var(--accent-ui)";
+  const panelTabs: { id: PanelTab; label: string }[] = isPractice
+    ? [
+        { id: "coach", label: "Coach" },
+        { id: "transcript", label: "Transcript" },
+      ]
+    : [{ id: "transcript", label: "Transcript" }];
+  const panelLabel = panelTab === "coach" ? "coach" : "transcript";
 
   return (
-    <div className="h-full flex flex-col overflow-hidden" style={{ background: "transparent" }}>
-      {/* Call bar: what this is, how long is left, how far along, and the way out. Nothing else. */}
-      <header className="flex items-center justify-between gap-3 px-4 md:px-6 h-16 border-b border-ink/10 flex-shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <div
-            className="w-8 h-8 flex items-center justify-center flex-none"
-            style={{ background: "var(--accent)" }}
-            aria-hidden
-          >
-            <span className="text-white text-xs font-bold leading-none">{product.mark}</span>
-          </div>
-          <div className="min-w-0">
-            <h1 className="font-display font-semibold text-ink text-sm md:text-base leading-tight truncate">
+    <AppShell product={product} fixed railFromLg>
+      <div className="h-full flex flex-col gap-2 lg:gap-3 p-2 sm:p-3 lg:p-4 overflow-hidden">
+        {/* Header card: what this is, how far along, how long is left, and the way out. */}
+        <header className="card flex-none flex flex-wrap sm:flex-nowrap items-center gap-2 md:gap-3 px-3 py-2 md:px-5 md:py-3">
+          <div className="min-w-0 w-full sm:w-auto sm:flex-1">
+            <p className="text-xs md:text-[13px] text-ink/75 truncate">
+              {product.name}
+              <span aria-hidden className="mx-1.5">
+                /
+              </span>
+              {isPractice ? `Practice run, ${difficulty}` : "Assessment, one attempt"}
+            </p>
+            <h1 className="font-display font-semibold text-ink text-[15px] md:text-lg leading-tight truncate">
               {scenario.title}
             </h1>
-            <p className="text-ink/75 text-xs leading-tight truncate">
-              {product.name} · {isPractice ? `Practice, ${difficulty}` : "Assessment, one attempt"}
-            </p>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2 md:gap-3 flex-none">
           {isPractice && (
-            <div
-              className="hidden sm:flex items-center gap-1 w-32 px-1"
-              role="img"
-              aria-label={`${objectivesDone} of ${objectives.length} objectives complete`}
-              data-anchor="objectives"
-            >
-              {objectives.map((o, i) => (
-                <span
-                  key={o.id}
-                  className="h-2.5 flex-1 rounded-full transition-colors duration-300"
-                  style={{ background: metObjectives[i] ? "var(--ok)" : "var(--edge)" }}
-                />
-              ))}
+            <div className="hidden md:flex flex-col gap-1 w-36 flex-none" data-anchor="objectives">
+              <p className="text-xs text-ink/75 tabular-nums" aria-hidden>
+                Objectives {objectivesDone}/{objectives.length}
+              </p>
+              <div
+                className="flex items-center gap-1"
+                role="img"
+                aria-label={`${objectivesDone} of ${objectives.length} objectives complete`}
+              >
+                {objectives.map((o, i) => (
+                  <span
+                    key={o.id}
+                    className="h-2 flex-1 rounded-full transition-colors duration-300"
+                    style={{ background: metObjectives[i] ? "var(--ok)" : "var(--line)" }}
+                  />
+                ))}
+              </div>
             </div>
           )}
           <CountdownTimer initial={scenario.durationSeconds} onExpire={onExpire} />
-          {barButton(
-            "Transcript",
-            showTranscript,
-            () => setShowTranscript((v) => !v),
-            <svg width="15" height="15" viewBox="0 0 14 14" fill="none" aria-hidden>
-              <rect x="1" y="2" width="12" height="1.6" rx="0.8" fill="currentColor" />
-              <rect x="1" y="6.2" width="8" height="1.6" rx="0.8" fill="currentColor" />
-              <rect x="1" y="10.4" width="10" height="1.6" rx="0.8" fill="currentColor" />
-            </svg>,
-          )}
           {isPractice &&
             barButton(
               "Coach",
-              showCoach,
-              () => setShowCoach((v) => !v),
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden>
-                <path
-                  d="M2.5 8.5l3.2 3.2L13.5 4"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                />
-              </svg>,
+              panelOpen && panelTab === "coach",
+              () => togglePanel("coach"),
+              <Icon name="target" size={18} />,
             )}
-          <span aria-hidden className="hidden sm:block w-px h-7 bg-ink/15 mx-1" />
+          {barButton(
+            "Transcript",
+            panelOpen && panelTab === "transcript",
+            () => togglePanel("transcript"),
+            <Icon name="list" size={18} />,
+          )}
           <button
             ref={endTriggerRef}
             onClick={requestEnd}
             disabled={finishing || pendingEnd !== null}
-            className="h-10 px-4 text-sm font-semibold whitespace-nowrap disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
+            className="btn !px-3 md:!px-4 border whitespace-nowrap ml-auto sm:ml-0"
             style={{
-              background: "color-mix(in srgb, var(--danger) 14%, transparent)",
+              background: "var(--surface)",
               color: "var(--danger)",
-              border: "1px solid color-mix(in srgb, var(--danger) 40%, transparent)",
+              borderColor: "var(--danger)",
             }}
           >
             End Call
           </button>
-        </div>
-      </header>
+        </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Transcript drawer */}
-        {showTranscript && (
-          <aside
-            aria-label="Transcript"
-            className={`${xlUp ? "w-80 flex-none border-r border-ink/10" : "fixed inset-0 z-50 safe-area md:inset-y-0 md:left-0 md:right-auto md:w-96 md:border-r md:border-ink/15 md:shadow-2xl"} flex flex-col overflow-hidden`}
-            style={{ background: "var(--surface-3)" }}
+        <div className="flex-1 min-h-0 flex gap-3">
+          {/* The stage card */}
+          <main
+            aria-label="Conversation"
+            className="card flex-1 min-w-0 flex flex-col overflow-y-auto md:overflow-hidden"
           >
-            <div className="px-4 py-3 border-b border-ink/10 flex items-center justify-between flex-none">
-              <h2 className="font-display font-semibold text-ink text-sm tracking-tight">Transcript</h2>
-              <div className="flex items-center gap-2">
-                <span className="text-ink/75 text-xs tabular-nums">{messages.length} lines</span>
+            <div className="relative flex-1 min-h-0 md:overflow-y-auto flex flex-col items-center justify-start md:justify-center px-4 md:px-8 pt-4 md:pt-6 pb-4 gap-3 md:gap-5">
+              {/* Persona: the same 1:1 portrait as the lobby, with a ring that shows who has the floor */}
+              <div className="flex items-center gap-4 w-full md:w-auto md:flex-col">
+                <div className="relative flex-none">
+                  <div
+                    aria-hidden
+                    className={`absolute -inset-1.5 md:-inset-2 rounded-[calc(var(--radius)+6px)] transition-opacity duration-300 ${state === "speaking" || state === "listening" ? "speak-ring" : ""}`}
+                    style={{
+                      border: `2px solid ${ringColor}`,
+                      opacity: state === "your-turn" ? 0 : state === "thinking" ? 0.4 : 1,
+                    }}
+                  />
+                  <figure
+                    className={`relative w-20 md:w-[clamp(120px,22vh,260px)] aspect-square overflow-hidden rounded-[var(--radius)] ${state === "thinking" ? "thinking-shimmer" : ""}`}
+                    style={{ background: "var(--surface-2)" }}
+                  >
+                    <img
+                      src={PORTRAIT_SRC}
+                      alt={persona.portraitAlt}
+                      className="portrait-img absolute inset-0 w-full h-full object-cover object-top"
+                    />
+                    <figcaption
+                      className="hidden md:block absolute left-2 bottom-2 px-2.5 py-1 rounded-full text-xs font-semibold"
+                      style={{ background: "var(--surface)", color: "rgb(var(--ink))" }}
+                    >
+                      {persona.name}
+                    </figcaption>
+                  </figure>
+                </div>
+                <div className="min-w-0 flex flex-col items-start gap-2 md:items-center md:gap-3">
+                  <div className="md:text-center">
+                    <p className="font-display font-semibold text-ink text-lg leading-tight md:sr-only">
+                      {persona.name}
+                    </p>
+                    <p className="text-ink/75 text-sm">
+                      {persona.role}, {persona.organisation}
+                    </p>
+                  </div>
+                  <p
+                    className="flex-none inline-flex items-center gap-2 h-7 px-3 rounded-full text-xs font-semibold"
+                    style={{
+                      color:
+                        state === "your-turn"
+                          ? "var(--ok)"
+                          : state === "listening"
+                            ? "var(--danger)"
+                            : "var(--brand)",
+                      background: "var(--surface-2)",
+                    }}
+                  >
+                    {state === "speaking" || state === "listening" ? (
+                      <VoiceWave
+                        active
+                        color={state === "listening" ? "var(--danger)" : "var(--brand)"}
+                        bars={8}
+                        className="!h-3 w-8"
+                      />
+                    ) : (
+                      <span
+                        aria-hidden
+                        className={`w-2 h-2 rounded-full ${state === "thinking" ? "animate-pulse" : ""}`}
+                        style={{ background: "currentColor" }}
+                      />
+                    )}
+                    {STATE_LABEL[state]}
+                  </p>
+                </div>
+              </div>
+
+              {/* Live caption: what the persona just said, always on, on every viewport */}
+              {lastPersonaLine && (
+                <div
+                  key={lastPersonaLine.index}
+                  role="region"
+                  aria-label={`${persona.name}, latest line`}
+                  tabIndex={0}
+                  className="w-full max-w-2xl text-center max-h-40 min-h-0 shrink overflow-y-auto px-2"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  <span className="sr-only">{persona.name} says: </span>
+                  <p className="caption-in text-ink text-base sm:text-lg md:text-xl leading-snug text-left md:text-center">
+                    {lastPersonaLine.text || " "}
+                  </p>
+                </div>
+              )}
+
+              {/* Your camera, only when it is on: a 1:1 tile in the corner of the stage */}
+              {cameraOn && (
+                <figure
+                  className="absolute top-3 right-3 w-24 md:w-32 aspect-square overflow-hidden rounded-[var(--radius-sm)] border shadow-lg"
+                  style={{ background: "var(--surface-2)", borderColor: "var(--edge)" }}
+                >
+                  <img
+                    src={CAMERA_PREVIEW_SRC}
+                    alt="Your camera view"
+                    className="w-full h-full object-cover"
+                  />
+                  <figcaption
+                    className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1"
+                    style={{ background: "var(--surface)", color: "rgb(var(--ink))" }}
+                  >
+                    {isRecording && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--danger)] animate-pulse" />
+                    )}
+                    You
+                  </figcaption>
+                </figure>
+              )}
+            </div>
+
+            {/* Control bar: voice first, text always. Sticks to the bottom while a phone scrolls the stage. */}
+            <div
+              className="flex-none sticky bottom-0 z-20 md:static px-3 md:px-6 pb-3 pt-3 border-t"
+              style={{ background: "var(--surface)", borderColor: "var(--edge)" }}
+            >
+              <div className="max-w-4xl mx-auto">
+                {hint && isPractice && !hintInSheet && (
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    className="sheet-in flex items-start gap-3 mb-2 px-4 py-2.5 text-sm rounded-[var(--radius-sm)]"
+                    style={{ background: "var(--accent-soft)" }}
+                  >
+                    <Icon name="bulb" size={18} className="mt-0.5 flex-none text-[var(--accent-soft-ink)]" />
+                    <span className="flex-1 text-ink">
+                      <span className="font-semibold">Hint </span>
+                      {hint}
+                    </span>
+                    <button
+                      onClick={() => setHint(null)}
+                      aria-label="Dismiss hint"
+                      className="-my-1 w-8 h-8 flex-none flex items-center justify-center rounded-[var(--radius-sm)] text-ink/80"
+                    >
+                      {closeIcon}
+                    </button>
+                  </div>
+                )}
+                {timeUp && isPractice && (
+                  <div
+                    role="status"
+                    className="mb-2 px-3 py-2 text-sm text-ink/85 rounded-[var(--radius-sm)]"
+                    style={{ background: "var(--surface-2)" }}
+                  >
+                    Time is up for a scored call. You can keep practising, or end the call to see your report.
+                  </div>
+                )}
+                {chip && isPractice && (
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    className={`sheet-in mb-2 px-4 py-3 border rounded-[var(--radius-sm)] ${
+                      !chip.behaviour
+                        ? ""
+                        : chip.behaviour.band === "Strong" || chip.behaviour.band === "Adequate"
+                          ? "sheet-ok"
+                          : "sheet-warn"
+                    }`}
+                    style={
+                      chip.behaviour
+                        ? undefined
+                        : { background: "var(--surface-2)", borderColor: "var(--edge)" }
+                    }
+                  >
+                    <div className="flex flex-wrap sm:flex-nowrap items-start gap-x-3 gap-y-2">
+                      <span
+                        aria-hidden
+                        className="mt-0.5 w-8 h-8 flex-none rounded-full flex items-center justify-center"
+                        style={{
+                          background: !chip.behaviour
+                            ? "rgb(var(--ink) / 0.55)"
+                            : chip.behaviour.band === "Strong" || chip.behaviour.band === "Adequate"
+                              ? "var(--ok)"
+                              : "var(--warn)",
+                          color: "var(--surface)",
+                        }}
+                      >
+                        {chip.behaviour &&
+                        (chip.behaviour.band === "Weak" || chip.behaviour.band === "Harmful") ? (
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M7 3v5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+                            <circle cx="7" cy="11" r="1.2" fill="currentColor" />
+                          </svg>
+                        ) : (
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path
+                              d="M3 7.5l2.5 2.5L11 4.5"
+                              stroke="currentColor"
+                              strokeWidth="2.2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        )}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="sheet-title font-display font-bold text-base leading-tight">
+                          {!chip.behaviour
+                            ? "On topic"
+                            : chip.behaviour.band === "Strong"
+                              ? "Strong reply"
+                              : chip.behaviour.band === "Adequate"
+                                ? "Good reply"
+                                : "Not quite"}
+                          <span className="ml-2 text-sm font-semibold text-ink/80 tabular-nums whitespace-nowrap">
+                            {chip.gain > 0 ? `+${chip.gain} XP` : "No XP"}
+                          </span>
+                        </p>
+                        <p className="text-sm text-ink mt-0.5">
+                          {chip.behaviour ? chip.behaviour.label : chip.note}
+                        </p>
+                        {hintInSheet && (
+                          <p className="text-sm text-ink/85 mt-1 leading-relaxed">
+                            <span className="font-semibold">Hint </span>
+                            {hint}
+                          </p>
+                        )}
+                        {whyOpen && chip.behaviour?.why && (
+                          <p className="mt-1.5 text-sm text-ink/85 leading-relaxed">{chip.behaviour.why}</p>
+                        )}
+                      </div>
+                      <div className="flex flex-none items-center gap-2 w-full sm:w-auto pl-11 sm:pl-0">
+                        {chip.behaviour?.why && (
+                          <button
+                            onClick={() => setWhyOpen((v) => !v)}
+                            aria-expanded={whyOpen}
+                            className="btn btn-secondary !min-h-10 !px-3 text-sm"
+                          >
+                            {whyOpen ? "Hide why" : "Why?"}
+                          </button>
+                        )}
+                        {chip.behaviour &&
+                          (chip.behaviour.band === "Weak" || chip.behaviour.band === "Harmful") &&
+                          canRewindLast && (
+                            <button onClick={rewindLast} className="btn btn-primary !min-h-10 !px-3 text-sm">
+                              Try again
+                            </button>
+                          )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div
+                  className="flex items-end gap-2 p-1.5 transition-colors rounded-[var(--radius-sm)]"
+                  style={{
+                    background: "var(--surface)",
+                    border: isRecording ? "2px solid var(--danger)" : "1px solid var(--line)",
+                  }}
+                >
+                  <button
+                    onPointerDown={(e) => {
+                      if (e.button !== 0) return;
+                      micDown();
+                    }}
+                    onPointerUp={micUp}
+                    onPointerLeave={() => press.current && !press.current.stopOnUp && micUp()}
+                    onClick={(e) => {
+                      // Keyboard activation (no pointer) toggles.
+                      if (e.detail !== 0) return;
+                      if (recordingRef.current) stopRecording(true);
+                      else startRecording();
+                    }}
+                    disabled={thinking || finishing}
+                    aria-pressed={isRecording}
+                    aria-keyshortcuts="Space"
+                    className="btn btn-primary !min-h-12 !px-4 flex-none select-none touch-none"
+                    style={isRecording ? { background: "var(--danger)" } : undefined}
+                  >
+                    {isRecording ? (
+                      <VoiceWave active color="#ffffff" bars={6} className="!h-4 w-6" />
+                    ) : (
+                      <Icon name="mic" size={18} />
+                    )}
+                    <span className="sr-only sm:not-sr-only">
+                      {isRecording ? "Release to send" : "Hold to talk"}
+                    </span>
+                    <span className="sr-only">
+                      {isRecording
+                        ? ", or tap to stop and send"
+                        : personaSpeaking
+                          ? `, interrupts ${firstName}`
+                          : ", or tap to start speaking"}
+                    </span>
+                    <kbd
+                      aria-hidden
+                      className="kbd"
+                      style={{ color: "#ffffff", borderColor: "rgb(255 255 255 / 0.7)" }}
+                    >
+                      Space
+                    </kbd>
+                  </button>
+                  <label htmlFor="composer" className="sr-only">
+                    Your reply
+                  </label>
+                  <textarea
+                    id="composer"
+                    ref={textareaRef}
+                    value={draft}
+                    readOnly={isRecording}
+                    disabled={thinking || finishing}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        void handleSubmit();
+                      }
+                    }}
+                    rows={1}
+                    placeholder={
+                      thinking
+                        ? `${firstName} is thinking...`
+                        : isRecording
+                          ? "Listening..."
+                          : personaSpeaking
+                            ? `Type to interrupt ${firstName}`
+                            : "Or type your reply"
+                    }
+                    className="flex-1 min-w-0 resize-none bg-transparent text-ink text-base leading-relaxed placeholder:text-ink/70 px-2 py-2.5 max-h-32 focus:outline-none"
+                  />
+                  <button
+                    onClick={() => void handleSubmit()}
+                    disabled={!draft.trim() || thinking || isRecording || finishing}
+                    aria-label="Send reply"
+                    className="w-12 h-12 flex-none flex items-center justify-center rounded-[var(--radius-sm)] transition-colors disabled:cursor-not-allowed"
+                    style={{
+                      background:
+                        draft.trim() && !thinking && !isRecording ? "var(--accent)" : "var(--surface-2)",
+                      color: draft.trim() && !thinking && !isRecording ? "#ffffff" : "rgb(var(--ink) / 0.7)",
+                    }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+                      <path
+                        d="M8 13V3M4 7l4-4 4 4"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Toolbar: call controls for everyone, practice tools for AI RolePlay */}
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => setCameraOn((v) => !v)}
+                    aria-pressed={cameraOn}
+                    className="btn btn-secondary !min-h-10 !px-3 text-sm !font-medium"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      aria-hidden
+                    >
+                      <path d="M23 7l-7 5 7 5V7z" />
+                      <rect x="1" y="5" width="15" height="14" rx="2" />
+                      {!cameraOn && <line x1="1" y1="1" x2="23" y2="23" />}
+                    </svg>
+                    <span className="sr-only sm:not-sr-only">{cameraOn ? "Camera on" : "Camera off"}</span>
+                  </button>
+                  <button
+                    onClick={() => setMuted((v) => !v)}
+                    aria-pressed={muted}
+                    className="btn btn-secondary !min-h-10 !px-3 text-sm !font-medium"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden>
+                      <path d="M5 7H3v4h2l4 3V4L5 7z" fill="currentColor" />
+                      {muted ? (
+                        <line
+                          x1="12"
+                          y1="6"
+                          x2="17"
+                          y2="12"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
+                      ) : (
+                        <path
+                          d="M12.5 5.5c1.2 1 1.2 5 0 6"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
+                      )}
+                    </svg>
+                    <span className="sr-only sm:not-sr-only">
+                      {muted ? `${firstName} muted` : `${firstName}'s voice on`}
+                    </span>
+                  </button>
+                  {isPractice && (
+                    <>
+                      <span
+                        aria-hidden
+                        className="hidden sm:block w-px h-6 mx-1"
+                        style={{ background: "var(--edge)" }}
+                      />
+                      <button
+                        onClick={requestHint}
+                        aria-keyshortcuts="H"
+                        className="btn btn-secondary !min-h-10 !px-3 text-sm !font-medium"
+                      >
+                        Hint <kbd className="kbd">H</kbd>
+                      </button>
+                      <button
+                        onClick={toggleCriteria}
+                        aria-pressed={showCriteria}
+                        aria-keyshortcuts="W"
+                        className="btn btn-secondary !min-h-10 !px-3 text-sm !font-medium"
+                        style={
+                          showCriteria
+                            ? {
+                                borderColor: "var(--accent-ui)",
+                                background: "var(--accent-soft)",
+                                color: "var(--accent-soft-ink)",
+                              }
+                            : undefined
+                        }
+                      >
+                        What counts <kbd className="kbd">W</kbd>
+                      </button>
+                      <button
+                        onClick={rewindLast}
+                        disabled={!canRewindLast}
+                        aria-keyshortcuts="R"
+                        className="btn btn-secondary !min-h-10 !px-3 text-sm !font-medium"
+                      >
+                        <span>
+                          Rewind<span className="hidden sm:inline"> last turn</span>
+                        </span>
+                        <kbd className="kbd">R</kbd>
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </main>
+
+          {/* Details panel: Coach and Transcript tabs in AI RolePlay, the transcript alone in Conversation AI.
+              Docked beside the stage on a laptop, a full screen sheet on smaller screens. */}
+          {panelOpen && (
+            <aside
+              aria-label={isPractice ? "Call details" : "Transcript"}
+              onKeyDown={(e) => {
+                if (e.key === "Escape" && !lgUp) closePanel();
+              }}
+              className={`${lgUp ? "card w-[360px] flex-none" : "fixed inset-0 z-50 safe-area md:inset-y-0 md:right-0 md:left-auto md:w-96 md:border-l md:shadow-2xl"} flex flex-col overflow-hidden`}
+              style={lgUp ? undefined : { background: "var(--surface)", borderColor: "var(--edge)" }}
+            >
+              <div className="flex items-center gap-2 px-3 pt-3 pb-2 flex-none">
+                {isPractice ? (
+                  <Tabs
+                    label="Call details"
+                    idPrefix="call"
+                    tabs={panelTabs}
+                    value={panelTab}
+                    onChange={setPanelTab}
+                    className="flex-1"
+                  />
+                ) : (
+                  <h2 className="flex-1 px-1 font-display font-semibold text-ink text-base">
+                    Transcript
+                    <span className="ml-2 text-sm font-normal text-ink/75 tabular-nums">
+                      {messages.length} lines
+                    </span>
+                  </h2>
+                )}
                 <button
-                  onClick={() => setShowTranscript(false)}
-                  className="w-9 h-9 flex items-center justify-center text-ink/75 hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-                  aria-label="Close transcript"
+                  ref={panelCloseRef}
+                  onClick={closePanel}
+                  className="w-11 h-11 flex-none flex items-center justify-center rounded-[var(--radius-sm)] text-ink/80 hover:bg-[var(--surface-2)]"
+                  aria-label={`Close ${panelLabel}`}
                 >
                   {closeIcon}
                 </button>
               </div>
-            </div>
-            <div
-              ref={scrollRef}
-              role="log"
-              aria-label="Conversation so far"
-              aria-live="off"
-              tabIndex={0}
-              className="flex-1 overflow-auto px-4 py-4 space-y-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--brand)]"
-            >
-              {messages.map((t, i) => {
-                const you = t.speaker === "You";
-                const ordinal = you && i >= openingLength ? playerOrdinalAt(i) : -1;
-                const canRewind =
-                  isPractice && ordinal >= 0 && ordinal < snapshots.length && !speaking && !finishing;
-                return (
-                  <div key={i} className={`flex flex-col gap-1 ${you ? "items-end" : "items-start"}`}>
-                    <div className="flex items-center gap-1.5 text-xs text-ink/75">
-                      <span className="font-medium">{t.speaker}</span>
-                      <span className="tabular-nums">{t.time}</span>
-                    </div>
-                    <div
-                      className="max-w-[88%] px-3 py-2 text-sm leading-relaxed"
-                      style={
-                        you
-                          ? {
-                              background: "rgb(var(--accent-rgb) / 0.16)",
-                              color: "rgb(var(--ink) / 0.92)",
-                              border: "1px solid rgb(var(--accent-rgb) / 0.3)",
-                            }
-                          : {
-                              background: "rgb(var(--ink) / 0.05)",
-                              color: "rgb(var(--ink) / 0.8)",
-                              border: "1px solid rgb(var(--ink) / 0.08)",
-                            }
-                      }
-                    >
-                      {t.text}
-                    </div>
-                    {canRewind && (
-                      <button
-                        onClick={() => rewindTo(ordinal)}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-brand min-h-[32px] px-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-                        aria-label={`Retry from your turn at ${t.time}`}
-                      >
-                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden>
-                          <path
-                            d="M3 8a5 5 0 1 0 1.5-3.5M3 3v2.5h2.5"
-                            stroke="currentColor"
-                            strokeWidth="1.6"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                        Retry from here
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-              {thinking && (
+
+              {isPractice && (
                 <div
-                  className="flex items-center gap-1 px-3 py-2 w-fit"
-                  style={{ background: "rgb(var(--ink) / 0.05)", border: "1px solid rgb(var(--ink) / 0.08)" }}
-                  aria-hidden
+                  {...tabPanelProps("call", "coach")}
+                  className={`${panelTab === "coach" ? "flex" : "hidden"} flex-1 min-h-0 flex-col overflow-y-auto px-3 pb-3 gap-3`}
                 >
-                  {[0, 0.15, 0.3].map((d, i) => (
-                    <span
-                      key={i}
-                      className="w-1 h-1 rounded-full bg-ink/40"
-                      style={{ animation: `pulse ${1 + d}s ease-in-out infinite` }}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </aside>
-        )}
-
-        {/* The stage */}
-        <main
-          aria-label="Conversation"
-          className="flex-1 flex flex-col min-w-0 overflow-y-auto md:overflow-hidden"
-        >
-          <div className="relative flex-1 md:min-h-[420px] flex flex-col items-center justify-start md:justify-center px-4 md:px-8 pt-4 md:pt-6 pb-4 gap-3 md:gap-4">
-            {/* Persona: the same 1:1 portrait as the brief, with a ring that shows who has the floor */}
-            <div className="flex items-center gap-4 w-full md:w-auto md:flex-col">
-              <div className="relative flex-none">
-                <div
-                  aria-hidden
-                  className={`absolute -inset-1.5 md:-inset-2 rounded-[calc(var(--radius)*1.45)] transition-opacity duration-300 ${state === "speaking" || state === "listening" ? "speak-ring" : ""}`}
-                  style={{
-                    border: `2px solid ${ringColor}`,
-                    opacity: state === "your-turn" ? 0 : state === "thinking" ? 0.35 : 1,
-                  }}
-                />
-                <figure
-                  className={`relative w-20 md:w-[clamp(150px,26vh,240px)] aspect-square overflow-hidden rounded-[var(--radius)] border border-ink/10 ${state === "thinking" ? "thinking-shimmer" : ""}`}
-                  style={{ background: "var(--surface-2)" }}
-                >
-                  <img
-                    src={PORTRAIT_SRC}
-                    alt={persona.portraitAlt}
-                    className="portrait-img absolute inset-0 w-full h-full object-cover object-top"
-                  />
-                </figure>
-              </div>
-              <div className="min-w-0 flex flex-col items-start gap-2 md:items-center md:gap-4">
-                <div className="md:text-center">
-                  <p className="font-display font-semibold text-ink text-lg leading-tight">{persona.name}</p>
-                  <p className="text-ink/75 text-sm">
-                    {persona.role}, {persona.organisation}
-                  </p>
-                </div>
-                <p
-                  className="flex-none inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold uppercase tracking-wider"
-                  style={{
-                    color:
-                      state === "your-turn"
-                        ? "var(--ok)"
-                        : state === "listening"
-                          ? "var(--danger)"
-                          : "var(--brand)",
-                    background: "rgb(var(--ink) / 0.05)",
-                  }}
-                >
-                  {state === "speaking" || state === "listening" ? (
-                    <VoiceWave
-                      active
-                      color={state === "listening" ? "var(--danger)" : "var(--brand)"}
-                      bars={8}
-                      className="!h-3 w-8"
-                    />
-                  ) : (
-                    <span
-                      aria-hidden
-                      className={`w-2 h-2 rounded-full ${state === "thinking" ? "animate-pulse" : ""}`}
-                      style={{ background: "currentColor" }}
-                    />
-                  )}
-                  {STATE_LABEL[state]}
-                </p>
-              </div>
-            </div>
-
-            {/* Live caption: what the persona just said, always on, on every viewport */}
-            {lastPersonaLine && (
-              <div
-                key={lastPersonaLine.index}
-                role="region"
-                aria-label={`${persona.name}, latest line`}
-                tabIndex={0}
-                className="w-full max-w-2xl text-center max-h-40 min-h-0 shrink overflow-y-auto px-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-                aria-live="polite"
-                aria-atomic="true"
-              >
-                <span className="sr-only">{persona.name} says: </span>
-                <p className="caption-in text-ink text-base sm:text-lg md:text-xl leading-snug text-left md:text-center">
-                  {lastPersonaLine.text || " "}
-                </p>
-              </div>
-            )}
-
-            {/* Your camera, only when it is on: a 1:1 tile in the corner of the stage */}
-            {cameraOn && (
-              <figure
-                className="absolute top-4 right-4 w-24 md:w-32 aspect-square overflow-hidden rounded-xl border border-ink/15 shadow-lg"
-                style={{ background: "var(--surface-2)" }}
-              >
-                <img src={CAMERA_PREVIEW_SRC} alt="Your camera view" className="w-full h-full object-cover" />
-                <figcaption
-                  className="absolute bottom-1 left-1 px-1.5 py-0.5 text-xs flex items-center gap-1"
-                  style={{ background: "color-mix(in srgb, var(--bg) 78%, transparent)" }}
-                >
-                  {isRecording && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--danger)] animate-pulse" />
-                  )}
-                  You
-                </figcaption>
-              </figure>
-            )}
-          </div>
-
-          {/* Composer: voice first, text always. Sticks to the bottom while a phone scrolls the stage. */}
-          <div
-            className="flex-none sticky bottom-0 z-20 md:static px-4 md:px-8 pb-3 pt-2"
-            style={{ background: "var(--bg)" }}
-          >
-            <div className="max-w-3xl mx-auto">
-              {hint && isPractice && !hintInSheet && (
-                <div
-                  role="status"
-                  aria-live="polite"
-                  className="sheet-in flex items-start gap-3 mb-2 px-4 py-2.5 text-sm border-2 rounded-[var(--radius)]"
-                  style={{ background: "var(--surface)", borderColor: "var(--edge)" }}
-                >
-                  <svg
-                    aria-hidden
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    className="mt-0.5 flex-none text-brand"
+                  {/* Progress */}
+                  <section
+                    className="flex items-center gap-3 p-3 rounded-[var(--radius-sm)]"
+                    style={{ background: "var(--surface-2)" }}
                   >
-                    <path
-                      d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8V16h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3z"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  <span className="flex-1 text-ink">
-                    <span className="font-semibold">Hint </span>
-                    {hint}
-                  </span>
-                  <button
-                    onClick={() => setHint(null)}
-                    aria-label="Dismiss hint"
-                    className="w-7 h-7 flex items-center justify-center text-ink/75 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-                  >
-                    {closeIcon}
-                  </button>
-                </div>
-              )}
-              {timeUp && isPractice && (
-                <div
-                  role="status"
-                  className="mb-2 px-3 py-2 text-sm text-ink/85"
-                  style={{ background: "rgb(var(--ink) / 0.06)", border: "1px solid rgb(var(--ink) / 0.12)" }}
-                >
-                  Time is up for a scored call. You can keep practising, or end the call to see your report.
-                </div>
-              )}
-              {chip && isPractice && (
-                <div
-                  role="status"
-                  aria-live="polite"
-                  className={`sheet-in mb-2 px-4 py-3 border-2 rounded-[var(--radius)] ${
-                    !chip.behaviour
-                      ? ""
-                      : chip.behaviour.band === "Strong" || chip.behaviour.band === "Adequate"
-                        ? "sheet-ok"
-                        : "sheet-warn"
-                  }`}
-                  style={
-                    chip.behaviour ? undefined : { background: "var(--surface)", borderColor: "var(--edge)" }
-                  }
-                >
-                  <div className="flex flex-wrap sm:flex-nowrap items-start gap-x-3 gap-y-2">
                     <span
+                      className="relative w-11 h-11 flex items-center justify-center flex-none"
                       aria-hidden
-                      className="mt-0.5 w-8 h-8 flex-none rounded-full flex items-center justify-center text-white"
-                      style={{
-                        background: !chip.behaviour
-                          ? "rgb(var(--ink) / 0.35)"
-                          : chip.behaviour.band === "Strong" || chip.behaviour.band === "Adequate"
-                            ? "var(--ok)"
-                            : "var(--warn)",
-                        color: "var(--surface)",
-                      }}
                     >
-                      {chip.behaviour &&
-                      (chip.behaviour.band === "Weak" || chip.behaviour.band === "Harmful") ? (
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                          <path d="M7 3v5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-                          <circle cx="7" cy="11" r="1.2" fill="currentColor" />
-                        </svg>
-                      ) : (
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                          <path
-                            d="M3 7.5l2.5 2.5L11 4.5"
-                            stroke="currentColor"
-                            strokeWidth="2.2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      )}
+                      <svg width="44" height="44" viewBox="0 0 36 36" className="-rotate-90">
+                        <circle cx="18" cy="18" r="15" fill="none" stroke="var(--line)" strokeWidth="3" />
+                        <circle
+                          cx="18"
+                          cy="18"
+                          r="15"
+                          fill="none"
+                          stroke="var(--accent-ui)"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeDasharray={`${(levelPct / 100) * 94.2} 94.2`}
+                          style={{ transition: "stroke-dasharray .9s cubic-bezier(.2,.8,.2,1)" }}
+                        />
+                      </svg>
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="sheet-title font-display font-bold text-base leading-tight">
-                        {!chip.behaviour
-                          ? "On topic"
-                          : chip.behaviour.band === "Strong"
-                            ? "Strong reply"
-                            : chip.behaviour.band === "Adequate"
-                              ? "Good reply"
-                              : "Not quite"}
-                        <span className="ml-2 text-sm font-semibold text-ink/80 tabular-nums whitespace-nowrap">
-                          {chip.gain > 0 ? `+${chip.gain} XP` : "No XP"}
-                        </span>
+                      <p className="text-xs text-ink/75">{level}</p>
+                      <p className="font-display font-bold text-ink text-lg leading-tight">
+                        <RollingNumber value={xp} />{" "}
+                        <span className="text-sm font-medium text-ink/75">XP</span>
                       </p>
-                      <p className="text-sm text-ink mt-0.5">
-                        {chip.behaviour ? chip.behaviour.label : chip.note}
-                      </p>
-                      {hintInSheet && (
-                        <p className="text-sm text-ink/85 mt-1 leading-relaxed">
-                          <span className="font-semibold">Hint </span>
-                          {hint}
-                        </p>
-                      )}
-                      {whyOpen && chip.behaviour?.why && (
-                        <p className="mt-1.5 text-sm text-ink/85 leading-relaxed">{chip.behaviour.why}</p>
-                      )}
                     </div>
-                    <div className="flex flex-none items-center gap-2 w-full sm:w-auto pl-11 sm:pl-0">
-                      {chip.behaviour?.why && (
-                        <button
-                          onClick={() => setWhyOpen((v) => !v)}
-                          aria-expanded={whyOpen}
-                          className="btn-secondary h-9 px-3 text-sm font-semibold rounded-[var(--radius)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-                        >
-                          {whyOpen ? "Hide why" : "Why?"}
-                        </button>
-                      )}
-                      {chip.behaviour &&
-                        (chip.behaviour.band === "Weak" || chip.behaviour.band === "Harmful") &&
-                        canRewindLast && (
-                          <button
-                            onClick={rewindLast}
-                            className="btn-primary h-9 px-3 text-sm font-semibold rounded-[var(--radius)] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand)]"
+                    <span
+                      className="flex items-center gap-1 h-7 px-2 rounded-full text-xs font-bold tabular-nums"
+                      style={
+                        streak >= 3
+                          ? { background: "var(--accent)", color: "#fff" }
+                          : { background: "var(--surface)", color: "rgb(var(--ink) / 0.85)" }
+                      }
+                      aria-label={`Strong streak ${streak}${streak >= 3 ? ", 1.5 times XP active" : ""}`}
+                    >
+                      <FlameIcon size={13} />
+                      {streak}
+                      {streak >= 3 && <span>x1.5</span>}
+                    </span>
+                    <span
+                      className="text-xs text-ink/80 tabular-nums"
+                      aria-label={`${badges.length} badges earned`}
+                    >
+                      <span className="font-bold text-ink">{badges.length}</span>/{BADGES.length}
+                    </span>
+                  </section>
+
+                  {/* Objectives */}
+                  <section>
+                    <div className="flex items-center justify-between px-1 mb-2">
+                      <h3 className="text-sm font-semibold text-ink">Objectives</h3>
+                      <span className="font-semibold text-ink/80 text-xs tabular-nums">
+                        {objectivesDone}/{objectives.length}
+                      </span>
+                    </div>
+                    <div
+                      className="h-1.5 mx-1 mb-1 overflow-hidden rounded-full"
+                      style={{ background: "var(--edge)" }}
+                    >
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${objectivesPct}%`, background: "var(--ok)" }}
+                      />
+                    </div>
+                    <ul>
+                      {objectives.map((o, i) => {
+                        const done = metObjectives[i];
+                        const criteria = scenario.instrument.skills
+                          .flatMap((s) => s.indicators)
+                          .filter((ind) => o.indicatorIds.includes(ind.id))
+                          .map((ind) => ind.label);
+                        return (
+                          <li key={o.id} data-objective={i} className="flex items-start gap-3 px-1 py-2">
+                            <span
+                              className="relative w-8 h-8 flex-none rounded-full flex items-center justify-center"
+                              style={{
+                                background: done ? "var(--ok-tint)" : "var(--surface)",
+                                border: done ? "1.5px solid var(--ok)" : "1.5px solid var(--line)",
+                              }}
+                            >
+                              {done ? (
+                                <Icon name="check" size={15} stroke={2.2} className="text-[var(--ok)]" />
+                              ) : (
+                                <span className="font-semibold text-sm text-ink/80 tabular-nums">
+                                  {i + 1}
+                                </span>
+                              )}
+                              {celebrate === i && (
+                                <span
+                                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                                  aria-hidden
+                                >
+                                  {CONFETTI.map((p, k) => (
+                                    <span
+                                      key={k}
+                                      className="absolute w-1.5 h-1.5 rounded-[1px]"
+                                      style={{
+                                        background: p.c,
+                                        ["--tx" as string]: `${Math.round(Math.cos((p.a * Math.PI) / 180) * p.d)}px`,
+                                        ["--ty" as string]: `${Math.round(Math.sin((p.a * Math.PI) / 180) * p.d)}px`,
+                                        animation: "confetti-burst 0.9s ease-out forwards",
+                                      }}
+                                    />
+                                  ))}
+                                </span>
+                              )}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm leading-snug text-ink/90">{o.label}</p>
+                              <p
+                                className="text-xs"
+                                style={{ color: done ? "var(--ok)" : "rgb(var(--ink) / 0.75)" }}
+                              >
+                                {done ? `Completed, +${o.xp} XP` : `${o.sub}`}
+                              </p>
+                              {showCriteria && (
+                                <ul className="mt-1 space-y-0.5" aria-label="What counts">
+                                  {criteria.map((c) => (
+                                    <li key={c} className="text-xs text-ink/85 leading-snug flex gap-1.5">
+                                      <span
+                                        aria-hidden
+                                        className="mt-1.5 w-1 h-1 rounded-full flex-none"
+                                        style={{ background: "var(--accent-ui)" }}
+                                      />
+                                      {c}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </section>
+
+                  {/* What each turn showed */}
+                  <section className="border-t pt-3" style={{ borderColor: "var(--edge)" }}>
+                    <h3 className="text-sm font-semibold text-ink px-1 mb-2">This call</h3>
+                    {log.length === 0 ? (
+                      <p className="text-sm text-ink/80 leading-relaxed px-1">
+                        After each reply, the behaviour it showed appears here with the reason. Choose What
+                        counts to see the criteria.
+                      </p>
+                    ) : (
+                      <ol className="space-y-2">
+                        {log.map((e) => (
+                          <li
+                            key={e.id}
+                            className="text-sm p-3 rounded-[var(--radius-sm)]"
+                            style={{ background: "var(--surface-2)" }}
                           >
-                            Try again
-                          </button>
-                        )}
-                    </div>
-                  </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs text-ink/75 tabular-nums">{e.time}</span>
+                              {e.behaviour && <BandChip band={e.behaviour.band} />}
+                              <span className="ml-auto text-xs text-ink/75 tabular-nums">
+                                {e.gain > 0 ? `+${e.gain}` : "0"} XP
+                              </span>
+                            </div>
+                            <p className="text-ink/90 mt-1 leading-snug">
+                              {e.behaviour ? e.behaviour.label : e.note}
+                            </p>
+                            {e.behaviour?.why && (
+                              <p className="text-xs text-ink/80 mt-0.5 leading-snug">{e.behaviour.why}</p>
+                            )}
+                          </li>
+                        ))}
+                      </ol>
+                    )}
+                  </section>
                 </div>
               )}
 
               <div
-                className="flex items-end gap-2 p-2 transition-colors rounded-[var(--radius)]"
-                style={{
-                  background: "var(--surface)",
-                  border: isRecording
-                    ? "1.5px solid color-mix(in srgb, var(--danger) 60%, transparent)"
-                    : "1px solid rgb(var(--ink) / 0.15)",
-                }}
+                {...(isPractice ? tabPanelProps("call", "transcript") : {})}
+                tabIndex={undefined}
+                className={`${panelTab === "transcript" ? "flex" : "hidden"} flex-1 min-h-0 flex-col`}
               >
-                <button
-                  onPointerDown={(e) => {
-                    if (e.button !== 0) return;
-                    micDown();
-                  }}
-                  onPointerUp={micUp}
-                  onPointerLeave={() => press.current && !press.current.stopOnUp && micUp()}
-                  onClick={(e) => {
-                    // Keyboard activation (no pointer) toggles.
-                    if (e.detail !== 0) return;
-                    if (recordingRef.current) stopRecording(true);
-                    else startRecording();
-                  }}
-                  disabled={thinking || finishing}
-                  aria-label={
-                    isRecording
-                      ? "Stop and send"
-                      : personaSpeaking
-                        ? `Interrupt ${firstName} and speak`
-                        : "Hold to talk, or tap to start speaking"
-                  }
-                  aria-pressed={isRecording}
-                  aria-keyshortcuts="Space"
-                  className="btn-primary h-12 px-4 flex-none flex items-center gap-2 text-sm font-semibold select-none touch-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-                  style={{
-                    background: isRecording ? "var(--danger)" : "var(--accent)",
-                    color: "#ffffff",
-                  }}
+                <div
+                  ref={scrollRef}
+                  role="log"
+                  aria-label="Conversation so far"
+                  aria-live="off"
+                  tabIndex={0}
+                  className="flex-1 overflow-auto px-3 pb-4 pt-1"
                 >
-                  {isRecording ? (
-                    <VoiceWave active color="#ffffff" bars={6} className="!h-4 w-6" />
-                  ) : (
-                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden>
-                      <rect x="7.5" y="3" width="5" height="9" rx="2.5" fill="currentColor" />
-                      <path
-                        d="M4 10c0 3.3 2.7 6 6 6s6-2.7 6-6M10 16v3"
-                        stroke="currentColor"
-                        strokeWidth="1.6"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  )}
-                  <span className="hidden sm:inline">{isRecording ? "Release to send" : "Hold to talk"}</span>
-                </button>
-                <label htmlFor="composer" className="sr-only">
-                  Your reply
-                </label>
-                <textarea
-                  id="composer"
-                  ref={textareaRef}
-                  value={draft}
-                  readOnly={isRecording}
-                  disabled={thinking || finishing}
-                  onChange={(e) => setDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      void handleSubmit();
-                    }
-                  }}
-                  rows={1}
-                  placeholder={
-                    thinking
-                      ? `${firstName} is thinking...`
-                      : isRecording
-                        ? "Listening..."
-                        : personaSpeaking
-                          ? `Type to interrupt ${firstName}`
-                          : "Or type your reply"
-                  }
-                  className="flex-1 min-w-0 resize-none bg-transparent text-ink text-base leading-relaxed placeholder:text-ink/70 px-2 py-2.5 max-h-32 focus:outline-none"
-                />
-                <button
-                  onClick={() => void handleSubmit()}
-                  disabled={!draft.trim() || thinking || isRecording || finishing}
-                  aria-label="Send reply"
-                  className="w-12 h-12 flex-none flex items-center justify-center transition-colors disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-                  style={{
-                    background:
-                      draft.trim() && !thinking && !isRecording ? "var(--accent)" : "rgb(var(--ink) / 0.08)",
-                    color: draft.trim() && !thinking && !isRecording ? "#ffffff" : "rgb(var(--ink) / 0.7)",
-                  }}
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-                    <path
-                      d="M8 13V3M4 7l4-4 4 4"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
-              </div>
-
-              {/* Toolbar: call controls for everyone, practice tools for AI RolePlay */}
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <button
-                  onClick={() => setCameraOn((v) => !v)}
-                  aria-pressed={cameraOn}
-                  className="h-9 px-3 inline-flex items-center gap-2 text-sm font-medium btn-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    aria-hidden
-                  >
-                    <path d="M23 7l-7 5 7 5V7z" />
-                    <rect x="1" y="5" width="15" height="14" rx="2" />
-                    {!cameraOn && <line x1="1" y1="1" x2="23" y2="23" />}
-                  </svg>
-                  <span className="sr-only sm:not-sr-only">{cameraOn ? "Camera on" : "Camera off"}</span>
-                </button>
-                <button
-                  onClick={() => setMuted((v) => !v)}
-                  aria-pressed={muted}
-                  className="h-9 px-3 inline-flex items-center gap-2 text-sm font-medium btn-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-                >
-                  <svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden>
-                    <path d="M5 7H3v4h2l4 3V4L5 7z" fill="currentColor" />
-                    {muted ? (
-                      <line
-                        x1="12"
-                        y1="6"
-                        x2="17"
-                        y2="12"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                      />
-                    ) : (
-                      <path
-                        d="M12.5 5.5c1.2 1 1.2 5 0 6"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                      />
-                    )}
-                  </svg>
-                  <span className="sr-only sm:not-sr-only">
-                    {muted ? `${firstName} muted` : `${firstName}'s voice on`}
-                  </span>
-                </button>
-                {isPractice && (
-                  <>
-                    <span aria-hidden className="hidden sm:block w-px h-6 bg-ink/15 mx-1" />
-                    <button
-                      onClick={requestHint}
-                      aria-keyshortcuts="H"
-                      className="h-9 px-3 inline-flex items-center gap-2 text-sm font-medium btn-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-                    >
-                      Hint <kbd className="kbd">H</kbd>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowCriteria((v) => !v);
-                        if (!lgUp) setShowCoach(true);
-                      }}
-                      aria-pressed={showCriteria}
-                      aria-keyshortcuts="W"
-                      className="h-9 px-3 inline-flex items-center gap-2 text-sm font-medium btn-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-                      style={{
-                        borderColor: showCriteria ? "rgb(var(--accent-rgb) / 0.6)" : "rgb(var(--ink) / 0.15)",
-                      }}
-                    >
-                      What counts <kbd className="kbd">W</kbd>
-                    </button>
-                    <button
-                      onClick={rewindLast}
-                      disabled={!canRewindLast}
-                      aria-keyshortcuts="R"
-                      className="h-9 px-3 inline-flex items-center gap-2 text-sm font-medium btn-secondary disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-                    >
-                      <span>
-                        Rewind<span className="hidden sm:inline"> last turn</span>
-                      </span>
-                      <kbd className="kbd">R</kbd>
-                    </button>
-                  </>
-                )}
-                <p className="hidden lg:block ml-auto text-xs text-ink/75">
-                  Hold <kbd className="kbd">Space</kbd> to talk{personaSpeaking ? " and interrupt" : ""}
-                </p>
-              </div>
-            </div>
-          </div>
-        </main>
-
-        {/* Coach lane: AI RolePlay only */}
-        {isPractice && showCoach && (
-          <aside
-            aria-label="Coach"
-            className={`${lgUp ? "w-80 flex-none border-l border-ink/10" : "fixed inset-0 z-50 safe-area md:inset-y-0 md:right-0 md:left-auto md:w-96 md:border-l md:border-ink/15 md:shadow-2xl"} flex flex-col overflow-hidden`}
-            style={{ background: "var(--surface-3)" }}
-          >
-            <div className="px-4 py-3 border-b border-ink/10 flex items-center justify-between flex-none">
-              <h2 className="font-display font-semibold text-ink text-sm tracking-tight">Coach</h2>
-              <button
-                onClick={() => setShowCoach(false)}
-                className="w-9 h-9 flex items-center justify-center text-ink/75 hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-                aria-label="Close coach"
-              >
-                {closeIcon}
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto" tabIndex={0} aria-label="Coach details">
-              {/* Progress, out of the call bar */}
-              <section className="px-4 py-3 border-b border-ink/10 flex items-center gap-3">
-                <span className="relative w-10 h-10 flex items-center justify-center flex-none" aria-hidden>
-                  <svg width="40" height="40" viewBox="0 0 36 36" className="-rotate-90">
-                    <circle
-                      cx="18"
-                      cy="18"
-                      r="15"
-                      fill="none"
-                      stroke="rgb(var(--ink) / 0.12)"
-                      strokeWidth="3"
-                    />
-                    <circle
-                      cx="18"
-                      cy="18"
-                      r="15"
-                      fill="none"
-                      stroke="var(--brand)"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeDasharray={`${(levelPct / 100) * 94.2} 94.2`}
-                      style={{ transition: "stroke-dasharray .9s cubic-bezier(.2,.8,.2,1)" }}
-                    />
-                  </svg>
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-ink/75 uppercase tracking-wider">{level}</p>
-                  <p className="font-display font-bold text-ink">
-                    <RollingNumber value={xp} /> <span className="text-sm font-medium text-ink/75">XP</span>
-                  </p>
-                </div>
-                <span
-                  className="flex items-center gap-1 px-2 py-1 text-xs font-bold tabular-nums"
-                  style={
-                    streak >= 3
-                      ? { background: "var(--accent)", color: "#fff" }
-                      : { background: "rgb(var(--ink) / 0.06)", color: "rgb(var(--ink) / 0.85)" }
-                  }
-                  aria-label={`Strong streak ${streak}${streak >= 3 ? ", 1.5 times XP active" : ""}`}
-                >
-                  <FlameIcon size={13} />
-                  {streak}
-                  {streak >= 3 && <span>x1.5</span>}
-                </span>
-                <span
-                  className="text-xs text-ink/80 tabular-nums"
-                  aria-label={`${badges.length} badges earned`}
-                >
-                  <span className="font-bold text-ink">{badges.length}</span>/{BADGES.length}
-                </span>
-              </section>
-
-              {/* Objectives */}
-              <section className="border-b border-ink/10">
-                <div className="px-4 pt-3 pb-2">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-ink/75">Objectives</h3>
-                    <span className="font-semibold text-ink text-xs tabular-nums">
-                      {objectivesDone}/{objectives.length}
-                    </span>
-                  </div>
-                  <div
-                    className="h-1.5 w-full overflow-hidden"
-                    style={{ background: "rgb(var(--ink) / 0.1)" }}
-                  >
-                    <div
-                      className="h-full transition-all duration-500"
-                      style={{ width: `${objectivesPct}%`, background: "var(--ok)" }}
-                    />
-                  </div>
-                </div>
-                <ul className="pb-2">
-                  {objectives.map((o, i) => {
-                    const done = metObjectives[i];
-                    const criteria = scenario.instrument.skills
-                      .flatMap((s) => s.indicators)
-                      .filter((ind) => o.indicatorIds.includes(ind.id))
-                      .map((ind) => ind.label);
-                    return (
-                      <li key={o.id} data-objective={i} className="flex items-start gap-3 px-4 py-2">
-                        <span
-                          className="relative w-8 h-8 flex-none flex items-center justify-center"
-                          style={{
-                            background: done ? "rgba(52,211,153,0.14)" : "rgb(var(--ink) / 0.05)",
-                            border: done
-                              ? "1px solid rgba(52,211,153,0.4)"
-                              : "1px solid rgb(var(--ink) / 0.12)",
-                          }}
+                  <ol className="flex flex-col">
+                    {messages.map((t, i) => {
+                      const you = t.speaker === "You";
+                      const ordinal = you && i >= openingLength ? playerOrdinalAt(i) : -1;
+                      const canRewind =
+                        isPractice && ordinal >= 0 && ordinal < snapshots.length && !speaking && !finishing;
+                      return (
+                        <li
+                          key={i}
+                          className="flex flex-col gap-1 px-1 py-3 border-t first:border-t-0"
+                          style={{ borderColor: "var(--edge)" }}
                         >
-                          {done ? (
-                            <svg width="15" height="15" viewBox="0 0 14 14" fill="none" aria-hidden>
-                              <path
-                                d="M2.5 7.5l2.8 2.8L11.5 4"
-                                stroke="var(--ok)"
-                                strokeWidth="1.8"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                          ) : (
-                            <span className="font-semibold text-sm text-ink/75 tabular-nums">{i + 1}</span>
-                          )}
-                          {celebrate === i && (
+                          <div className="flex items-center gap-2 text-[13px]">
                             <span
-                              className="absolute inset-0 flex items-center justify-center pointer-events-none"
                               aria-hidden
+                              className="w-2 h-2 rounded-full flex-none"
+                              style={{ background: you ? "var(--accent-ui)" : "var(--line)" }}
+                            />
+                            <span className="font-semibold text-ink">{t.speaker}</span>
+                            <span className="ml-auto text-xs text-ink/75 tabular-nums">{t.time}</span>
+                          </div>
+                          <p className="text-sm leading-relaxed text-ink/85 pl-4">{t.text}</p>
+                          {canRewind && (
+                            <button
+                              onClick={() => rewindTo(ordinal)}
+                              className="ml-3 self-start inline-flex items-center gap-1 text-xs font-semibold text-brand min-h-[32px] px-1 rounded-[var(--radius-sm)]"
                             >
-                              {CONFETTI.map((p, k) => (
-                                <span
-                                  key={k}
-                                  className="absolute w-1.5 h-1.5 rounded-[1px]"
-                                  style={{
-                                    background: p.c,
-                                    ["--tx" as string]: `${Math.round(Math.cos((p.a * Math.PI) / 180) * p.d)}px`,
-                                    ["--ty" as string]: `${Math.round(Math.sin((p.a * Math.PI) / 180) * p.d)}px`,
-                                    animation: "confetti-burst 0.9s ease-out forwards",
-                                  }}
+                              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden>
+                                <path
+                                  d="M3 8a5 5 0 1 0 1.5-3.5M3 3v2.5h2.5"
+                                  stroke="currentColor"
+                                  strokeWidth="1.6"
+                                  strokeLinecap="round"
                                 />
-                              ))}
-                            </span>
+                              </svg>
+                              Retry from here
+                              <span className="sr-only">, your turn at {t.time}</span>
+                            </button>
                           )}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm leading-snug text-ink/90">{o.label}</p>
-                          <p
-                            className="text-xs"
-                            style={{ color: done ? "var(--ok)" : "rgb(var(--ink) / 0.75)" }}
-                          >
-                            {done ? `Completed, +${o.xp} XP` : `${o.sub}`}
-                          </p>
-                          {showCriteria && (
-                            <ul className="mt-1 space-y-0.5" aria-label="What counts">
-                              {criteria.map((c) => (
-                                <li key={c} className="text-xs text-ink/85 leading-snug flex gap-1.5">
-                                  <span
-                                    aria-hidden
-                                    className="mt-1.5 w-1 h-1 rounded-full bg-brand flex-none"
-                                  />
-                                  {c}
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
-
-              {/* What each turn showed */}
-              <section className="px-4 py-3">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-ink/75 mb-2">This call</h3>
-                {log.length === 0 ? (
-                  <p className="text-sm text-ink/80 leading-relaxed">
-                    After each reply, the behaviour it showed appears here with the reason. Choose What counts
-                    to see the criteria.
-                  </p>
-                ) : (
-                  <ol className="space-y-2.5">
-                    {log.map((e) => (
-                      <li key={e.id} className="text-sm">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs text-ink/75 tabular-nums">{e.time}</span>
-                          {e.behaviour && <BandChip band={e.behaviour.band} />}
-                          <span className="ml-auto text-xs text-ink/75 tabular-nums">
-                            {e.gain > 0 ? `+${e.gain}` : "0"} XP
-                          </span>
-                        </div>
-                        <p className="text-ink/90 mt-1 leading-snug">
-                          {e.behaviour ? e.behaviour.label : e.note}
-                        </p>
-                        {e.behaviour?.why && (
-                          <p className="text-xs text-ink/80 mt-0.5 leading-snug">{e.behaviour.why}</p>
-                        )}
-                      </li>
-                    ))}
+                        </li>
+                      );
+                    })}
                   </ol>
-                )}
-              </section>
-            </div>
-          </aside>
-        )}
+                  {thinking && (
+                    <div className="flex items-center gap-1 px-5 py-2 w-fit" aria-hidden>
+                      {[0, 0.15, 0.3].map((d, i) => (
+                        <span
+                          key={i}
+                          className="w-1.5 h-1.5 rounded-full bg-ink/40"
+                          style={{ animation: `pulse ${1 + d}s ease-in-out infinite` }}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </aside>
+          )}
+        </div>
       </div>
 
       {isPractice && burst.n > 0 && (
@@ -1445,11 +1452,10 @@ export default function SessionPage({
           className="fixed inset-x-0 top-20 z-[61] flex justify-center pointer-events-none px-4"
         >
           <div
-            className="unlock-pop flex items-center gap-4 pl-3 pr-6 py-3 border shadow-2xl"
+            className="unlock-pop card flex items-center gap-4 pl-3 pr-6 py-3"
             style={{
-              background: "var(--bg)",
-              borderColor: "rgb(var(--accent-rgb) / 0.6)",
-              boxShadow: "0 20px 60px -12px rgb(var(--accent-rgb) / 0.55)",
+              borderColor: "var(--accent-ui)",
+              boxShadow: "0 20px 50px -16px rgb(0 0 0 / 0.35)",
             }}
           >
             <BadgeMedal
@@ -1463,7 +1469,7 @@ export default function SessionPage({
               size={48}
             />
             <div>
-              <p className="text-brand text-xs font-bold uppercase tracking-widest">{unlock.title}</p>
+              <p className="text-brand text-xs font-bold">{unlock.title}</p>
               <p className="text-ink font-display font-semibold text-base">{unlock.sub}</p>
             </div>
             <p className="font-display font-bold text-2xl text-ink ml-2">
@@ -1488,8 +1494,7 @@ export default function SessionPage({
             aria-modal="true"
             aria-labelledby="end-title"
             aria-describedby="end-desc"
-            className="w-full max-w-md border border-ink/15 p-6 shadow-2xl"
-            style={{ background: "var(--surface)" }}
+            className="card w-full max-w-md p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => {
               if (e.key === "Escape") return closeConfirm();
@@ -1517,20 +1522,12 @@ export default function SessionPage({
             <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
               <button
                 onClick={() => void endCall()}
-                className="px-5 py-3 text-sm font-semibold border min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-                style={{
-                  color: "var(--danger)",
-                  borderColor: "color-mix(in srgb, var(--danger) 55%, transparent)",
-                }}
+                className="btn border"
+                style={{ color: "var(--danger)", borderColor: "var(--danger)", background: "var(--surface)" }}
               >
                 End and score
               </button>
-              <button
-                ref={keepTalkingRef}
-                onClick={closeConfirm}
-                className="px-5 py-3 text-sm font-semibold text-white min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand)]"
-                style={{ background: "var(--accent)" }}
-              >
+              <button ref={keepTalkingRef} onClick={closeConfirm} className="btn btn-primary">
                 Keep talking
               </button>
             </div>
@@ -1540,10 +1537,7 @@ export default function SessionPage({
 
       {pendingEnd !== null && (
         <div className="fixed inset-x-0 bottom-28 z-[70] flex justify-center px-4 pointer-events-none">
-          <div
-            className="pointer-events-auto flex flex-wrap items-center gap-3 pl-5 pr-2 py-2 border border-ink/15 shadow-2xl"
-            style={{ background: "var(--surface)" }}
-          >
+          <div className="card pointer-events-auto flex flex-wrap items-center gap-3 pl-5 pr-2 py-2 shadow-2xl">
             <p role="status" className="text-ink text-sm">
               Call ended. Scoring in{" "}
               <span className="tabular-nums font-semibold" aria-hidden>
@@ -1554,15 +1548,11 @@ export default function SessionPage({
             <button
               autoFocus
               onClick={() => setPendingEnd(null)}
-              className="px-4 py-2 text-sm font-semibold text-white min-h-[40px] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand)]"
-              style={{ background: "var(--accent)" }}
+              className="btn btn-primary !min-h-10 !px-4 text-sm"
             >
               Resume call
             </button>
-            <button
-              onClick={() => void endCall()}
-              className="px-3 py-2 text-sm font-semibold text-ink/85 min-h-[40px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-            >
+            <button onClick={() => void endCall()} className="btn btn-ghost !min-h-10 !px-3 text-sm">
               Score now
             </button>
           </div>
@@ -1579,10 +1569,7 @@ export default function SessionPage({
             backdropFilter: "blur(6px)",
           }}
         >
-          <div
-            className="flex flex-col items-center gap-3 px-8 py-6 border border-ink/15"
-            style={{ background: "var(--surface)" }}
-          >
+          <div className="card flex flex-col items-center gap-3 px-8 py-6 shadow-2xl">
             <VoiceWave active color="var(--brand)" bars={14} className="w-28" />
             <p className="font-display font-semibold text-ink">Preparing your report</p>
             <p className="text-ink/80 text-sm text-center max-w-xs">
@@ -1600,6 +1587,6 @@ export default function SessionPage({
           50% { opacity: 1; }
         }
       `}</style>
-    </div>
+    </AppShell>
   );
 }

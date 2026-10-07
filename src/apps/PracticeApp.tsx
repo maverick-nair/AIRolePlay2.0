@@ -17,7 +17,7 @@ type Page = "landing" | "session" | "summary";
 export default function PracticeApp() {
   const scenario = renewalNegotiation;
   const [page, setPage] = useState<Page>("landing");
-  // AI RolePlay opens on the light lesson canvas; Conversation AI opens dark.
+  // Both products open light; dark is a toggle in the rail.
   const [dark, setDark] = useState(false);
   const [options, setOptions] = useState<PracticeOptions>({ difficulty: "firm", hints: true });
   const [runKey, setRunKey] = useState(0);

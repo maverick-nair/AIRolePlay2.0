@@ -117,7 +117,10 @@ export default function DeviceCheck() {
     onClick: () => void;
     children?: React.ReactNode;
   }) => (
-    <div className="grid sm:grid-cols-[8rem_1fr_auto] gap-3 items-center py-4 border-t border-ink/10">
+    <div
+      className="grid sm:grid-cols-[8rem_1fr_auto] gap-3 items-center py-4 border-t"
+      style={{ borderColor: "var(--edge)" }}
+    >
       <div>
         <p className="font-display font-semibold text-ink text-base">{name}</p>
         <p className="text-xs" style={{ color: statusColor(status) }} role="status">
@@ -127,8 +130,7 @@ export default function DeviceCheck() {
       <div className="min-h-[2.5rem] flex items-center">{children}</div>
       <button
         onClick={() => void onClick()}
-        className="justify-self-start sm:justify-self-end px-4 py-2 text-sm font-semibold border border-ink/25 text-ink min-h-[40px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-        style={{ background: "var(--surface-2)" }}
+        className="justify-self-start sm:justify-self-end btn btn-secondary !min-h-10 !px-4 text-sm"
       >
         {action}
       </button>
@@ -144,8 +146,8 @@ export default function DeviceCheck() {
         onClick={testMic}
       >
         <div
-          className="w-full h-2 overflow-hidden"
-          style={{ background: "rgb(var(--ink) / 0.1)" }}
+          className="w-full h-2 overflow-hidden rounded-full"
+          style={{ background: "var(--edge)" }}
           aria-hidden
         >
           <div
@@ -169,8 +171,8 @@ export default function DeviceCheck() {
           muted
           playsInline
           aria-label="Camera preview"
-          className="w-24 h-24 object-cover border border-ink/15"
-          style={{ background: "rgb(var(--ink) / 0.06)", display: cam === "ok" ? "block" : "none" }}
+          className="w-24 h-24 object-cover rounded-[var(--radius-sm)]"
+          style={{ background: "var(--surface-2)", display: cam === "ok" ? "block" : "none" }}
         />
         {cam !== "ok" && (
           <p className="text-ink/70 text-xs leading-relaxed">
@@ -178,7 +180,7 @@ export default function DeviceCheck() {
           </p>
         )}
       </Row>
-      <p className="text-ink/70 text-xs leading-relaxed pt-3 border-t border-ink/10">
+      <p className="text-ink/75 text-xs leading-relaxed pt-3 border-t" style={{ borderColor: "var(--edge)" }}>
         Both tests are optional. You can type every reply instead of speaking. Only your transcript is
         assessed; nothing is inferred from your voice or face.
       </p>

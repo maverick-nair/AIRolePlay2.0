@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReportTab } from "../types";
-import ThemeToggle from "../components/ThemeToggle";
+import AppShell from "../components/AppShell";
+import Icon from "../components/Icon";
+import Tabs from "../components/Tabs";
+import BuildStamp from "../components/BuildStamp";
 import TenPointScale from "../components/TenPointScale";
 import ScoreRing from "../components/ScoreRing";
 import RollingNumber from "../components/RollingNumber";
@@ -207,210 +210,180 @@ export default function SummaryPage({
     { id: "transcript", label: "Transcript" },
   ];
 
-  const card = "rounded-2xl border border-ink/10 p-5";
-  const eyebrow = "text-ink/75 text-xs font-bold tracking-widest uppercase";
+  const card = "card p-5";
+  const eyebrow = "text-ink/80 text-[13px] font-semibold";
 
   return (
-    <div className="relative isolate min-h-full overflow-auto" style={{ background: "var(--bg)" }}>
-      <nav className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 md:px-8 py-3 border-b border-ink/10">
-        <div className="flex items-center gap-2.5">
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{ background: "var(--accent)" }}
-          >
-            <span className="text-white text-xs font-bold font-display">{product.mark}</span>
-          </div>
-          <span className="text-ink/75 font-display font-medium text-sm">{product.name}</span>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 md:gap-3">
-          <button
-            onClick={onHome}
-            className="px-3 py-2 rounded-lg text-ink/85 text-xs font-semibold hover:text-ink border border-ink/15 min-h-[36px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-          >
-            {isAssessment ? "Back to assessment" : "Back to AI RolePlay"}
-          </button>
-          {/* Share: one menu for the PDF and the email, instead of two buttons in every bar */}
-          <div ref={shareRef} className="relative">
-            <button
-              onClick={() => setShareOpen((v) => !v)}
-              aria-expanded={shareOpen}
-              aria-controls="share-menu"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-ink/85 text-xs font-semibold hover:text-ink border border-ink/15 min-h-[36px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-            >
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden>
-                <path
-                  d="M7 9V2M4 4.5 7 1.5l3 3M2.5 8v3.5h9V8"
-                  stroke="currentColor"
-                  strokeWidth="1.4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              Share
-            </button>
-            {shareOpen && (
-              <ul
-                id="share-menu"
-                className="absolute right-0 top-full mt-1.5 z-30 w-48 rounded-xl border border-ink/15 p-1.5 shadow-xl"
-                style={{ background: "var(--surface)" }}
-              >
-                {[
-                  { label: "Download PDF", run: download },
-                  { label: "Email report", run: () => setEmailOpen(true) },
-                ].map((o) => (
-                  <li key={o.label}>
-                    <button
-                      onClick={() => {
-                        setShareOpen(false);
-                        o.run();
-                      }}
-                      className="w-full text-left px-3 py-2 rounded-lg text-sm text-ink hover:bg-ink/5 min-h-[40px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-                    >
-                      {o.label}
+    <AppShell
+      product={product}
+      items={[
+        {
+          id: "home",
+          label: isAssessment ? "Back to assessment" : "Back to AI RolePlay",
+          icon: isAssessment ? "brief" : "home",
+          onSelect: onHome,
+        },
+        { id: "report", label: "This report", icon: "report", current: true, onSelect: () => {} },
+      ]}
+    >
+      <main className="max-w-[1480px] p-3 sm:p-4 lg:p-5 flex flex-col gap-4 animate-fade-in-up">
+        {/* Header card: which report, its terms, and what you can do with it */}
+        <section className="card p-5 sm:p-6" aria-labelledby="report-title">
+          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+            <div className="min-w-0">
+              <nav aria-label="Breadcrumb">
+                <ol className="flex flex-wrap items-center gap-1.5 text-sm text-ink/80">
+                  <li>
+                    <button onClick={onHome} className="underline underline-offset-4 min-h-6">
+                      {isAssessment ? "Assessment" : "Practice"}
                     </button>
                   </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          <ThemeToggle />
-        </div>
-      </nav>
-
-      <main className="max-w-[1400px] mx-auto px-4 md:px-8 py-6 animate-fade-in-up">
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-5">
-          <div>
-            <p className="text-ink/75 text-xs uppercase tracking-widest font-medium mb-1 flex flex-wrap items-center gap-2">
-              {isAssessment ? `${product.name} assessment report` : `${product.name} practice report`}
-              <span
-                className="px-1.5 py-0.5 rounded text-xs font-semibold tracking-wider normal-case"
-                style={
-                  isAssessment
-                    ? { background: "rgb(var(--accent-rgb) / 0.14)", color: "var(--brand)" }
-                    : { background: "rgba(52,211,153,0.14)", color: "var(--ok)" }
-                }
+                  <li aria-hidden>/</li>
+                  <li aria-current="page" className="text-ink font-medium">
+                    {isAssessment ? `${product.name} assessment report` : `${product.name} practice report`}
+                  </li>
+                </ol>
+              </nav>
+              <h1
+                id="report-title"
+                className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-ink leading-tight"
               >
-                {isAssessment
-                  ? "One attempt, standardised persona"
-                  : `Run ${attemptIndex + 1} of ${scenario.maxPracticeAttempts}`}
-              </span>
-              {isAssessment && feedbackOnly && (
-                <span className="px-1.5 py-0.5 rounded text-xs font-semibold tracking-wider normal-case border border-ink/25 text-ink/85">
-                  Pilot assessment, feedback only
+                {scenario.title}
+              </h1>
+              <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-ink/80">
+                {[
+                  ["Report", report.id],
+                  [
+                    "Date",
+                    new Date(report.completedAt).toLocaleString("en-GB", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    }),
+                  ],
+                  ["Duration", formatDuration(report.durationSeconds)],
+                  ["Instrument", `v${report.instrumentVersion}`],
+                ].map(([k, v]) => (
+                  <div key={k} className="flex gap-1.5">
+                    <dt>{k}</dt>
+                    <dd className="font-semibold text-ink tabular-nums">{v}</dd>
+                  </div>
+                ))}
+              </dl>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <span className="chip">
+                  {isAssessment
+                    ? "One attempt, standardised persona"
+                    : `Run ${attemptIndex + 1} of ${scenario.maxPracticeAttempts}`}
                 </span>
-              )}
-            </p>
-            <h1 className="font-display font-bold text-2xl md:text-3xl text-ink tracking-tight">
-              {scenario.title}
-            </h1>
-            <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-ink/75">
-              {[
-                ["Report", report.id],
-                [
-                  "Date",
-                  new Date(report.completedAt).toLocaleString("en-GB", {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  }),
-                ],
-                ["Duration", formatDuration(report.durationSeconds)],
-                ["Instrument", `v${report.instrumentVersion}`],
-              ].map(([k, v]) => (
-                <div key={k} className="flex gap-1.5">
-                  <dt className="text-ink/75">{k}</dt>
-                  <dd className="font-semibold text-ink tabular-nums">{v}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-          {!isAssessment && (
-            <div
-              role="radiogroup"
-              aria-label="Report view"
-              className="inline-flex self-start lg:self-auto p-1 rounded-xl border border-ink/15"
-              style={{ background: "var(--surface)" }}
-            >
-              {[
-                { v: true, l: "Compare with peers" },
-                { v: false, l: "Just me" },
-              ].map((o) => (
-                <button
-                  key={o.l}
-                  role="radio"
-                  aria-checked={compare === o.v}
-                  disabled={o.v && !peersReady}
-                  title={
-                    o.v && !peersReady
-                      ? `Unlocks once more than ${PEER_THRESHOLD} people have played (${PLAYERS_COMPLETED} so far)`
-                      : undefined
-                  }
-                  onClick={() => setCompare(o.v)}
-                  className="px-3.5 py-2 rounded-lg text-xs font-semibold min-h-[36px] transition-colors disabled:cursor-not-allowed disabled:line-through focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-                  style={
-                    compare === o.v
-                      ? { background: "var(--accent)", color: "#ffffff" }
-                      : { color: "rgb(var(--ink) / 0.75)" }
-                  }
-                >
-                  {o.l}
-                </button>
-              ))}
+                {isAssessment && feedbackOnly && (
+                  <span className="chip chip-neutral">Pilot assessment, feedback only</span>
+                )}
+              </div>
             </div>
-          )}
-        </div>
+
+            <div className="flex flex-wrap items-center gap-2 lg:justify-end flex-none">
+              {!isAssessment && (
+                <div role="radiogroup" aria-label="Report view" className="seg">
+                  {[
+                    { v: true, l: "Compare with peers" },
+                    { v: false, l: "Just me" },
+                  ].map((o) => (
+                    <button
+                      key={o.l}
+                      role="radio"
+                      aria-checked={compare === o.v}
+                      disabled={o.v && !peersReady}
+                      title={
+                        o.v && !peersReady
+                          ? `Unlocks once more than ${PEER_THRESHOLD} people have played (${PLAYERS_COMPLETED} so far)`
+                          : undefined
+                      }
+                      onClick={() => setCompare(o.v)}
+                      className="px-3 min-h-10 rounded-[var(--radius-sm)] text-sm font-medium whitespace-nowrap disabled:cursor-not-allowed disabled:line-through"
+                      style={
+                        compare === o.v
+                          ? {
+                              background: "var(--surface)",
+                              color: "rgb(var(--ink))",
+                              fontWeight: 600,
+                              boxShadow: "0 1px 2px rgb(0 0 0 / 0.08), 0 0 0 1px var(--edge)",
+                            }
+                          : { color: "rgb(var(--ink) / 0.8)" }
+                      }
+                    >
+                      {o.l}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {/* Share: one menu for the PDF and the email */}
+              <div ref={shareRef} className="relative">
+                <button
+                  onClick={() => setShareOpen((v) => !v)}
+                  aria-expanded={shareOpen}
+                  aria-controls="share-menu"
+                  className="btn btn-secondary"
+                >
+                  <Icon name="share" size={17} />
+                  Share
+                </button>
+                {shareOpen && (
+                  <ul
+                    id="share-menu"
+                    className="card absolute right-0 top-full mt-1.5 z-30 w-52 p-1.5 shadow-xl"
+                  >
+                    {[
+                      { label: "Download PDF", run: download },
+                      { label: "Email report", run: () => setEmailOpen(true) },
+                    ].map((o) => (
+                      <li key={o.label}>
+                        <button
+                          onClick={() => {
+                            setShareOpen(false);
+                            o.run();
+                          }}
+                          className="w-full text-left px-3 rounded-[var(--radius-sm)] text-sm text-ink hover:bg-[var(--surface-2)] min-h-11"
+                        >
+                          {o.label}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Instrument status: shown above every tab so a score is never read without its rung */}
         <div
-          className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border px-4 py-3 mb-5"
-          style={{ background: "var(--surface)", borderColor: "rgb(var(--accent-rgb) / 0.35)" }}
+          className="card flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3"
+          style={{ borderColor: "var(--accent-ui)" }}
         >
-          <span
-            className="px-2 py-1 rounded text-xs font-bold tracking-wider uppercase"
-            style={{ background: "var(--accent)", color: "#fff" }}
-          >
+          <span className="chip font-semibold">
             Rung {scenario.instrument.claimRung} of 4: {rung.title}
           </span>
-          <p className="text-ink/80 text-xs leading-relaxed flex-1 min-w-[16rem]">
-            {rung.claim} <span className="text-ink/75">{rung.fitFor}</span>
+          <p className="text-ink/85 text-sm leading-relaxed flex-1 min-w-[16rem]">
+            {rung.claim} <span className="text-ink/80">{rung.fitFor}</span>
           </p>
         </div>
 
-        {/* Tab bar */}
-        <div
-          role="tablist"
-          aria-label="Report sections"
-          className="flex flex-wrap items-center gap-1.5 p-1.5 rounded-2xl mb-5 glass"
-        >
-          {TABS.map((t) => {
-            const active = tab === t.id;
-            return (
-              <button
-                key={t.id}
-                role="tab"
-                id={`tab-${t.id}`}
-                aria-selected={active}
-                aria-controls={`panel-${t.id}`}
-                onClick={() => setTab(t.id)}
-                className="tool-btn flex-1 basis-[calc(50%-0.375rem)] sm:basis-0 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs md:text-sm font-semibold min-h-[44px] whitespace-nowrap"
-                style={
-                  active
-                    ? { background: "var(--accent)", color: "#ffffff" }
-                    : { background: "transparent", color: "rgb(var(--ink) / 0.75)" }
-                }
-              >
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
+        <Tabs
+          label="Report sections"
+          idPrefix="report"
+          tabs={TABS}
+          value={tab}
+          onChange={setTab}
+          className="flex-wrap"
+        />
 
         {/* ===================== OVERVIEW ===================== */}
         {tab === "overview" && (
           <div
             role="tabpanel"
-            id="panel-overview"
-            aria-labelledby="tab-overview"
+            id="report-panel-overview"
+            aria-labelledby="report-tab-overview"
+            tabIndex={0}
             className="animate-fade-in-up space-y-4"
           >
             {/* AI RolePlay: a run complete moment, like finishing a lesson */}
@@ -891,8 +864,9 @@ export default function SummaryPage({
         {tab === "evidence" && (
           <div
             role="tabpanel"
-            id="panel-evidence"
-            aria-labelledby="tab-evidence"
+            id="report-panel-evidence"
+            aria-labelledby="report-tab-evidence"
+            tabIndex={0}
             className="animate-fade-in-up"
           >
             <p className="text-ink/80 text-sm mb-5 leading-relaxed">
@@ -1036,7 +1010,7 @@ export default function SummaryPage({
                                         className="rounded-xl p-3 border border-ink/10"
                                         style={{ background: "var(--surface-2)" }}
                                       >
-                                        <p className="text-ink/75 text-xs font-semibold uppercase tracking-wider mb-1">
+                                        <p className="text-ink/80 text-[13px] font-semibold mb-1">
                                           Recommendation
                                         </p>
                                         <p className="text-ink/85 text-sm leading-relaxed">
@@ -1048,7 +1022,7 @@ export default function SummaryPage({
                                           className="rounded-xl p-3 border border-ink/10"
                                           style={{ background: "var(--surface-2)" }}
                                         >
-                                          <p className="text-ink/75 text-xs font-semibold uppercase tracking-wider mb-1">
+                                          <p className="text-ink/80 text-[13px] font-semibold mb-1">
                                             Practice Drill
                                           </p>
                                           <p className="text-ink/85 text-sm leading-relaxed">
@@ -1076,8 +1050,9 @@ export default function SummaryPage({
         {tab === "comm" && (
           <div
             role="tabpanel"
-            id="panel-comm"
-            aria-labelledby="tab-comm"
+            id="report-panel-comm"
+            aria-labelledby="report-tab-comm"
+            tabIndex={0}
             className="animate-fade-in-up grid lg:grid-cols-12 gap-4 items-start"
           >
             <div className="lg:col-span-5 space-y-4">
@@ -1299,12 +1274,13 @@ export default function SummaryPage({
         {tab === "transcript" && (
           <div
             role="tabpanel"
-            id="panel-transcript"
-            aria-labelledby="tab-transcript"
+            id="report-panel-transcript"
+            aria-labelledby="report-tab-transcript"
+            tabIndex={0}
             className="animate-fade-in-up grid lg:grid-cols-12 gap-4 items-start"
           >
             <aside className="lg:col-span-4 lg:order-2 lg:sticky lg:top-4 glass rounded-2xl p-5">
-              <h2 className="font-display font-semibold text-ink text-sm mb-3">Key Moments</h2>
+              <h2 className="font-display font-semibold text-ink text-sm mb-3">Key moments</h2>
               {tagged.filter((l) => l.tag).length === 0 ? (
                 <p className="text-ink/75 text-sm">
                   No turn in this call reached a Strong, Weak or Harmful band.
@@ -1342,7 +1318,7 @@ export default function SummaryPage({
             </aside>
             <div className="glass rounded-2xl p-6 lg:col-span-8 lg:order-1">
               <div className="flex items-center justify-between mb-5">
-                <h2 className="font-display font-semibold text-ink text-xl">Conversation Transcript</h2>
+                <h2 className="font-display font-semibold text-ink text-xl">Conversation transcript</h2>
                 <span
                   className="px-3 py-1 rounded-full text-ink/70 text-xs font-medium"
                   style={{ background: "rgb(var(--ink) / 0.05)" }}
@@ -1397,6 +1373,7 @@ export default function SummaryPage({
           </div>
         )}
       </main>
+      <BuildStamp product={product.name} />
       {party && <ConfettiBurst pieces={120} />}
       {emailOpen && (
         <EmailDialog
@@ -1407,6 +1384,6 @@ export default function SummaryPage({
           onDownload={download}
         />
       )}
-    </div>
+    </AppShell>
   );
 }

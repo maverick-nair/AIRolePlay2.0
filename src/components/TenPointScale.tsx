@@ -14,13 +14,8 @@ export default function TenPointScale({
   const active = bandFor(score);
 
   return (
-    <div
-      className="flex flex-col p-4 sm:p-6 md:p-8 rounded-2xl border border-ink/10"
-      style={{ background: "var(--surface)" }}
-    >
-      <p className="text-ink/70 text-xs font-bold tracking-widest uppercase mb-5">
-        Overall Negotiation Score
-      </p>
+    <div className="card flex flex-col p-4 sm:p-6 md:p-7">
+      <p className="text-ink/80 text-[13px] font-semibold mb-5">Overall negotiation score</p>
 
       <div className="flex flex-col sm:flex-row sm:items-start gap-6 mb-10">
         <div className="flex items-baseline gap-2">
@@ -30,22 +25,20 @@ export default function TenPointScale({
         <div className="flex flex-col gap-3 max-w-md sm:mt-2">
           <div className="flex items-center gap-3 flex-wrap">
             <span
-              className="px-3 py-1 rounded-full text-xs font-bold tracking-wide"
+              className="px-3 py-1 rounded-full text-xs font-bold"
               style={{ background: active.color, color: readableOn(active.color) }}
             >
-              {active.label.toUpperCase()}
+              {active.label}
             </span>
             {raw !== undefined && (
-              <span className="text-ink/70 text-xs tabular-nums">Weighted average {raw.toFixed(2)}</span>
+              <span className="text-ink/75 text-xs tabular-nums">Weighted average {raw.toFixed(2)}</span>
             )}
           </div>
           <p className="text-ink/80 text-sm leading-relaxed">{description}</p>
         </div>
       </div>
 
-      <p className="text-ink/75 text-xs font-bold tracking-widest uppercase mb-4">
-        Knolskape Ten-Point Scale
-      </p>
+      <p className="text-ink/80 text-[13px] font-semibold mb-4">KNOLSKAPE ten point scale</p>
       <div
         className="grid grid-cols-5 gap-1 sm:gap-2 md:gap-3"
         role="img"

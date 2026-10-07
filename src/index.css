@@ -1,10 +1,8 @@
-/* Self hosted variable fonts (no third party font host, works inside locked down networks).
-   AI RolePlay: Bricolage Grotesque for display, DM Sans for body.
-   Conversation AI: Newsreader for display, Instrument Sans for body. */
-@import "@fontsource-variable/bricolage-grotesque/opsz.css";
-@import "@fontsource-variable/dm-sans";
-@import "@fontsource-variable/newsreader/opsz.css";
-@import "@fontsource-variable/instrument-sans";
+/* Self hosted fonts (no third party font host, works inside locked down networks).
+   AI RolePlay: Figtree. Conversation AI: IBM Plex Sans, with Plex Mono for time, scores and IDs. */
+@import "@fontsource-variable/figtree";
+@import "@fontsource-variable/ibm-plex-sans";
+@import "@fontsource/ibm-plex-mono/500.css";
 @import "tailwindcss";
 
 html,
@@ -36,95 +34,113 @@ body,
   }
 }
 
-/* Theme tokens. Two products, two design languages, one set of token names.
-   AI RolePlay borrows the lesson side of Brilliant: a clean light canvas first, a warm coral accent,
-   tactile buttons that press down, green for a strong reply and amber for "not quite".
-   Conversation AI borrows the calm, structured side: a dark ground first, flat precise controls,
-   a cool blue accent and no game layer. Every pair below is checked for WCAG AA. */
+/* Theme tokens. One set of names, two products, light first, every pair checked for WCAG 2.2 AA:
+   text 4.5:1 or more, control borders, icons and progress fills 3:1 or more (1.4.11).
+   AI RolePlay: a warm practice studio. Figtree, orange accent, soft grey ground, white cards.
+   Conversation AI: a calm assessment centre. IBM Plex, indigo accent, crisper corners, no game layer. */
 :root {
-  --font-body: "DM Sans Variable", "DM Sans", system-ui, sans-serif;
-  --radius: 16px;
-  --ink: 255 255 255; /* foreground channels, used as rgb(var(--ink) / a) */
-  --bg: #0c0e16;
-  --surface: #151826;
-  --surface-2: #1c2030;
-  --surface-3: #10131d;
-  --edge: #2a2f42; /* tile and button borders, and the 3D press edge */
-  --brand: #fc6e51; /* accent text: 6.3:1 on surface */
-  --accent: #c93d1f; /* fills behind white text: 5.0:1 */
-  --accent-hover: #b3361b;
-  --accent-press: #7f2611; /* the bottom edge of a primary button */
-  --accent-2: #b3361b;
-  --accent-rgb: 252 110 81;
-  --ok: #4ade80;
-  --ok-tint: #132a1f;
-  --warn: #fdba74;
-  --warn-tint: #2a1c12;
-  --danger: #fb7185;
+  --font-body: "Figtree Variable", "Figtree", system-ui, sans-serif;
+  --font-mono: "Figtree Variable", "Figtree", system-ui, sans-serif;
+  --radius: 18px; /* cards */
+  --radius-sm: 12px; /* controls */
+  --ink: 24 24 27;
+  --bg: #f1f1f3;
+  --surface: #ffffff;
+  --surface-2: #f6f6f8;
+  --surface-3: #fafafb;
+  --edge: #e4e4e9; /* dividers and card edges (decorative) */
+  --line: #8a8f98; /* control borders: 3.3:1 on white */
+  --brand: #c2410c; /* accent text: 5.2:1 on white */
+  --accent: #c2410c; /* fills behind white text: 5.2:1 */
+  --accent-hover: #9a3412;
+  --accent-press: #7c2d12;
+  --accent-2: #9a3412;
+  --accent-ui: #ea580c; /* progress fills and icons: 3.6:1 */
+  --accent-soft: #fff1e8;
+  --accent-soft-ink: #9a3412; /* 6.6:1 on the soft fill */
+  --accent-rgb: 234 88 12;
+  --xp: #d97706;
+  --ok: #15803d;
+  --ok-tint: #ecfdf3;
+  --warn: #9a3412;
+  --warn-tint: #fff7ed;
+  --danger: #b91c1c;
   --bg-gradient: none;
 }
 
-:root.light {
-  --ink: 23 21 19;
-  --bg: #faf9f7;
-  --surface: #ffffff;
-  --surface-2: #f4f2ef;
-  --surface-3: #fbfaf8;
-  --edge: #e4e0da;
-  --brand: #b5361a; /* accent text: 6.0:1 on white */
-  --accent: #c93d1f;
-  --accent-hover: #b3361b;
-  --accent-press: #8f2a13;
-  --accent-2: #b3361b;
-  --accent-rgb: 201 61 31;
-  --ok: #166534; /* 6.4:1 on its tint */
-  --ok-tint: #e8f7ee;
-  --warn: #9a3412; /* 6.7:1 on its tint */
-  --warn-tint: #fff4e5;
-  --danger: #be123c;
-  --bg-gradient: none;
+:root:not(.light) {
+  --ink: 244 244 245;
+  --bg: #141416;
+  --surface: #1d1d21;
+  --surface-2: #25252a;
+  --surface-3: #18181b;
+  --edge: #34343b;
+  --line: #7c7c86;
+  --brand: #fb923c;
+  --accent: #c2410c;
+  --accent-hover: #9a3412;
+  --accent-press: #7c2d12;
+  --accent-2: #9a3412;
+  --accent-ui: #f97316;
+  --accent-soft: #2a1a10;
+  --accent-soft-ink: #fdba74;
+  --xp: #fbbf24;
+  --ok: #4ade80;
+  --ok-tint: #12261a;
+  --warn: #fdba74;
+  --warn-tint: #2a1c12;
+  --danger: #f87171;
 }
 
 :root[data-product="conversation-ai"] {
-  --font-display: "Newsreader Variable", "Newsreader", Georgia, serif;
-  --font-body: "Instrument Sans Variable", "Instrument Sans", system-ui, sans-serif;
-  --radius: 6px;
-  --ink: 232 236 246;
-  --bg: #0b1020;
-  --surface: #121a30;
-  --surface-2: #182240;
-  --surface-3: #0e1529;
-  --edge: #263257;
-  --brand: #8ab4ff; /* accent text: 8.3:1 on surface */
-  --accent: #1d4ed8; /* fills behind white text: 6.3:1 */
-  --accent-hover: #1e40af;
-  --accent-press: #1e3a8a;
-  --accent-2: #1e3a8a;
-  --accent-rgb: 59 130 246;
-  --ok: #4ade80;
-  --ok-tint: #10261d;
-  --warn: #fdba74;
-  --warn-tint: #261a12;
-  --bg-gradient: none;
-}
-:root.light[data-product="conversation-ai"] {
-  --ink: 15 23 42;
-  --bg: #f5f7fb;
+  --font-display: "IBM Plex Sans Variable", "IBM Plex Sans", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans Variable", "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --radius: 10px;
+  --radius-sm: 8px;
+  --ink: 17 24 39;
+  --bg: #f2f3f7;
   --surface: #ffffff;
-  --surface-2: #f3f6fb;
-  --surface-3: #f8fafd;
-  --edge: #d9e0ec;
-  --brand: #1d4ed8; /* accent text: 6.1:1 */
-  --accent: #1d4ed8;
-  --accent-hover: #1e40af;
-  --accent-press: #1e3a8a;
-  --accent-2: #1e3a8a;
-  --accent-rgb: 59 130 246;
-  --ok: #166534;
-  --ok-tint: #e8f7ee;
+  --surface-2: #f5f6fa;
+  --surface-3: #fafbfd;
+  --edge: #e1e4ec;
+  --line: #8890a0; /* 3.2:1 on white */
+  --brand: #4338ca; /* 7.9:1 */
+  --accent: #3730a3; /* white text 9.9:1 */
+  --accent-hover: #312e81;
+  --accent-press: #1e1b4b;
+  --accent-2: #312e81;
+  --accent-ui: #4f46e5;
+  --accent-soft: #eef2ff;
+  --accent-soft-ink: #3730a3;
+  --accent-rgb: 79 70 229;
+  --ok: #047857;
+  --ok-tint: #ecfdf5;
   --warn: #9a3412;
-  --warn-tint: #fff4e5;
-  --danger: #be123c;
+  --warn-tint: #fff7ed;
+  --danger: #b91c1c;
+}
+:root:not(.light)[data-product="conversation-ai"] {
+  --ink: 236 238 243;
+  --bg: #0f1117;
+  --surface: #171a23;
+  --surface-2: #1e2230;
+  --surface-3: #131620;
+  --edge: #2b3040;
+  --line: #7b8296; /* 4.5:1 on surface */
+  --brand: #a5b4fc;
+  --accent: #4f46e5; /* white text 6.3:1 */
+  --accent-hover: #4338ca;
+  --accent-press: #312e81;
+  --accent-2: #4338ca;
+  --accent-ui: #818cf8;
+  --accent-soft: #1e1b4b;
+  --accent-soft-ink: #c7d2fe;
+  --ok: #34d399;
+  --ok-tint: #0f2a22;
+  --warn: #fbbf24;
+  --warn-tint: #2a2112;
+  --danger: #f87171;
 }
 
 body {
@@ -152,7 +168,7 @@ body {
   --color-emerald: #10b981;
   --color-amber: #f59e0b;
   --color-rose: #f43f5e;
-  --font-display: "Bricolage Grotesque Variable", "Bricolage Grotesque", system-ui, sans-serif;
+  --font-display: "Figtree Variable", "Figtree", system-ui, sans-serif;
 }
 
 * {
@@ -169,21 +185,6 @@ body {
 *::-webkit-scrollbar-thumb {
   background: rgb(var(--ink) / 0.2);
   border-radius: 99px;
-}
-
-@keyframes pulse-ring {
-  0% {
-    transform: scale(1);
-    opacity: 0.6;
-  }
-  70% {
-    transform: scale(1.18);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1.18);
-    opacity: 0;
-  }
 }
 
 @keyframes wave {
@@ -207,15 +208,6 @@ body {
   }
 }
 
-@keyframes spin-slow {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 @keyframes confetti-burst {
   0% {
     transform: translate(0, 0) scale(1);
@@ -227,70 +219,7 @@ body {
   }
 }
 
-.animate-pulse-ring {
-  animation: pulse-ring 2s ease-out infinite;
-}
-
-/* Micro-interactions: springy press + hover lift for tactile, sticky controls. */
-.tool-btn {
-  transition:
-    transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
-    background 0.18s ease,
-    border-color 0.18s ease,
-    box-shadow 0.18s ease;
-}
-@media (hover: hover) {
-  .tool-btn:hover {
-    transform: translateY(-1px) scale(1.06);
-  }
-}
-.tool-btn:active {
-  transform: scale(0.92);
-}
-.tool-btn:focus-visible {
-  outline: 2px solid var(--brand);
-  outline-offset: 2px;
-}
-
-@keyframes badge-pop {
-  0% {
-    transform: scale(0.4);
-    opacity: 0;
-  }
-  60% {
-    transform: scale(1.25);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-.badge-pop {
-  animation: badge-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes tip-in {
-  from {
-    opacity: 0;
-    transform: translate(-50%, 4px);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
-}
-
 /* Row entrance for leaderboard reshuffles, a subtle stickiness cue. */
-@keyframes row-rise {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
 .animate-fade-in-up {
   animation: fade-in-up 0.5s ease-out both;
@@ -304,37 +233,6 @@ body {
 .glass {
   background: var(--surface);
   border: 1px solid var(--edge);
-}
-
-.glass-strong {
-  background: var(--surface);
-  border: 1px solid var(--edge);
-}
-
-.gradient-text {
-  background: linear-gradient(135deg, var(--brand) 0%, var(--accent) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.gradient-text-emerald {
-  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.glow-violet {
-  box-shadow:
-    0 0 40px rgb(var(--accent-rgb) / 0.35),
-    0 0 80px rgb(var(--accent-rgb) / 0.15);
-}
-
-.glow-emerald {
-  box-shadow:
-    0 0 40px rgba(16, 185, 129, 0.3),
-    0 0 80px rgba(16, 185, 129, 0.1);
 }
 
 /* ---------- Gamification motion ---------- */
@@ -356,24 +254,7 @@ body {
   animation-timing-function: cubic-bezier(0.15, 0.6, 0.35, 1);
   animation-fill-mode: both;
 }
-@keyframes xp-float {
-  0% {
-    transform: translateY(0) scale(0.7);
-    opacity: 0;
-  }
-  20% {
-    transform: translateY(8px) scale(1.15);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(34px) scale(1);
-    opacity: 0;
-  }
-}
-.xp-float {
-  animation: xp-float 1.3s ease-out forwards;
-  white-space: nowrap;
-}
+
 @keyframes unlock-pop {
   0% {
     transform: translateY(-16px) scale(0.85);
@@ -461,45 +342,20 @@ body {
   filter: grayscale(0.25) contrast(0.95) brightness(1.3);
 }
 /* ---------- Product design languages ---------- */
-/* AI RolePlay: rounded, soft, playful. Cards and controls take the product radius; docked call
-   panels stay square because they meet the screen edge. */
-[data-product="roleplay"]
-  :is(
-    button:not(.rounded-full),
-    [role="radio"],
-    [role="tab"],
-    textarea,
-    .rounded-2xl,
-    .rounded-xl,
-    .rounded-lg,
-    .glass,
-    .tool-btn
-  ) {
+/* Corner radius: one card radius and one control radius per product. */
+:is(.rounded-2xl, .rounded-xl, .glass) {
   border-radius: var(--radius);
 }
-
-/* Conversation AI: an assessment paper. Serif headings, sharp edges, ruled ground, no motion flourishes. */
-[data-product="conversation-ai"]
-  :is(.rounded-2xl, .rounded-xl, .rounded-lg, .rounded-md, .rounded, .glass, .glass-strong) {
-  border-radius: var(--radius);
-}
-[data-product="conversation-ai"] .glass,
-[data-product="conversation-ai"] .glass-strong {
-  border-color: rgb(var(--ink) / 0.16);
-}
-[data-product="conversation-ai"] .tool-btn:hover,
-[data-product="conversation-ai"] .tool-btn:active {
-  transform: none;
-}
-[data-product="conversation-ai"] .font-display {
-  letter-spacing: -0.01em;
-}
-/* The serif is for headings of 20px and above. Small labels, buttons and tabs use the body sans. */
-[data-product="conversation-ai"]
-  :is(.text-xs, .text-sm, .text-base, .text-lg, button, [role="tab"]).font-display,
-[data-product="conversation-ai"] :is(button, [role="tab"]) .font-display {
-  font-family: var(--font-body);
-  letter-spacing: 0;
+:is(
+  button:not(.rounded-full),
+  [role="radio"],
+  [role="tab"],
+  textarea,
+  input[type="text"],
+  .rounded-lg,
+  .rounded-md
+) {
+  border-radius: var(--radius-sm);
 }
 
 /* Live caption under the persona: a short fade so a new line reads as new without moving the layout. */
@@ -542,7 +398,7 @@ body {
   50% {
     box-shadow:
       0 0 0 3px var(--brand),
-      0 0 0 12px color-mix(in srgb, var(--brand) 18%, transparent);
+      0 0 0 8px color-mix(in srgb, var(--brand) 16%, transparent);
   }
 }
 .thinking-shimmer::after {
@@ -580,49 +436,27 @@ body {
   }
 }
 
-/* The practice brief: a drawer from the right edge, full height on every screen. */
-.brief-drawer {
-  height: 100dvh;
-  max-height: 100dvh;
-}
-.brief-drawer::backdrop {
-  background: rgb(0 0 0 / 0.55);
-}
-.brief-drawer[open] {
-  animation: drawer-in 0.22s ease-out;
-}
-@keyframes drawer-in {
-  from {
-    transform: translateX(24px);
-    opacity: 0;
-  }
-}
-
 /* ---------- Components shared by both products ---------- */
-/* Buttons. One shape per product: AI RolePlay buttons sit on a darker bottom edge and press down
-   into it, like a physical key; Conversation AI buttons are flat and precise. */
+/* Buttons: flat and clear. Secondary buttons and inputs carry a 3:1 border (WCAG 1.4.11). */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  min-height: 48px;
-  padding: 0 1.5rem;
-  border-radius: var(--radius);
-  font-weight: 700;
+  min-height: 44px;
+  padding: 0 1.25rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
   font-size: 15px;
   line-height: 1.2;
   transition:
-    transform 0.08s ease,
-    box-shadow 0.08s ease,
     background-color 0.15s ease,
-    border-color 0.15s ease;
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 .btn:disabled {
   cursor: not-allowed;
   opacity: 0.55;
-  box-shadow: none !important;
-  transform: none !important;
 }
 .btn-primary {
   background: var(--accent);
@@ -634,59 +468,136 @@ body {
 .btn-secondary {
   background: var(--surface);
   color: rgb(var(--ink));
-  border: 2px solid var(--edge);
+  border: 1px solid var(--line);
 }
 .btn-secondary:hover:not(:disabled) {
-  border-color: rgb(var(--ink) / 0.35);
+  background: var(--surface-2);
 }
-[data-product="roleplay"] .btn-primary {
-  box-shadow: 0 4px 0 var(--accent-press);
+.btn-ghost {
+  color: rgb(var(--ink) / 0.85);
 }
-[data-product="roleplay"] .btn-primary:active:not(:disabled) {
-  transform: translateY(3px);
-  box-shadow: 0 1px 0 var(--accent-press);
-}
-[data-product="roleplay"] .btn-secondary {
-  box-shadow: 0 3px 0 var(--edge);
-}
-[data-product="roleplay"] .btn-secondary:active:not(:disabled) {
-  transform: translateY(2px);
-  box-shadow: 0 1px 0 var(--edge);
-}
-[data-product="conversation-ai"] .btn {
-  font-weight: 600;
-}
-[data-product="conversation-ai"] .btn-secondary {
-  border-width: 1.5px;
+.btn-ghost:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: rgb(var(--ink));
 }
 
-/* Choice tiles (difficulty, options). A thick border that turns accent when chosen. */
-.choice {
-  border: 2px solid var(--edge);
+/* Cards: white panels on the soft ground, as in the reference. */
+.card {
   background: var(--surface);
+  border: 1px solid var(--edge);
   border-radius: var(--radius);
+}
+
+/* Chips: tags and facts. Text on the soft accent is 6.6:1 or better. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 28px;
+  padding: 0 0.625rem;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--accent-soft);
+  color: var(--accent-soft-ink);
+}
+.chip-neutral {
+  background: var(--surface-2);
+  color: rgb(var(--ink) / 0.85);
+}
+
+/* Choice tiles (difficulty). A border that turns accent when chosen, plus a check, so state is not
+   shown by colour alone. */
+.choice {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
   transition:
     border-color 0.15s ease,
-    background-color 0.15s ease,
-    transform 0.08s ease,
-    box-shadow 0.08s ease;
+    background-color 0.15s ease;
 }
 .choice:hover {
-  border-color: rgb(var(--ink) / 0.3);
+  background: var(--surface-2);
 }
 .choice[aria-checked="true"] {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 9%, var(--surface));
+  border: 2px solid var(--accent-ui);
+  background: var(--accent-soft);
 }
-[data-product="roleplay"] .choice {
-  box-shadow: 0 3px 0 var(--edge);
+
+/* Segmented tabs, as in the reference panel. */
+.seg {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: calc(var(--radius-sm) + 2px);
+  background: var(--surface-2);
+  border: 1px solid var(--edge);
 }
-[data-product="roleplay"] .choice[aria-checked="true"] {
-  box-shadow: 0 3px 0 var(--accent-press);
+.seg [role="tab"] {
+  flex: 1;
+  min-height: 40px;
+  padding: 0 0.75rem;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgb(var(--ink) / 0.8);
+  white-space: nowrap;
 }
-[data-product="roleplay"] .choice:active {
-  transform: translateY(2px);
-  box-shadow: 0 1px 0 var(--edge);
+.seg [role="tab"][aria-selected="true"] {
+  background: var(--surface);
+  color: rgb(var(--ink));
+  font-weight: 600;
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.08),
+    0 0 0 1px var(--edge);
+}
+
+/* Disclosure rows inside panels (the brief, skills). */
+.acc {
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.acc > summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 52px;
+  padding: 0 1rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 15px;
+}
+.acc > summary::-webkit-details-marker {
+  display: none;
+}
+.acc > summary .acc-chevron {
+  transition: transform 0.2s ease;
+}
+.acc[open] > summary .acc-chevron {
+  transform: rotate(180deg);
+}
+.acc > .acc-body {
+  padding: 0 1rem 1rem;
+}
+
+/* Icon rail. */
+.rail-item {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  color: rgb(var(--ink) / 0.75);
+}
+.rail-item:hover {
+  background: var(--surface-2);
+  color: rgb(var(--ink));
+}
+.rail-item[aria-current="page"] {
+  background: var(--accent);
+  color: #ffffff;
 }
 
 /* The feedback sheet under the composer, after each practice reply. */

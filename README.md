@@ -11,7 +11,7 @@ Every score is produced the same way in both products. A classifier (an LLM, or 
 
 The first scenario is a renewal negotiation with Margaret Hale, VP Procurement at Northwind Freight.
 
-The two interfaces follow a clean, clear approach inspired by Brilliant and are deliberately different. AI RolePlay feels like a lesson: light first, tactile buttons that press down, a path of runs and a feedback sheet after every reply. Conversation AI feels like a calm exam room: dark first, flat precise controls, a numbered step flow and no game layer. See `docs/handover.md` for the tokens and shared classes.
+Both interfaces share one frame: a slim icon rail (a top bar on small screens), a soft grey ground and white cards, with a header card, a stage card and a tabbed details panel. Inside that frame they are deliberately different. AI RolePlay is a practice studio for a mature audience, from entry level employees to leadership: a warm orange accent, Figtree, a path of five runs, a daily goal, quests, streaks and badges, and a feedback sheet after every reply. Conversation AI is a quiet assessment room: an indigo accent, IBM Plex Sans and Mono, a numbered brief, a three step flow and no game layer. Every screen is checked against WCAG 2.2 AA in both themes. See `docs/handover.md` for the tokens and shared classes.
 
 ## Quick start
 

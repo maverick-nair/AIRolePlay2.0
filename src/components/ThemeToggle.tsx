@@ -8,16 +8,12 @@ export default function ThemeToggle() {
       onClick={toggle}
       aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}
       title={dark ? "Light theme" : "Dark theme"}
-      className="flex items-center justify-center w-8 h-8 border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-      style={{
-        borderColor: "rgb(var(--ink) / 0.15)",
-        color: "rgb(var(--ink) / 0.7)",
-      }}
+      className="rail-item"
     >
       {dark ? (
         <svg
-          width="15"
-          height="15"
+          width="20"
+          height="20"
           viewBox="0 0 16 16"
           fill="none"
           stroke="currentColor"
@@ -30,8 +26,8 @@ export default function ThemeToggle() {
         </svg>
       ) : (
         <svg
-          width="15"
-          height="15"
+          width="20"
+          height="20"
           viewBox="0 0 16 16"
           fill="none"
           stroke="currentColor"

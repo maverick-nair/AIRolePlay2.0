@@ -20,11 +20,9 @@ export default function ClaimLadderPanel({ current }: { current: ClaimRung }) {
             aria-current={isCurrent ? "step" : undefined}
           >
             <div className="flex items-center justify-between">
-              <span className="font-display text-xs font-bold tracking-widest uppercase text-ink/75">
-                Rung {r.rung}
-              </span>
+              <span className="text-[13px] font-semibold text-ink/80">Rung {r.rung}</span>
               <span
-                className="text-xs font-display font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                className="text-xs font-semibold px-1.5 py-0.5 rounded"
                 style={
                   isCurrent
                     ? { background: "var(--accent)", color: "#fff" }
