@@ -109,9 +109,9 @@ export default function AssessmentLanding({
           {persona.organisation}. Your words are scored against {scenario.instrument.skills.length} skills,
           and the report shows the evidence behind every rating.
         </p>
-        <dl className="flex flex-wrap border-y border-ink/20 py-4 gap-y-4">
-          {META.map(([k, v], i) => (
-            <div key={k} className={`pr-8 ${i ? "pl-6 border-l border-ink/15" : ""}`}>
+        <dl className="flex flex-wrap border-y border-ink/20 py-4 gap-x-10 gap-y-4">
+          {META.map(([k, v]) => (
+            <div key={k}>
               <dt className="text-ink/70 text-[11px] uppercase tracking-widest mb-1">{k}</dt>
               <dd className="font-display font-semibold text-ink text-lg tabular-nums">{v}</dd>
             </div>
