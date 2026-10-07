@@ -874,7 +874,7 @@ export default function SummaryPage({
                       <div className="flex items-center gap-4 flex-shrink-0">
                         {compare && (
                           <span className="hidden md:block text-right">
-                            <span className="block text-ink/70 text-[11px]">vs peers</span>
+                            <span className="block text-ink/70 text-xs">vs peers</span>
                             <span className="block text-ink text-xs font-semibold tabular-nums">
                               {delta >= 0 ? "+" : ""}
                               {delta.toFixed(1)}
@@ -931,7 +931,7 @@ export default function SummaryPage({
                                   <div className="mt-1.5 flex items-center gap-2">
                                     <BandChip band={ind.band} />
                                     {ind.observed && (
-                                      <span className="text-ink/70 text-[11px] tabular-nums">
+                                      <span className="text-ink/70 text-xs tabular-nums">
                                         {ind.evidence.length} {ind.evidence.length === 1 ? "turn" : "turns"}
                                       </span>
                                     )}
@@ -988,7 +988,7 @@ export default function SummaryPage({
                                         className="rounded-xl p-3 border border-ink/10"
                                         style={{ background: "var(--surface-2)" }}
                                       >
-                                        <p className="text-ink/75 text-[11px] font-semibold uppercase tracking-wider mb-1">
+                                        <p className="text-ink/75 text-xs font-semibold uppercase tracking-wider mb-1">
                                           Recommendation
                                         </p>
                                         <p className="text-ink/85 text-sm leading-relaxed">
@@ -1000,7 +1000,7 @@ export default function SummaryPage({
                                           className="rounded-xl p-3 border border-ink/10"
                                           style={{ background: "var(--surface-2)" }}
                                         >
-                                          <p className="text-ink/75 text-[11px] font-semibold uppercase tracking-wider mb-1">
+                                          <p className="text-ink/75 text-xs font-semibold uppercase tracking-wider mb-1">
                                             Practice Drill
                                           </p>
                                           <p className="text-ink/85 text-sm leading-relaxed">
@@ -1053,7 +1053,7 @@ export default function SummaryPage({
                     ],
                   ].map(([k, v]) => (
                     <div key={k} className="rounded-xl p-3 border border-ink/10">
-                      <dt className="text-ink/75 text-[11px] font-medium">{k}</dt>
+                      <dt className="text-ink/75 text-xs font-medium">{k}</dt>
                       <dd className="font-display font-bold text-ink text-lg tabular-nums mt-0.5">{v}</dd>
                     </div>
                   ))}
@@ -1128,7 +1128,7 @@ export default function SummaryPage({
                                 style={{ background: reached ? cefrColor(lvl) : "rgb(var(--ink) / 0.08)" }}
                               />
                               <span
-                                className="text-[11px] font-display"
+                                className="text-xs font-display"
                                 style={{
                                   color: isCurrent ? "rgb(var(--ink))" : "rgb(var(--ink) / 0.7)",
                                   fontWeight: isCurrent ? 700 : 500,
@@ -1154,7 +1154,7 @@ export default function SummaryPage({
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-ink/75 text-xs font-semibold font-display">{d.name}</span>
                             <span
-                              className="px-2 py-0.5 rounded-full text-[11px] font-bold font-display"
+                              className="px-2 py-0.5 rounded-full text-xs font-bold font-display"
                               style={{
                                 background: cefrColor(d.level),
                                 color: readableOn(cefrColor(d.level)),
@@ -1163,7 +1163,7 @@ export default function SummaryPage({
                               {d.level}
                             </span>
                           </div>
-                          <p className="text-ink/70 text-[11px] leading-relaxed">{d.note}</p>
+                          <p className="text-ink/70 text-xs leading-relaxed">{d.note}</p>
                         </div>
                       ))}
                     </div>
@@ -1309,7 +1309,7 @@ export default function SummaryPage({
                     <div key={i} className={`flex flex-col gap-1.5 ${you ? "items-end" : "items-start"}`}>
                       <div className="flex items-center gap-2">
                         <span className="text-ink/80 text-xs font-bold font-display">{t.speaker}</span>
-                        <span className="text-ink/70 text-[11px] tabular-nums">{t.time}</span>
+                        <span className="text-ink/70 text-xs tabular-nums">{t.time}</span>
                       </div>
                       <MarkList marks={t.marks} align={you ? "end" : "start"} />
                       <div

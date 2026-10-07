@@ -569,20 +569,18 @@ body {
 :root.light .portrait-img {
   filter: grayscale(0.25) contrast(0.95) brightness(1.3);
 }
-:root.light 
 /* ---------- Product design languages ---------- */
-/* AI RolePlay: rounded, soft, playful. Cards, controls and frames take the product radius. */
+/* AI RolePlay: rounded, soft, playful. Cards and controls take the product radius; docked call
+   panels stay square because they meet the screen edge. */
 [data-product="roleplay"]
   :is(
     button:not(.rounded-full),
     [role="radio"],
     [role="tab"],
-    section,
-    figure,
-    dl,
-    aside,
     textarea,
-    li.border,
+    .rounded-2xl,
+    .rounded-xl,
+    .rounded-lg,
     .glass,
     .tool-btn
   ) {
@@ -618,6 +616,13 @@ body {
 }
 [data-product="conversation-ai"] .font-display {
   letter-spacing: -0.01em;
+}
+/* The serif is for headings of 20px and above. Small labels, buttons and tabs use the body sans. */
+[data-product="conversation-ai"]
+  :is(.text-xs, .text-sm, .text-base, .text-lg, button, [role="tab"]).font-display,
+[data-product="conversation-ai"] :is(button, [role="tab"]) .font-display {
+  font-family: var(--font-body);
+  letter-spacing: 0;
 }
 
 /* Live caption under the persona: a short fade so a new line reads as new without moving the layout. */

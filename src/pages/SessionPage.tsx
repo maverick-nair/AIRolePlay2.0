@@ -790,14 +790,14 @@ export default function SessionPage({
               <div className="relative flex-none">
                 <div
                   aria-hidden
-                  className={`absolute -inset-1.5 md:-inset-2 rounded-[20px] md:rounded-[28px] transition-opacity duration-300 ${state === "speaking" || state === "listening" ? "speak-ring" : ""}`}
+                  className={`absolute -inset-1.5 md:-inset-2 rounded-[calc(var(--radius)*1.45)] transition-opacity duration-300 ${state === "speaking" || state === "listening" ? "speak-ring" : ""}`}
                   style={{
                     border: `2px solid ${ringColor}`,
                     opacity: state === "your-turn" ? 0 : state === "thinking" ? 0.35 : 1,
                   }}
                 />
                 <figure
-                  className={`relative w-20 md:w-[clamp(150px,26vh,240px)] aspect-square overflow-hidden rounded-[15px] md:rounded-[22px] border border-ink/10 ${state === "thinking" ? "thinking-shimmer" : ""}`}
+                  className={`relative w-20 md:w-[clamp(150px,26vh,240px)] aspect-square overflow-hidden rounded-[var(--radius)] border border-ink/10 ${state === "thinking" ? "thinking-shimmer" : ""}`}
                   style={{ background: "var(--surface-2)" }}
                 >
                   <img
@@ -1142,7 +1142,10 @@ export default function SessionPage({
                       aria-keyshortcuts="R"
                       className="h-9 px-3 inline-flex items-center gap-2 text-sm border border-ink/15 text-ink/85 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
                     >
-                      Rewind<span className="hidden sm:inline"> last turn</span> <kbd className="kbd">R</kbd>
+                      <span>
+                        Rewind<span className="hidden sm:inline"> last turn</span>
+                      </span>
+                      <kbd className="kbd">R</kbd>
                     </button>
                   </>
                 )}

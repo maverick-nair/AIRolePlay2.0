@@ -37,7 +37,7 @@ function BriefSection({
         }}
       >
         <h2 className="flex-1 flex items-baseline gap-3">
-          <span className="text-[11px] font-semibold tracking-[0.2em] text-brand tabular-nums">{n}</span>
+          <span className="text-xs font-semibold tracking-[0.2em] text-brand tabular-nums">{n}</span>
           <span className="font-display font-semibold text-ink text-xl tracking-tight">{title}</span>
         </h2>
         {collapsible && (
@@ -134,13 +134,13 @@ export default function AssessmentLanding({
             <span className="text-white text-xs font-bold leading-none">{product.mark}</span>
           </div>
           <span className="text-ink font-display font-semibold text-lg tracking-tight">{product.name}</span>
-          <span className="hidden sm:inline text-ink/70 text-[11px] uppercase tracking-widest border-l border-ink/15 pl-3">
+          <span className="hidden sm:inline text-ink/70 text-xs uppercase tracking-widest border-l border-ink/15 pl-3">
             {product.line}
           </span>
         </div>
         <div className="flex items-center gap-4">
           <span
-            className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 text-[11px] uppercase tracking-wider border"
+            className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 text-xs uppercase tracking-wider border"
             style={{ borderColor: "rgb(var(--accent-rgb) / 0.5)", color: "var(--brand)" }}
           >
             Assessment
@@ -175,7 +175,7 @@ export default function AssessmentLanding({
             <dl className="flex flex-wrap gap-x-8 gap-y-3">
               {META.map(([k, v]) => (
                 <div key={k}>
-                  <dt className="text-ink/70 text-[11px] uppercase tracking-widest mb-0.5">{k}</dt>
+                  <dt className="text-ink/70 text-xs uppercase tracking-widest mb-0.5">{k}</dt>
                   <dd className="font-display font-semibold text-ink text-lg tabular-nums leading-tight">
                     {v}
                   </dd>
@@ -203,13 +203,11 @@ export default function AssessmentLanding({
               <div className="grid md:grid-cols-2 gap-x-8 gap-y-3">
                 <p className="text-ink/80 text-sm leading-relaxed">{player.challenge}</p>
                 <div>
-                  <p className="text-ink/70 text-[11px] uppercase tracking-widest mb-2">
-                    Objectives to achieve
-                  </p>
+                  <p className="text-ink/70 text-xs uppercase tracking-widest mb-2">Objectives to achieve</p>
                   <ol className="space-y-1.5">
                     {scenario.instrument.objectives.map((o, i) => (
                       <li key={o.id} className="grid grid-cols-[1.5rem_1fr] gap-x-2 text-sm leading-snug">
-                        <span className="text-ink/60 text-xs tabular-nums pt-0.5">{i + 1}.</span>
+                        <span className="text-ink/75 text-xs tabular-nums pt-0.5">{i + 1}.</span>
                         <span>
                           <span className="font-display font-semibold text-ink">{o.label}</span>
                           <span className="text-ink/75">: {o.sub}</span>
@@ -226,7 +224,7 @@ export default function AssessmentLanding({
                 <ol className="space-y-2">
                   {INSTRUCTIONS.map((t, i) => (
                     <li key={t} className="grid grid-cols-[1.5rem_1fr] gap-x-2">
-                      <span className="text-ink/60 text-xs tabular-nums pt-0.5">{i + 1}.</span>
+                      <span className="text-ink/75 text-xs tabular-nums pt-0.5">{i + 1}.</span>
                       <span className="text-ink/80 text-sm leading-relaxed">{t}</span>
                     </li>
                   ))}
@@ -261,7 +259,7 @@ export default function AssessmentLanding({
                 />
               </figure>
               <div className="aspect-square p-4 flex flex-col justify-center">
-                <p className="text-ink/70 text-[11px] uppercase tracking-widest mb-1">Your counterpart</p>
+                <p className="text-ink/70 text-xs uppercase tracking-widest mb-1">Your counterpart</p>
                 <p className="font-display font-semibold text-ink text-xl leading-tight">{persona.name}</p>
                 <p className="text-ink/75 text-sm mt-1">
                   {persona.role}, {persona.organisation}
@@ -330,7 +328,7 @@ export default function AssessmentLanding({
               <ul className="space-y-3">
                 {scenario.instrument.skills.map((sk, i) => (
                   <li key={sk.id} className="grid grid-cols-[1.75rem_1fr] gap-x-2">
-                    <span className="text-brand text-[11px] font-semibold tabular-nums pt-1">
+                    <span className="text-brand text-xs font-semibold tabular-nums pt-1">
                       {String(i + 1).padStart(2, "0")}
                     </span>
                     <span>
