@@ -166,7 +166,7 @@ export default function PracticeLanding({
         <div className="grid lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
           <div className="lg:col-span-7 flex flex-col">
             <div
-              className="inline-flex items-center gap-2.5 mb-4 px-3 py-1 text-xs font-medium font-display tracking-wide"
+              className="self-start inline-flex items-center gap-2.5 mb-4 px-3 py-1 text-xs font-medium font-display tracking-wide"
               style={{ background: "rgb(var(--accent-rgb) / 0.12)", color: "var(--brand)" }}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-brand" />
