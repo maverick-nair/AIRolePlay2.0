@@ -1,5 +1,5 @@
 import type { Report } from "../domain/report";
-import { formatDuration, tagTranscript } from "../domain/report";
+import { formatDuration, opportunityFor, opportunityLine, tagTranscript } from "../domain/report";
 import type { Scenario } from "../domain/scenario";
 import { CLAIM_LADDER } from "../domain/instrumentStatus";
 import { formatTalkShare } from "../domain/descriptive";
@@ -47,13 +47,17 @@ export default async function buildReportPdf(report: Report, scenario: Scenario)
   };
   const band = bandFor(report.scores.overall);
   const rung = CLAIM_LADDER[scenario.instrument.claimRung];
+  const feedbackOnly = scenario.instrument.claimRung === 1;
+  const personaFirst = scenario.stimulus.persona.name.split(" ")[0];
   const date = new Date(report.completedAt).toLocaleString("en-GB", {
     dateStyle: "medium",
     timeStyle: "short",
   });
 
   text(
-    `AI ROLEPLAY  ·  ${report.mode === "assessment" ? "ASSESSMENT REPORT" : "PRACTICE REPORT"}`,
+    report.mode === "assessment"
+      ? `CONVERSATION AI  ·  ASSESSMENT REPORT${feedbackOnly ? "  ·  PILOT, FEEDBACK ONLY" : ""}`
+      : "AI ROLEPLAY  ·  PRACTICE REPORT",
     9,
     "bold",
     [184, 50, 15],
@@ -74,6 +78,12 @@ export default async function buildReportPdf(report: Report, scenario: Scenario)
   );
 
   heading("Performance Overview");
+  if (report.mode === "assessment")
+    text(
+      `${report.scores.passed ? "Met the pass mark." : "Below the pass mark."} ${report.scores.overall} of ${scenario.passScore} required.`,
+      14,
+      "bold",
+    );
   text(
     `Overall score: ${report.scores.overall}/10  (${band.label}, weighted average ${report.scores.weightedAverage.toFixed(2)}). ${report.scores.passed ? "Met" : "Did not meet"} the pass mark of ${scenario.passScore}.`,
     12,
@@ -86,7 +96,7 @@ export default async function buildReportPdf(report: Report, scenario: Scenario)
     [90, 84, 78],
   );
   text(
-    `Indicators observed: ${Math.round(report.scores.coverage * 100)}%. Talk to listen ${formatTalkShare(report.metrics.talkShare)}. Questions ${report.metrics.questions} (${report.metrics.openQuestions} open). Offers ${report.metrics.conditionalOffers} conditional, ${report.metrics.unconditionalOffers} unconditional.`,
+    `Indicators observed: ${Math.round(report.scores.coverage * 100)}%. Talk to listen ${formatTalkShare(report.metrics.talkShare)}. Questions ${report.metrics.questions} (${report.metrics.openQuestions} open). Offers ${report.metrics.conditionalOffers} conditional, ${report.metrics.unconditionalOffers} unconditional.${report.stats.interruptions !== undefined ? ` Spoke over ${personaFirst} ${report.stats.interruptions} times.` : ""}`,
     9,
   );
   gap(6);
@@ -107,6 +117,11 @@ export default async function buildReportPdf(report: Report, scenario: Scenario)
     if (fb) text(fb, 9.5);
     s.indicators.forEach((ind) => {
       text(`    ${ind.label}: ${ind.band ?? "Not observed"}`, 9, "bold", [60, 56, 52]);
+      if (!ind.observed)
+        text(
+          `        ${opportunityLine(opportunityFor(scenario, report.transcript, ind.indicatorId), personaFirst)}`,
+          9,
+        );
       ind.evidence.forEach((e) =>
         text(`        "${e.quote}" (${report.transcript[e.turnIndex]?.time ?? ""}) ${e.note}`, 9),
       );

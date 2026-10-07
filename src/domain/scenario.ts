@@ -62,6 +62,9 @@ export const CriticalIncident = z.object({
   // Directive for the LLM persona, and the exact line the scripted mock persona says.
   directive: z.string(),
   mockLine: z.string(),
+  // Indicators this moment gives the participant a clear chance to show. Reports cite the moment
+  // when one of them is never observed, instead of a generic "the scenario gave an opportunity".
+  opportunityFor: z.array(z.string()).default([]),
 });
 export type CriticalIncident = z.infer<typeof CriticalIncident>;
 

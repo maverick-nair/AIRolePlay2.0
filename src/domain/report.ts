@@ -132,3 +132,42 @@ export const TAG_LABEL: Record<TurnTag, string> = {
 export function formatDuration(seconds: number) {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
+
+// ---------- Where the chance was ----------
+
+export type Opportunity =
+  | { kind: "moment"; incidentLabel: string; time: string; quote: string; turnIndex: number }
+  | { kind: "not-reached"; incidentLabel: string }
+  | { kind: "every-turn" };
+
+// For an indicator, finds the critical incident that gave the clearest chance to show it and the
+// persona line where that incident landed in this transcript. Incidents fire after the player's Nth
+// turn, so the line is the first persona turn after that many live player turns. Indicators no incident
+// is authored for (asking open questions, building on what was said) had a chance on every turn.
+export function opportunityFor(
+  scenario: Scenario,
+  transcript: SessionTurn[],
+  indicatorId: string,
+  player = "You",
+): Opportunity {
+  const incident = scenario.stimulus.incidents.find((i) => i.opportunityFor.includes(indicatorId));
+  if (!incident) return { kind: "every-turn" };
+  // The scripted opening is not part of the live call; incidents count live player turns only.
+  let playerTurns = 0;
+  for (let i = scenario.stimulus.opening.length; i < transcript.length; i++) {
+    const t = transcript[i];
+    if (t.speaker === player) playerTurns++;
+    else if (playerTurns === incident.afterPlayerTurn && playerTurns > 0 && t.text.trim())
+      return { kind: "moment", incidentLabel: incident.label, time: t.time, quote: t.text, turnIndex: i };
+  }
+  return { kind: "not-reached", incidentLabel: incident.label };
+}
+
+// One plain sentence a report can show for an indicator that was never observed.
+export function opportunityLine(o: Opportunity, personaFirstName: string): string {
+  if (o.kind === "moment")
+    return `The chance was at ${o.time} (${o.incidentLabel}), when ${personaFirstName} said: "${o.quote}"`;
+  if (o.kind === "not-reached")
+    return `The call ended before ${o.incidentLabel.toLowerCase()}, the moment built to bring this out.`;
+  return "Every reply was a chance to show this. It did not appear in this call.";
+}
