@@ -1,11 +1,9 @@
 import { useState } from "react";
 import ThemeToggle from "../components/ThemeToggle";
 import SectionLabel from "../components/SectionLabel";
-import ClaimLadderPanel from "../components/ClaimLadderPanel";
 import { PORTRAIT_SRC } from "../data/scenario";
 import type { Report } from "../domain/report";
 import type { Scenario } from "../domain/scenario";
-import { CLAIM_LADDER } from "../domain/instrumentStatus";
 import type { Product } from "../products";
 import BuildStamp from "../components/BuildStamp";
 
@@ -25,7 +23,6 @@ export default function AssessmentLanding({
   onViewReport: (report: Report) => void;
 }) {
   const [confirmed, setConfirmed] = useState(false);
-  const rung = CLAIM_LADDER[scenario.instrument.claimRung];
   const minutes = Math.round(scenario.durationSeconds / 60);
   const persona = scenario.stimulus.persona;
   const indicatorCount = scenario.instrument.skills.reduce((a, s) => a + s.indicators.length, 0);
@@ -216,16 +213,6 @@ export default function AssessmentLanding({
             </dl>
           </section>
         </div>
-
-        {/* Instrument status */}
-        <section className="border border-ink/10 p-7" style={{ background: "var(--surface)" }}>
-          <SectionLabel index="06">What this score may be used for</SectionLabel>
-          <p className="text-ink/80 text-sm leading-relaxed mb-4 max-w-3xl">
-            This instrument is on rung {scenario.instrument.claimRung} of 4 ({rung.title}). {rung.claim}{" "}
-            {rung.fitFor} The rung is printed on the report and on the PDF.
-          </p>
-          <ClaimLadderPanel current={scenario.instrument.claimRung} />
-        </section>
 
         {/* Begin */}
         <section
