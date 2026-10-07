@@ -154,8 +154,15 @@ export default function AssessmentLanding({
         <header className="max-w-7xl mx-auto px-6 md:px-10 pt-7 pb-5 animate-fade-in-up">
           <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-4 border-b border-ink/20 pb-5">
             <div className="max-w-4xl">
-              <p className="text-[11px] font-semibold tracking-[0.2em] text-brand mb-2 uppercase">
-                Assessment brief · {scenario.category}
+              <p className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-2">
+                <span className="text-xs font-semibold tracking-[0.2em] text-brand uppercase">
+                  Assessment brief · {scenario.category}
+                </span>
+                {scenario.instrument.claimRung === 1 && (
+                  <span className="px-2 py-0.5 text-xs font-semibold border border-ink/30 text-ink/85">
+                    Pilot assessment, feedback only
+                  </span>
+                )}
               </p>
               <h1 className="font-display font-semibold text-4xl md:text-[2.75rem] text-ink tracking-[-0.015em] leading-[1.05] mb-2">
                 {scenario.title}
@@ -224,7 +231,10 @@ export default function AssessmentLanding({
                     </li>
                   ))}
                 </ol>
-                <div>
+                <p className="md:col-start-1 text-ink/85 text-sm leading-relaxed pt-2 border-t border-ink/15 md:order-none">
+                  Need more time? Extended time is available on request from your administrator.
+                </p>
+                <div className="md:col-start-2 md:row-start-1 md:row-span-2">
                   <h3 className="font-display font-semibold text-ink text-base mb-1">
                     Audio and video access test
                   </h3>

@@ -697,3 +697,21 @@ body {
     display: none;
   }
 }
+
+/* The practice brief: a drawer from the right edge, full height on every screen. */
+.brief-drawer {
+  height: 100dvh;
+  max-height: 100dvh;
+}
+.brief-drawer::backdrop {
+  background: rgb(0 0 0 / 0.55);
+}
+.brief-drawer[open] {
+  animation: drawer-in 0.22s ease-out;
+}
+@keyframes drawer-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
