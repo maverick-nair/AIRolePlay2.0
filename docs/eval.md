@@ -56,7 +56,7 @@ Six dimensions with fixed weights add up to 100. A check passes only when every 
 ### Everything the player needs is there
 
 - `info.home`: the persona, scene, role, goal, challenge, every objective and skill, the difficulty options, hints, Start practising, practice runs, badges and the feedback status are on the page and visible.
-- `info.brief`: the title, counterpart, role, goal, situation, challenge, every skill, the assessment rules, the confirmation and Begin.
+- `info.brief`: the title, counterpart, role, goal, situation, challenge, every skill, the instructions, the confirmation and Begin.
 - `info.call`: the scenario title, End Call, and from 1024px wide the objectives and transcript panels. Below that width the panels open from the top bar, so they are not required.
 - `info.timer`: the call timer is visible.
 - `info.report`: every skill and every behaviour, opened one skill at a time on the Evidence by Skill tab.

@@ -153,8 +153,9 @@ const MANIFEST: Record<string, string[]> = {
     player.scene,
     player.challenge,
     ...skills.flatMap((s) => [s.name, s.desc]),
-    "One attempt",
-    "Hidden criteria",
+    "Instructions",
+    "You have one attempt",
+    "criteria are hidden until your report",
     "Pass mark",
     "I understand this is a single, timed attempt",
     "Begin the assessment",
@@ -206,7 +207,7 @@ const MAIN = COMBOS[0].name;
 
 // ---------------------------------------------------------------- page helpers
 type Ctx = { combo: Combo; page: Page; errors: string[]; failed: string[] };
-async function open(browser: Browser, combo: Combo, path: string): Promise<Ctx> {
+async function open(browser: Browser, combo: Combo, path: string, measureReady = false): Promise<Ctx> {
   const context = await browser.newContext({
     viewport: { width: combo.w, height: combo.h },
     reducedMotion: combo.reduced ? "reduce" : "no-preference",
@@ -228,7 +229,8 @@ async function open(browser: Browser, combo: Combo, path: string): Promise<Ctx> 
   await page.goto(BASE + path);
   await page.waitForLoadState("networkidle");
   const ready = Date.now() - t0;
-  if (combo.name === MAIN) check("flow.ready-fast", ready < 1500, `${path} ${combo.name}`, `${ready} ms`);
+  // Measured on the quiet first load (loadMetrics), before the journeys run in parallel.
+  if (measureReady) check("flow.ready-fast", ready < 1500, `${path} ${combo.name}`, `${ready} ms`);
   // Both products open dark; light is the toggle.
   if (combo.theme === "light") await page.getByRole("button", { name: /Switch to light theme/ }).click();
   return { combo, page, errors, failed };
@@ -705,7 +707,7 @@ function finish(c: Ctx): Promise<void> {
 
 async function loadMetrics(browser: Browser) {
   for (const path of ["/", "/assess/"]) {
-    const c = await open(browser, COMBOS[0], path);
+    const c = await open(browser, COMBOS[0], path, true);
     await c.page.waitForTimeout(800);
     const perf = await ev<{ lcp: number; longTasks: number[] }>(c.page, "window.__eval.perf()");
     check("robust.lcp", perf.lcp > 0 && perf.lcp < 1500, path, `${Math.round(perf.lcp)} ms`);

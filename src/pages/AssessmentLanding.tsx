@@ -25,33 +25,13 @@ export default function AssessmentLanding({
   const [confirmed, setConfirmed] = useState(false);
   const minutes = Math.round(scenario.durationSeconds / 60);
   const persona = scenario.stimulus.persona;
-  const indicatorCount = scenario.instrument.skills.reduce((a, s) => a + s.indicators.length, 0);
-
-  const RULES = [
-    {
-      k: "One attempt",
-      v: "The conversation runs once. There is no rewind, no retry and no second sitting.",
-    },
-    {
-      k: `${minutes} minutes`,
-      v: "The call ends when the time runs out and the report is produced from what was said.",
-    },
-    {
-      k: "Standardised persona",
-      v: `${persona.name} follows the same schedule of critical incidents for every participant.`,
-    },
-    {
-      k: "Hidden criteria",
-      v: `${indicatorCount} behavioural indicators are scored. Their anchors are shown only in the report, beside your words.`,
-    },
-    {
-      k: "Evidence, not impressions",
-      v: "Every rating quotes the turn it comes from. Conversation metrics are descriptive and never enter the score.",
-    },
-    {
-      k: "Text only scoring",
-      v: "If you speak, only the transcript is assessed. Nothing is inferred from voice or face.",
-    },
+  const INSTRUCTIONS = [
+    "You have one attempt. There is no retry.",
+    `The call lasts ${minutes} minutes and ends when time runs out.`,
+    "Speak or type your replies.",
+    "Only your words are scored, never your voice or face.",
+    "The scoring criteria are hidden until your report.",
+    "Find a quiet place before you begin.",
   ];
 
   return (
@@ -91,9 +71,7 @@ export default function AssessmentLanding({
                 {scenario.title}
               </h1>
               <p className="text-ink/75 text-sm leading-relaxed max-w-2xl mb-6">
-                {product.tagline} You will hold one conversation with {persona.name}, {persona.role} at{" "}
-                {persona.organisation}. Your words are scored against {scenario.instrument.skills.length}{" "}
-                skills by the method described below, and the report shows the evidence behind every rating.
+                One conversation with {persona.name}, {persona.role} at {persona.organisation}.
               </p>
               <dl
                 className="grid grid-cols-2 sm:grid-cols-4 border border-ink/15"
@@ -215,11 +193,6 @@ export default function AssessmentLanding({
                   </li>
                 ))}
               </ul>
-              <p className="text-ink/70 text-xs mt-4 leading-relaxed">
-                The behavioural indicators under each skill are not shown before the conversation, so every
-                participant meets the same unprompted challenge. The report lists them with their anchors and
-                your quoted words.
-              </p>
             </section>
 
             {/* Rules */}
@@ -227,15 +200,15 @@ export default function AssessmentLanding({
               className="md:col-span-5 border border-ink/10 p-7"
               style={{ background: "var(--surface)" }}
             >
-              <SectionLabel index="06">How this assessment runs</SectionLabel>
-              <dl className="space-y-3">
-                {RULES.map((r) => (
-                  <div key={r.k} className="flex gap-3">
-                    <dt className="w-32 flex-none font-display font-semibold text-ink text-sm">{r.k}</dt>
-                    <dd className="text-ink/80 text-sm leading-relaxed">{r.v}</dd>
-                  </div>
+              <SectionLabel index="06">Instructions</SectionLabel>
+              <ul className="space-y-2.5">
+                {INSTRUCTIONS.map((t) => (
+                  <li key={t} className="flex gap-3 text-ink/85 text-sm leading-relaxed">
+                    <span aria-hidden className="mt-2 w-1.5 h-1.5 flex-none bg-brand" />
+                    {t}
+                  </li>
                 ))}
-              </dl>
+              </ul>
             </section>
           </div>
 
@@ -280,10 +253,7 @@ export default function AssessmentLanding({
                       onChange={(e) => setConfirmed(e.target.checked)}
                       className="mt-1 w-4 h-4 accent-[var(--accent)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
                     />
-                    <span>
-                      I understand this is a single, timed attempt with a standardised persona, that my
-                      transcript is scored against hidden criteria, and that the report will be saved.
-                    </span>
+                    <span>I understand this is a single, timed attempt and the report will be saved.</span>
                   </label>
                 </div>
                 <div className="md:col-span-4 flex md:justify-end">

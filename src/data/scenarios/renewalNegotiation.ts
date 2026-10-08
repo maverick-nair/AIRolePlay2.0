@@ -134,7 +134,7 @@ export const renewalNegotiation = validateScenario({
       {
         id: "strategy",
         name: "Negotiation Strategy",
-        desc: "Planning and steering the negotiation: knowing your walk-away point, sequencing concessions, and trading value instead of giving it away.",
+        desc: "Plan the deal and trade value, not discounts.",
         weight: 20,
         indicators: [
           {
@@ -212,7 +212,7 @@ export const renewalNegotiation = validateScenario({
       {
         id: "value",
         name: "Value Articulation",
-        desc: "Connecting the offer to the client's own business outcomes, so the conversation is about return on investment rather than cost alone.",
+        desc: "Tie your offer to the client's business outcomes.",
         weight: 20,
         indicators: [
           {
@@ -273,7 +273,7 @@ export const renewalNegotiation = validateScenario({
       {
         id: "objection",
         name: "Objection Handling",
-        desc: "Staying composed under pressure, acknowledging concerns, and exploring objections instead of defending against them.",
+        desc: "Stay calm and explore objections before answering.",
         weight: 15,
         indicators: [
           {
@@ -330,7 +330,7 @@ export const renewalNegotiation = validateScenario({
       {
         id: "listening",
         name: "Active Listening",
-        desc: "Hearing what is said and what is not, reflecting it back accurately, and letting the client's words shape the next move.",
+        desc: "Hear what is said and reflect it back.",
         weight: 15,
         indicators: [
           {
@@ -386,7 +386,7 @@ export const renewalNegotiation = validateScenario({
       {
         id: "probing",
         name: "Evidence-based Probing",
-        desc: "Asking questions that uncover the interests, constraints, and decision criteria behind a client's stated position.",
+        desc: "Ask questions that uncover what really matters.",
         weight: 15,
         indicators: [
           {
@@ -444,7 +444,7 @@ export const renewalNegotiation = validateScenario({
       {
         id: "relationship",
         name: "Relationship Management",
-        desc: "Protecting trust and goodwill while negotiating firmly, so the client wants to keep working with you after the deal.",
+        desc: "Negotiate firmly while keeping trust.",
         weight: 15,
         indicators: [
           {
