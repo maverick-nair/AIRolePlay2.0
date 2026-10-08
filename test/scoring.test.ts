@@ -10,6 +10,7 @@ import {
   bandFromPoints,
   hintFor,
   levelFor,
+  practiceRunsLeft,
   scoreSession,
   scoreSkill,
   turnOutcome,
@@ -159,6 +160,16 @@ describe("heuristic classifier", () => {
     const weak = classifyHeuristically(scenario, "I could probably look at around 10% off if that helps.", 0);
     expect(weak.hits.find((h) => h.indicatorId === "strategy.conditional-concession")?.band).toBe("Weak");
   });
+  it("treats matching the rival price as giving up the anchor, not as collaboration", () => {
+    const c = classifyHeuristically(scenario, "We can match their price.", 0);
+    expect(c.hits.find((h) => h.indicatorId === "strategy.anchor")?.band).toBe("Weak");
+    expect(c.hits.find((h) => h.indicatorId === "relationship.tone")).toBeUndefined();
+    expect(hintFor(scenario, [c])).not.toBeNull();
+  });
+  it("still credits a genuinely collaborative line", () => {
+    const c = classifyHeuristically(scenario, "Let's work together on a plan your CFO can sign.", 0);
+    expect(c.hits.find((h) => h.indicatorId === "relationship.tone")?.band).toBe("Strong");
+  });
   it("flags hostile language as Harmful", () => {
     const c = classifyHeuristically(scenario, "That's ridiculous, take it or leave it.", 0);
     expect(c.hits.some((h) => h.band === "Harmful")).toBe(true);
@@ -243,5 +254,17 @@ describe("claim ladder", () => {
     const ladder = claimLadder(scenario.instrument.claimRung);
     expect(ladder[0].state).toBe("current");
     expect(ladder[3].state).toBe("ahead");
+  });
+});
+
+describe("practice run cap", () => {
+  it("defaults a scenario to five practice runs", () => {
+    expect(scenario.maxPracticeAttempts).toBe(5);
+  });
+  it("counts down and never goes negative", () => {
+    expect(practiceRunsLeft(0, 5)).toBe(5);
+    expect(practiceRunsLeft(4, 5)).toBe(1);
+    expect(practiceRunsLeft(5, 5)).toBe(0);
+    expect(practiceRunsLeft(7, 5)).toBe(0);
   });
 });

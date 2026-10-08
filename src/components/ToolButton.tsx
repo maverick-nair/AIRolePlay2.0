@@ -7,6 +7,7 @@ export default function ToolButton({
   label,
   badge,
   badgeColor,
+  badgeText = "#0c0c0f",
   children,
 }: {
   active?: boolean;
@@ -14,13 +15,14 @@ export default function ToolButton({
   label: string;
   badge?: ReactNode;
   badgeColor?: string;
+  badgeText?: string;
   children: ReactNode;
 }) {
   return (
     <div className="relative group">
       <button
         onClick={onClick}
-        aria-label={label}
+        aria-label={badge !== null && badge !== undefined ? `${label} ${badge}` : label}
         aria-pressed={active}
         className="tool-btn relative w-10 h-10 flex items-center justify-center"
         style={{
@@ -34,10 +36,10 @@ export default function ToolButton({
         {badge !== null && badge !== undefined && (
           <span
             key={String(badge)}
-            className="badge-pop absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[11px] font-bold font-display rounded-full tabular-nums"
+            className="badge-pop absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-xs font-bold font-display rounded-full tabular-nums"
             style={{
               background: badgeColor ?? "var(--brand)",
-              color: "#0c0c0f",
+              color: badgeText,
             }}
           >
             {badge}
@@ -46,7 +48,7 @@ export default function ToolButton({
       </button>
       <span
         role="tooltip"
-        className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-1 text-[11px] font-display rounded opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 group-hover:[animation:tip-in_0.15s_ease-out] z-50"
+        className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-1 text-xs font-display rounded opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 group-hover:[animation:tip-in_0.15s_ease-out] z-50"
         style={{ background: "rgb(var(--ink) / 0.92)", color: "var(--bg)" }}
       >
         {label}

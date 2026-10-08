@@ -43,7 +43,7 @@ export default function TenPointScale({
         </div>
       </div>
 
-      <p className="text-ink/70 text-[11px] font-bold tracking-widest uppercase mb-4">
+      <p className="text-ink/70 text-xs font-bold tracking-widest uppercase mb-4">
         Knolskape Ten-Point Scale
       </p>
       <div
@@ -81,17 +81,17 @@ export default function TenPointScale({
                         outlineOffset: 2,
                       }}
                     >
-                      {n}
+                      {on ? n : null}
                     </div>
                   );
                 })}
               </div>
               <span
-                className={`mt-3 text-center text-xs font-display ${on ? "font-bold text-ink" : "font-medium text-ink/70"}`}
+                className={`mt-3 text-center text-xs font-display ${on ? "font-bold text-ink" : "font-medium text-ink/70 max-[420px]:sr-only"}`}
               >
                 {b.label}
               </span>
-              <span className="text-center text-[11px] text-ink/70 tabular-nums">
+              <span className="text-center text-xs text-ink/70 tabular-nums">
                 {b.min}-{b.max}
               </span>
             </div>

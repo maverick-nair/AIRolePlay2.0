@@ -31,6 +31,7 @@ export default function SummaryPage({
   report,
   scenario,
   attempts,
+  runsLeft = Number.POSITIVE_INFINITY,
   onPractiseAgain,
   onHome,
 }: {
@@ -38,6 +39,7 @@ export default function SummaryPage({
   report: Report;
   scenario: Scenario;
   attempts: Report[];
+  runsLeft?: number;
   onPractiseAgain: () => void;
   onHome: () => void;
 }) {
@@ -46,13 +48,15 @@ export default function SummaryPage({
   const peersReady = PLAYERS_COMPLETED > PEER_THRESHOLD;
   const [compare, setCompare] = useState(peersReady);
   const [emailOpen, setEmailOpen] = useState(false);
-  const [party, setParty] = useState(report.scores.passed);
+  // Confetti on a passing practice run only: an assessment has no game layer.
+  const [party, setParty] = useState(report.scores.passed && report.mode !== "assessment");
   useEffect(() => {
     const t = window.setTimeout(() => setParty(false), 3000);
     return () => window.clearTimeout(t);
   }, []);
 
   const isAssessment = report.mode === "assessment";
+  const canPractiseAgain = !isAssessment && runsLeft > 0;
   const { scores, metrics, narrative, stats } = report;
   const tagged = useMemo(() => tagTranscript(report), [report]);
   const peer = scenario.instrument.peerBaseline;
@@ -208,14 +212,14 @@ export default function SummaryPage({
         </div>
       </nav>
 
-      <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-6 animate-fade-in-up">
+      <main className="max-w-[1400px] mx-auto px-4 md:px-8 py-6 animate-fade-in-up">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-5">
           <div>
             <p className="text-ink/70 text-xs uppercase tracking-widest font-medium mb-1 flex items-center gap-2">
               {isAssessment ? `${product.name} assessment report` : `${product.name} practice report`}
               <span
-                className="px-1.5 py-0.5 rounded text-[11px] font-display font-semibold tracking-wider normal-case"
+                className="px-1.5 py-0.5 rounded text-xs font-display font-semibold tracking-wider normal-case"
                 style={
                   isAssessment
                     ? { background: "rgb(var(--accent-rgb) / 0.14)", color: "var(--brand)" }
@@ -290,12 +294,12 @@ export default function SummaryPage({
           style={{ background: "var(--surface)", borderColor: "rgb(var(--accent-rgb) / 0.35)" }}
         >
           <span
-            className="px-2 py-1 rounded text-[11px] font-display font-bold tracking-wider uppercase"
+            className="px-2 py-1 rounded text-xs font-display font-bold tracking-wider uppercase"
             style={{ background: "var(--accent)", color: "#fff" }}
           >
             Rung {scenario.instrument.claimRung} of 4: {rung.title}
           </span>
-          <p className="text-ink/80 text-xs leading-relaxed flex-1 min-w-[16rem]">
+          <p className="text-ink/80 text-xs leading-relaxed flex-1 min-w-[16rem] max-w-[85ch]">
             {rung.claim} <span className="text-ink/70">{rung.fitFor}</span>
           </p>
         </div>
@@ -355,7 +359,7 @@ export default function SummaryPage({
                     className="rounded-2xl border border-ink/10 p-5"
                     style={{ background: "var(--surface)" }}
                   >
-                    <p className="text-ink/70 text-[11px] font-bold tracking-widest uppercase mb-2">
+                    <p className="text-ink/70 text-xs font-bold tracking-widest uppercase mb-2">
                       Above Peer Average
                     </p>
                     <p className="font-display font-bold text-ink text-4xl tabular-nums">
@@ -371,9 +375,7 @@ export default function SummaryPage({
                     className="rounded-2xl border border-ink/10 p-5"
                     style={{ background: "var(--surface)" }}
                   >
-                    <p className="text-ink/70 text-[11px] font-bold tracking-widest uppercase mb-2">
-                      Next Band
-                    </p>
+                    <p className="text-ink/70 text-xs font-bold tracking-widest uppercase mb-2">Next Band</p>
                     <p className="font-display font-bold text-ink text-4xl tabular-nums">
                       {Math.max(0, bandFor(scores.overall).max + 1 - scores.overall)}
                       <span className="text-lg text-ink/70"> pts</span>
@@ -391,7 +393,7 @@ export default function SummaryPage({
                   className="rounded-2xl border border-ink/10 p-5"
                   style={{ background: "var(--surface)" }}
                 >
-                  <p className="text-ink/70 text-[11px] font-bold tracking-widest uppercase mb-2">
+                  <p className="text-ink/70 text-xs font-bold tracking-widest uppercase mb-2">
                     Strongest Skill
                   </p>
                   <p className="font-display font-bold text-ink text-xl leading-tight">{sorted[0].name}</p>
@@ -424,98 +426,110 @@ export default function SummaryPage({
                   <p className="text-ink/75 text-xs">
                     Focus next: <span className="text-ink font-semibold">{weakest?.label}</span>
                   </p>
-                  <button
-                    onClick={onPractiseAgain}
-                    className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-display font-semibold text-sm text-white min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand)]"
-                    style={{ background: "var(--accent)" }}
-                  >
-                    Practise again
-                  </button>
+                  {canPractiseAgain ? (
+                    <button
+                      onClick={onPractiseAgain}
+                      className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-display font-semibold text-sm text-white min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand)]"
+                      style={{ background: "var(--accent)" }}
+                    >
+                      Practise again
+                    </button>
+                  ) : (
+                    <p className="text-ink/75 text-xs" role="status">
+                      All {scenario.maxPracticeAttempts} practice runs on this scenario are used.
+                    </p>
+                  )}
                 </div>
               </section>
             )}
 
-            {/* Rewards earned in this call */}
-            <section
-              className="rounded-2xl border p-5 mb-4 relative overflow-hidden"
-              style={{ background: "var(--surface)", borderColor: "rgb(var(--accent-rgb) / 0.35)" }}
-            >
-              <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
-                <h2 className="font-display font-semibold text-ink text-sm">Rewards Earned</h2>
-                <p className="text-ink/75 text-xs">
-                  XP and badges carry over to your profile and the season leaderboard.
-                </p>
-              </div>
-              <div className="grid grid-cols-2 lg:grid-cols-12 gap-4 items-center">
-                <div className="lg:col-span-3">
-                  <p className="text-ink/75 text-[11px] font-bold tracking-widest uppercase mb-1">
-                    XP Earned
-                  </p>
-                  <p className="font-display font-bold text-4xl text-ink">
-                    +<RollingNumber value={stats.endXp - stats.startXp} />
-                  </p>
-                  <p className="text-ink/75 text-xs mt-1">
-                    Total <RollingNumber value={stats.endXp} className="font-semibold text-ink" /> XP
+            {/* Rewards earned in this call: practice only, an assessment has no game layer */}
+            {!isAssessment && (
+              <section
+                className="rounded-2xl border p-5 mb-4 relative overflow-hidden"
+                style={{ background: "var(--surface)", borderColor: "rgb(var(--accent-rgb) / 0.35)" }}
+              >
+                <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
+                  <h2 className="font-display font-semibold text-ink text-sm">Rewards Earned</h2>
+                  <p className="text-ink/75 text-xs">
+                    XP and badges carry over to your profile and the season leaderboard.
                   </p>
                 </div>
-                <div className="lg:col-span-2">
-                  <p className="text-ink/75 text-[11px] font-bold tracking-widest uppercase mb-1">
-                    Best Streak
-                  </p>
-                  <p className="font-display font-bold text-4xl text-ink flex items-center gap-1.5">
-                    <span className="text-brand">
-                      <FlameIcon size={26} />
-                    </span>
-                    {stats.bestStreak}
-                  </p>
-                  <p className="text-ink/75 text-xs mt-1">Strong replies in a row</p>
-                </div>
-                {compare && (
-                  <div className="lg:col-span-2">
-                    <p className="text-ink/75 text-[11px] font-bold tracking-widest uppercase mb-1">
-                      Leaderboard
+                <div className="grid grid-cols-2 lg:grid-cols-12 gap-4 items-center">
+                  <div className="lg:col-span-3">
+                    <p className="text-ink/75 text-xs font-bold tracking-widest uppercase mb-1">XP Earned</p>
+                    <p className="font-display font-bold text-4xl text-ink">
+                      +<RollingNumber value={stats.endXp - stats.startXp} />
                     </p>
-                    <p className="font-display font-bold text-4xl text-ink">#{stats.endRank}</p>
                     <p className="text-ink/75 text-xs mt-1">
-                      {stats.startRank > stats.endRank
-                        ? `Up ${stats.startRank - stats.endRank} from #${stats.startRank}`
-                        : `Held at #${stats.startRank}`}
+                      Total <RollingNumber value={stats.endXp} className="font-semibold text-ink" /> XP
                     </p>
                   </div>
-                )}
-                <div className={`col-span-2 ${compare ? "lg:col-span-5" : "lg:col-span-7"}`}>
-                  <p className="text-ink/75 text-[11px] font-bold tracking-widest uppercase mb-2">
-                    Badges{" "}
-                    <span className="text-ink font-display">
-                      {stats.badges.length}/{BADGES.length}
-                    </span>
-                  </p>
-                  <ul className="flex flex-wrap gap-3">
-                    {BADGES.map((b) => {
-                      const got = stats.badges.includes(b.id);
-                      return (
-                        <li key={b.id} className="flex flex-col items-center w-16 text-center" title={b.desc}>
-                          <span
-                            className={got ? "shine" : ""}
-                            style={{ clipPath: "polygon(50% 0, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)" }}
+                  <div className="lg:col-span-2">
+                    <p className="text-ink/75 text-xs font-bold tracking-widest uppercase mb-1">
+                      Best Streak
+                    </p>
+                    <p className="font-display font-bold text-4xl text-ink flex items-center gap-1.5">
+                      <span className="text-brand">
+                        <FlameIcon size={26} />
+                      </span>
+                      {stats.bestStreak}
+                    </p>
+                    <p className="text-ink/75 text-xs mt-1">Strong replies in a row</p>
+                  </div>
+                  {compare && (
+                    <div className="lg:col-span-2">
+                      <p className="text-ink/75 text-xs font-bold tracking-widest uppercase mb-1">
+                        Leaderboard
+                      </p>
+                      <p className="font-display font-bold text-4xl text-ink">#{stats.endRank}</p>
+                      <p className="text-ink/75 text-xs mt-1">
+                        {stats.startRank > stats.endRank
+                          ? `Up ${stats.startRank - stats.endRank} from #${stats.startRank}`
+                          : `Held at #${stats.startRank}`}
+                      </p>
+                    </div>
+                  )}
+                  <div className={`col-span-2 ${compare ? "lg:col-span-5" : "lg:col-span-7"}`}>
+                    <p className="text-ink/75 text-xs font-bold tracking-widest uppercase mb-2">
+                      Badges{" "}
+                      <span className="text-ink font-display">
+                        {stats.badges.length}/{BADGES.length}
+                      </span>
+                    </p>
+                    <ul className="flex flex-wrap gap-3">
+                      {BADGES.map((b) => {
+                        const got = stats.badges.includes(b.id);
+                        return (
+                          <li
+                            key={b.id}
+                            className="flex flex-col items-center w-16 text-center"
+                            title={b.desc}
                           >
-                            <BadgeMedal mark={b.mark} earned={got} size={42} />
-                          </span>
-                          <span
-                            className={`mt-1 text-[11px] leading-tight ${got ? "text-ink font-semibold" : "text-ink/70"}`}
-                          >
-                            {b.name}
-                          </span>
-                          <span className="sr-only">
-                            {got ? "Earned" : "Not earned"}: {b.desc}
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                            <span
+                              className={got ? "shine" : ""}
+                              style={{
+                                clipPath: "polygon(50% 0, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)",
+                              }}
+                            >
+                              <BadgeMedal mark={b.mark} earned={got} size={42} />
+                            </span>
+                            <span
+                              className={`mt-1 text-xs leading-tight ${got ? "text-ink font-semibold" : "text-ink/70"}`}
+                            >
+                              {b.name}
+                            </span>
+                            <span className="sr-only">
+                              {got ? "Earned" : "Not earned"}: {b.desc}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
                 </div>
-              </div>
-            </section>
+              </section>
+            )}
 
             {/* Conversation metrics: descriptive, computed from the transcript */}
             <section
@@ -532,7 +546,7 @@ export default function SummaryPage({
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                 {KPIS.map((k) => (
                   <div key={k.label} className="rounded-xl p-3.5 border border-ink/10">
-                    <p className="text-ink/75 text-[11px] font-medium mb-1.5">{k.label}</p>
+                    <p className="text-ink/75 text-xs font-medium mb-1.5">{k.label}</p>
                     <p className="font-display font-bold text-ink text-xl tabular-nums">{k.value}</p>
                     <p className="text-xs mt-1 flex items-center gap-1.5 text-ink/75">
                       <span
@@ -572,8 +586,8 @@ export default function SummaryPage({
                   {scores.skills.map((k) => {
                     const b = bandFor(k.score);
                     return (
-                      <li key={k.id} className="grid grid-cols-[minmax(0,11rem)_1fr_auto] items-center gap-4">
-                        <span className="text-ink text-sm font-medium truncate">
+                      <li key={k.id} className="grid grid-cols-[minmax(0,12rem)_1fr_auto] items-center gap-4">
+                        <span className="text-ink text-sm font-medium leading-snug">
                           {k.name} <span className="text-ink/70 text-xs tabular-nums">({k.weight}%)</span>
                         </span>
                         <div
@@ -639,11 +653,9 @@ export default function SummaryPage({
                         className="rounded-xl p-3 border border-ink/10"
                         style={{ background: "var(--surface-2)" }}
                       >
-                        <dt className="text-ink/75 text-[11px] font-bold tracking-widest uppercase">{c.k}</dt>
+                        <dt className="text-ink/75 text-xs font-bold tracking-widest uppercase">{c.k}</dt>
                         <dd className="font-display font-bold text-ink text-xl tabular-nums mt-1">{c.v}</dd>
-                        <dd className="text-ink/75 text-xs leading-snug truncate" title={c.sub}>
-                          {c.sub}
-                        </dd>
+                        <dd className="text-ink/75 text-xs leading-snug">{c.sub}</dd>
                       </div>
                     ))}
                   </dl>
@@ -760,14 +772,14 @@ export default function SummaryPage({
                 return (
                   <div key={s.id} className="glass rounded-2xl overflow-hidden">
                     <button
-                      className="w-full flex items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-ink/[0.02] min-h-[44px]"
+                      className="w-full flex flex-wrap sm:flex-nowrap items-center gap-x-4 gap-y-2 px-5 py-4 text-left transition-colors hover:bg-ink/[0.02] min-h-[44px]"
                       onClick={() => setExpanded(open ? null : s.id)}
                       aria-expanded={open}
                     >
                       <span className="font-display text-xs font-bold text-ink/70 tabular-nums w-6 flex-none">
                         {String(i + 1).padStart(2, "0")}
                       </span>
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-[12rem]">
                         <p className="font-display font-semibold text-ink text-sm">
                           {s.name}
                           <span className="text-ink/70 text-xs font-normal ml-2">Weight {s.weight}%</span>
@@ -775,12 +787,12 @@ export default function SummaryPage({
                             {s.observedCount}/{s.indicators.length} indicators observed
                           </span>
                         </p>
-                        <p className="text-ink/75 text-xs mt-0.5 leading-relaxed line-clamp-1">{s.desc}</p>
+                        <p className="text-ink/75 text-xs mt-0.5 leading-relaxed max-w-[85ch]">{s.desc}</p>
                       </div>
                       <div className="flex items-center gap-4 flex-shrink-0">
                         {compare && (
                           <span className="hidden md:block text-right">
-                            <span className="block text-ink/70 text-[11px]">vs peers</span>
+                            <span className="block text-ink/70 text-xs">vs peers</span>
                             <span className="block text-ink text-xs font-semibold tabular-nums">
                               {delta >= 0 ? "+" : ""}
                               {delta.toFixed(1)}
@@ -837,7 +849,7 @@ export default function SummaryPage({
                                   <div className="mt-1.5 flex items-center gap-2">
                                     <BandChip band={ind.band} />
                                     {ind.observed && (
-                                      <span className="text-ink/70 text-[11px] tabular-nums">
+                                      <span className="text-ink/70 text-xs tabular-nums">
                                         {ind.evidence.length} {ind.evidence.length === 1 ? "turn" : "turns"}
                                       </span>
                                     )}
@@ -888,7 +900,7 @@ export default function SummaryPage({
                                         className="rounded-xl p-3 border border-ink/10"
                                         style={{ background: "var(--surface-2)" }}
                                       >
-                                        <p className="text-ink/75 text-[11px] font-semibold uppercase tracking-wider mb-1">
+                                        <p className="text-ink/75 text-xs font-semibold uppercase tracking-wider mb-1">
                                           Recommendation
                                         </p>
                                         <p className="text-ink/85 text-sm leading-relaxed">
@@ -899,7 +911,7 @@ export default function SummaryPage({
                                         className="rounded-xl p-3 border border-ink/10"
                                         style={{ background: "var(--surface-2)" }}
                                       >
-                                        <p className="text-ink/75 text-[11px] font-semibold uppercase tracking-wider mb-1">
+                                        <p className="text-ink/75 text-xs font-semibold uppercase tracking-wider mb-1">
                                           Practice Drill
                                         </p>
                                         <p className="text-ink/85 text-sm leading-relaxed">
@@ -947,7 +959,7 @@ export default function SummaryPage({
                     ["Your turns", String(metrics.playerTurns)],
                   ].map(([k, v]) => (
                     <div key={k} className="rounded-xl p-3 border border-ink/10">
-                      <dt className="text-ink/75 text-[11px] font-medium">{k}</dt>
+                      <dt className="text-ink/75 text-xs font-medium">{k}</dt>
                       <dd className="font-display font-bold text-ink text-lg tabular-nums mt-0.5">{v}</dd>
                     </div>
                   ))}
@@ -1022,7 +1034,7 @@ export default function SummaryPage({
                                 style={{ background: reached ? cefrColor(lvl) : "rgb(var(--ink) / 0.08)" }}
                               />
                               <span
-                                className="text-[11px] font-display"
+                                className="text-xs font-display"
                                 style={{
                                   color: isCurrent ? "rgb(var(--ink))" : "rgb(var(--ink) / 0.7)",
                                   fontWeight: isCurrent ? 700 : 500,
@@ -1048,7 +1060,7 @@ export default function SummaryPage({
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-ink/75 text-xs font-semibold font-display">{d.name}</span>
                             <span
-                              className="px-2 py-0.5 rounded-full text-[11px] font-bold font-display"
+                              className="px-2 py-0.5 rounded-full text-xs font-bold font-display"
                               style={{
                                 background: cefrColor(d.level),
                                 color: readableOn(cefrColor(d.level)),
@@ -1057,7 +1069,7 @@ export default function SummaryPage({
                               {d.level}
                             </span>
                           </div>
-                          <p className="text-ink/70 text-[11px] leading-relaxed">{d.note}</p>
+                          <p className="text-ink/70 text-xs leading-relaxed">{d.note}</p>
                         </div>
                       ))}
                     </div>
@@ -1171,7 +1183,7 @@ export default function SummaryPage({
                           >
                             {l.tag === "strength" ? "Strength" : "Missed opportunity"}
                           </span>
-                          <span className="text-ink/85 leading-snug line-clamp-2">{l.text}</span>
+                          <span className="text-ink/85 leading-snug">{l.text}</span>
                         </span>
                       </li>
                     ))}
@@ -1195,10 +1207,10 @@ export default function SummaryPage({
                     <div key={i} className={`flex flex-col gap-1.5 ${you ? "items-end" : "items-start"}`}>
                       <div className="flex items-center gap-2">
                         <span className="text-ink/80 text-xs font-bold font-display">{t.speaker}</span>
-                        <span className="text-ink/70 text-[11px] tabular-nums">{t.time}</span>
+                        <span className="text-ink/70 text-xs tabular-nums">{t.time}</span>
                         {t.tag && (
                           <span
-                            className="px-2 py-0.5 rounded-full text-[11px] font-semibold"
+                            className="px-2 py-0.5 rounded-full text-xs font-semibold"
                             style={{
                               background: t.tag === "strength" ? "#2f7a34" : "#b5472f",
                               color: "#ffffff",
@@ -1251,7 +1263,7 @@ export default function SummaryPage({
           >
             Email Report
           </button>
-          {!isAssessment && (
+          {canPractiseAgain && (
             <button
               onClick={onPractiseAgain}
               className="flex items-center gap-2 px-6 py-3 rounded-xl font-display font-semibold text-sm text-ink border border-ink/20 min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
@@ -1265,7 +1277,7 @@ export default function SummaryPage({
             This assessment allowed one attempt. The report is saved and cannot be retaken.
           </p>
         )}
-      </div>
+      </main>
       {party && <ConfettiBurst pieces={120} />}
       {emailOpen && (
         <EmailDialog

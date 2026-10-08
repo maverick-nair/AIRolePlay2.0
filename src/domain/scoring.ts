@@ -242,3 +242,9 @@ export function hintFor(scenario: Scenario, recent: TurnClassification[]): strin
   }
   return null;
 }
+
+// Practice runs still available on a scenario. Never negative; the store may hold more runs than
+// the cap if the cap was lowered after they were saved.
+export function practiceRunsLeft(used: number, max: number): number {
+  return Math.max(0, max - used);
+}

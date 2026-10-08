@@ -1,55 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
 @import "tailwindcss";
-
-@font-face {
-  font-family: "Inter:Semi Bold";
-  font-style: normal;
-  font-weight: 600;
-  src: url("https://static.figma.com/font/Inter_1") format("woff2");
-}
-@font-face {
-  font-family: "SF Pro:Bold";
-  font-style: normal;
-  font-weight: 700;
-  src: url("https://static.figma.com/font/SF-Pro_1") format("woff2");
-}
-@font-face {
-  font-family: "SF Pro:Semibold";
-  font-style: normal;
-  font-weight: 590;
-  src: url("https://static.figma.com/font/SF-Pro_1") format("woff2");
-}
-@font-face {
-  font-family: "Inter:Regular";
-  font-style: normal;
-  font-weight: 400;
-  src: url("https://static.figma.com/font/Inter_1") format("woff2");
-}
-@font-face {
-  font-family: "SF Pro:Regular";
-  font-style: normal;
-  font-weight: 400;
-  src: url("https://static.figma.com/font/SF-Pro_1") format("woff2");
-}
-@font-face {
-  font-family: "SF Pro:Medium";
-  font-style: normal;
-  font-weight: 510;
-  src: url("https://static.figma.com/font/SF-Pro_1") format("woff2");
-}
-@font-face {
-  font-family: "Sacramento:Regular";
-  font-style: normal;
-  font-weight: 400;
-  src: url("https://static.figma.com/font/Sacramento-Regular_1") format("woff2");
-}
-@font-face {
-  font-family: "Inter:Medium";
-  font-style: normal;
-  font-weight: 500;
-  src: url("https://static.figma.com/font/Inter_1") format("woff2");
-}
 
 html,
 body,
@@ -606,4 +555,12 @@ body {
 }
 :root.light .scene-img {
   filter: invert(1) hue-rotate(180deg) grayscale(0.35) brightness(1.08) contrast(0.9);
+}
+
+/* Readable measure: long paragraphs stop at about 90 characters a line. */
+main :is(p, li, blockquote, figcaption) {
+  max-width: 75ch;
+}
+main :is(p, li, blockquote, figcaption).text-center {
+  margin-inline: auto;
 }

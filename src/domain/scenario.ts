@@ -75,6 +75,8 @@ export const Scenario = z.object({
   category: z.string(),
   durationSeconds: z.number().int().positive(),
   passScore: z.number().int().min(1).max(10),
+  // Practice runs allowed per participant on this scenario. Assessment always allows one.
+  maxPracticeAttempts: z.number().int().positive().default(5),
   stimulus: z.object({
     persona: z.object({
       name: z.string(),

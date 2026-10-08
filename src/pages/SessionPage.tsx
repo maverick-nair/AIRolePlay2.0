@@ -95,6 +95,10 @@ export default function SessionPage({
   const [hint, setHint] = useState<string | null>(null);
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [finishing, setFinishing] = useState(false);
+  const [confirmEnd, setConfirmEnd] = useState(false);
+  const endBtnRef = useRef<HTMLButtonElement | null>(null);
+  const keepRef = useRef<HTMLButtonElement | null>(null);
+  const endNowRef = useRef<HTMLButtonElement | null>(null);
   const [timeUp, setTimeUp] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const startRef = useRef(Date.now());
@@ -311,10 +315,8 @@ export default function SessionPage({
 
     if (isPractice && hints) {
       const h = hintFor(scenario, nextClassifications);
-      if (h) {
-        setHint(h);
-        replyTimers.current.push(window.setTimeout(() => setHint(null), 7000));
-      }
+      // The hint stays until the next reply: the persona holds the floor for several seconds first.
+      if (h) setHint(h);
     }
 
     void scheduleReply(transcript, turns + 1);
@@ -378,6 +380,15 @@ export default function SessionPage({
     if (!isPractice) void endCall();
   }
 
+  // Ending a call is final (it uses a practice run, or the one assessment attempt), so it asks first.
+  function closeConfirm() {
+    endBtnRef.current?.focus();
+    setConfirmEnd(false);
+  }
+  useEffect(() => {
+    if (confirmEnd) keepRef.current?.focus();
+  }, [confirmEnd]);
+
   // Which player-turn ordinal does a transcript index correspond to (for rewind buttons)?
   const openingLength = scenario.stimulus.opening.length;
   const playerOrdinalAt = (index: number) =>
@@ -386,16 +397,16 @@ export default function SessionPage({
   return (
     <div className="h-full flex flex-col overflow-hidden" style={{ background: "transparent" }}>
       {/* Top bar: participants named up top */}
-      <div className="flex items-center justify-between gap-3 px-4 md:px-8 h-16 border-b border-ink/10 flex-shrink-0">
+      <header className="flex items-center justify-between gap-3 px-4 md:px-8 h-16 border-b border-ink/10 flex-shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <div
-            className="w-8 h-8 flex items-center justify-center flex-none"
+            className="w-8 h-8 flex items-center justify-center flex-none max-[360px]:hidden"
             style={{ background: "var(--accent)" }}
           >
             <span className="text-white text-xs font-bold font-display leading-none">{product.mark}</span>
           </div>
           <span
-            className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 text-[11px] font-display uppercase tracking-wider"
+            className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 text-xs font-display uppercase tracking-wider"
             style={{ background: "rgba(52,211,153,0.12)", color: "var(--ok)" }}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--ok)]" /> Live
@@ -404,7 +415,7 @@ export default function SessionPage({
             {product.name}
           </span>
           <span
-            className="hidden lg:inline-flex items-center gap-2 px-2.5 py-1 text-[11px] font-display uppercase tracking-wider"
+            className="hidden lg:inline-flex items-center gap-2 px-2.5 py-1 text-xs font-display uppercase tracking-wider"
             style={
               isPractice
                 ? { background: "rgb(var(--ink) / 0.06)", color: "rgb(var(--ink) / 0.8)" }
@@ -412,7 +423,7 @@ export default function SessionPage({
             }
             title={
               isPractice
-                ? "Practice: unlimited attempts, rewind available"
+                ? `Practice: up to ${scenario.maxPracticeAttempts} runs, rewind available`
                 : "Assessment: one attempt, standardised persona"
             }
           >
@@ -421,70 +432,79 @@ export default function SessionPage({
         </div>
 
         <div className="flex items-center gap-2 md:gap-3">
-          {/* XP HUD: level, rolling XP, progress to next level, streak multiplier */}
-          <div
-            className="relative hidden md:flex items-center gap-3 pl-1 pr-3 py-1 border border-ink/15"
-            style={{ background: "var(--surface)" }}
-          >
-            <span className="relative w-9 h-9 flex items-center justify-center" aria-hidden>
-              <svg width="36" height="36" viewBox="0 0 36 36" className="-rotate-90">
-                <circle cx="18" cy="18" r="15" fill="none" stroke="rgb(var(--ink) / 0.12)" strokeWidth="3" />
-                <circle
-                  cx="18"
-                  cy="18"
-                  r="15"
-                  fill="none"
-                  stroke="var(--brand)"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeDasharray={`${(levelPct / 100) * 94.2} 94.2`}
-                  style={{ transition: "stroke-dasharray .9s cubic-bezier(.2,.8,.2,1)" }}
-                />
-              </svg>
-              <span className="absolute font-display font-bold text-[11px] text-ink">
-                {level
-                  .split(" ")
-                  .map((w) => w[0])
-                  .join("")}
-              </span>
-            </span>
-            <span className="flex flex-col leading-tight">
-              <span className="text-ink/75 text-[11px] font-display uppercase tracking-widest">{level}</span>
-              <span className="font-display font-bold text-ink text-sm">
-                <RollingNumber value={xp} /> <span className="text-ink/70 font-medium text-xs">XP</span>
-              </span>
-            </span>
-            <span
-              className="flex items-center gap-1 px-2 py-1 text-xs font-display font-bold tabular-nums"
-              style={
-                streak >= 3
-                  ? { background: "var(--accent)", color: "#fff" }
-                  : { background: "rgb(var(--ink) / 0.06)", color: "rgb(var(--ink) / 0.8)" }
-              }
-              aria-label={`Streak ${streak}${streak >= 3 ? ", 1.5 times XP active" : ""}`}
+          {/* XP HUD: level, rolling XP, progress to next level, streak multiplier. Practice only. */}
+          {isPractice && (
+            <div
+              className="relative hidden md:flex items-center gap-3 pl-1 pr-3 py-1 border border-ink/15"
+              style={{ background: "var(--surface)" }}
             >
-              <FlameIcon size={13} />
-              {streak}
-              {streak >= 3 && <span className="text-[11px] font-semibold">x1.5</span>}
-            </span>
-            <span
-              className="text-ink/75 text-xs font-display tabular-nums"
-              aria-label={`${badges.length} badges earned`}
-            >
-              <span className="font-bold text-ink">{badges.length}</span>/{BADGES.length} badges
-            </span>
-            {floats.map((f) => (
+              <span className="relative w-9 h-9 flex items-center justify-center" aria-hidden>
+                <svg width="36" height="36" viewBox="0 0 36 36" className="-rotate-90">
+                  <circle
+                    cx="18"
+                    cy="18"
+                    r="15"
+                    fill="none"
+                    stroke="rgb(var(--ink) / 0.12)"
+                    strokeWidth="3"
+                  />
+                  <circle
+                    cx="18"
+                    cy="18"
+                    r="15"
+                    fill="none"
+                    stroke="var(--brand)"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeDasharray={`${(levelPct / 100) * 94.2} 94.2`}
+                    style={{ transition: "stroke-dasharray .9s cubic-bezier(.2,.8,.2,1)" }}
+                  />
+                </svg>
+                <span className="absolute font-display font-bold text-xs text-ink">
+                  {level
+                    .split(" ")
+                    .map((w) => w[0])
+                    .join("")}
+                </span>
+              </span>
+              <span className="flex flex-col leading-tight">
+                <span className="text-ink/75 text-xs font-display uppercase tracking-widest">{level}</span>
+                <span className="font-display font-bold text-ink text-sm">
+                  <RollingNumber value={xp} /> <span className="text-ink/70 font-medium text-xs">XP</span>
+                </span>
+              </span>
               <span
-                key={f.id}
-                aria-hidden
-                className="xp-float absolute left-12 -bottom-1 font-display font-bold text-sm"
-                style={{ color: "var(--brand)" }}
+                className="flex items-center gap-1 px-2 py-1 text-xs font-display font-bold tabular-nums"
+                style={
+                  streak >= 3
+                    ? { background: "var(--accent)", color: "#fff" }
+                    : { background: "rgb(var(--ink) / 0.06)", color: "rgb(var(--ink) / 0.8)" }
+                }
+                aria-label={`Streak ${streak}${streak >= 3 ? ", 1.5 times XP active" : ""}`}
               >
-                +{f.v}
-                {f.mult ? " x1.5" : ""}
+                <FlameIcon size={13} />
+                {streak}
+                {streak >= 3 && <span className="text-xs font-semibold">x1.5</span>}
               </span>
-            ))}
-          </div>
+              <span
+                className="text-ink/75 text-xs font-display tabular-nums"
+                aria-label={`${badges.length} badges earned`}
+              >
+                <span className="font-bold text-ink">{badges.length}</span>/{BADGES.length} badges
+              </span>
+              {floats.map((f) => (
+                <span
+                  key={f.id}
+                  aria-hidden
+                  className="xp-float absolute left-12 -bottom-1 font-display font-bold text-sm"
+                  style={{ color: "var(--brand)" }}
+                >
+                  +{f.v}
+                  {f.mult ? " x1.5" : ""}
+                </span>
+              ))}
+            </div>
+          )}
           <CountdownTimer initial={scenario.durationSeconds} onExpire={onExpire} />
 
           <ToolButton active={showTranscript} onClick={() => setShowTranscript((v) => !v)} label="Transcript">
@@ -499,8 +519,9 @@ export default function SessionPage({
               active={showObjectives}
               onClick={() => setShowObjectives((v) => !v)}
               label="Objectives"
-              badge={`${objectivesDone}/${objectives.length}`}
+              badge={isPractice ? `${objectivesDone}/${objectives.length}` : undefined}
               badgeColor="var(--ok)"
+              badgeText="var(--bg)"
             >
               <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
                 <path
@@ -513,20 +534,23 @@ export default function SessionPage({
               </svg>
             </ToolButton>
           </span>
-          <span className="hidden sm:block">
-            <ToolButton
-              active={showLeaderboard}
-              onClick={() => setShowLeaderboard((v) => !v)}
-              label="Leaderboard"
-              badge={`#${myRank}`}
-              badgeColor="#f59e0b"
-            >
-              <LeaderboardIcon />
-            </ToolButton>
-          </span>
+          {isPractice && (
+            <span className="hidden sm:block">
+              <ToolButton
+                active={showLeaderboard}
+                onClick={() => setShowLeaderboard((v) => !v)}
+                label="Leaderboard"
+                badge={`#${myRank}`}
+                badgeColor="#f59e0b"
+              >
+                <LeaderboardIcon />
+              </ToolButton>
+            </span>
+          )}
           <ThemeToggle />
           <button
-            onClick={() => void endCall()}
+            ref={endBtnRef}
+            onClick={() => setConfirmEnd(true)}
             disabled={finishing}
             className="tool-btn px-3.5 py-2 min-h-[40px] text-xs font-semibold font-display disabled:opacity-60 whitespace-nowrap"
             style={{
@@ -538,13 +562,14 @@ export default function SessionPage({
             End Call
           </button>
         </div>
-      </div>
+      </header>
 
       {/* Body */}
       <div className="flex flex-1 overflow-hidden">
         {/* Transcript: left panel */}
         {showTranscript && (
           <aside
+            aria-label="Transcript"
             className={`${mdUp ? "w-80 flex-none border-r border-ink/10" : "fixed inset-0 z-50 safe-area"} flex flex-col overflow-hidden`}
             style={{ background: "var(--surface-3)" }}
           >
@@ -568,20 +593,28 @@ export default function SessionPage({
                 </button>
               </div>
             </div>
-            <div ref={scrollRef} className="flex-1 overflow-auto px-4 py-4 space-y-4">
+            <div
+              ref={scrollRef}
+              role="region"
+              aria-label="Conversation so far"
+              tabIndex={0}
+              className="flex-1 overflow-auto px-4 py-4 space-y-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--brand)]"
+            >
               {messages.map((t, i) => {
                 const you = t.speaker === "You";
                 const ordinal = you && i >= openingLength ? playerOrdinalAt(i) : -1;
-                const canRewind =
-                  isPractice && ordinal >= 0 && ordinal < snapshots.length && !speaking && !finishing;
+                // The retry slot keeps its space while the persona speaks, so the transcript never jumps.
+                const hasRewind = isPractice && ordinal >= 0 && ordinal < snapshots.length;
+                const canRewind = hasRewind && !speaking && !finishing;
                 return (
                   <div
                     key={i}
+                    data-speaker={you ? "you" : "persona"}
                     className={`group/turn flex flex-col gap-1 ${you ? "items-end" : "items-start"}`}
                   >
                     <div className="flex items-center gap-1.5">
-                      <span className="text-ink/70 text-[11px] font-display">{t.speaker}</span>
-                      <span className="text-ink/70 text-[11px] tabular-nums">{t.time}</span>
+                      <span className="text-ink/70 text-xs font-display">{t.speaker}</span>
+                      <span className="text-ink/70 text-xs tabular-nums">{t.time}</span>
                     </div>
                     <div
                       className="max-w-[88%] px-3 py-2 text-sm leading-relaxed"
@@ -601,13 +634,13 @@ export default function SessionPage({
                     >
                       {t.text}
                     </div>
-                    {canRewind && (
+                    {hasRewind && (
                       <button
                         onClick={() => rewindTo(ordinal)}
-                        className="text-[11px] font-display font-semibold text-brand opacity-70 hover:opacity-100 focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] rounded px-1"
-                        aria-label={`Retry from your turn at ${t.time}`}
+                        disabled={!canRewind}
+                        className={`${canRewind ? "" : "invisible"} text-xs font-display font-semibold text-brand opacity-70 hover:opacity-100 focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] rounded px-1`}
                       >
-                        Retry from here
+                        Retry from here<span className="sr-only">, your turn at {t.time}</span>
                       </button>
                     )}
                   </div>
@@ -631,26 +664,26 @@ export default function SessionPage({
           </aside>
         )}
 
-        <div className="flex-1 flex flex-col overflow-y-auto md:overflow-hidden px-4 md:px-8 py-4 md:py-5 gap-3 md:gap-4">
+        <main className="flex-1 flex flex-col overflow-y-auto md:overflow-hidden px-4 md:px-8 py-4 md:py-5 gap-3 md:gap-4">
           {/* RolePlay topic banner */}
           <div className="border border-ink/10 flex-none px-5 py-4" style={{ background: "var(--surface)" }}>
             <div className="flex items-center gap-2 mb-1.5">
               <span
-                className="text-[11px] font-display uppercase tracking-widest"
+                className="text-xs font-display uppercase tracking-widest"
                 style={{ color: "var(--brand)" }}
               >
                 {isPractice ? "Practice scenario" : "Assessment scenario"}
               </span>
               <span
-                className="px-1.5 py-0.5 text-[11px] font-display uppercase tracking-wider"
+                className="px-1.5 py-0.5 text-xs font-display uppercase tracking-wider"
                 style={{ background: "rgba(52,211,153,0.14)", color: "var(--ok)" }}
               >
                 Live
               </span>
             </div>
-            <h2 className="font-display font-bold text-ink text-lg md:text-xl tracking-tight leading-snug">
+            <h1 className="font-display font-bold text-ink text-lg md:text-xl tracking-tight leading-snug">
               {scenario.title}
-            </h2>
+            </h1>
             <p className="hidden sm:block text-ink/70 text-sm mt-1 truncate">
               Protect the deal and the relationship under price pressure.
             </p>
@@ -663,7 +696,7 @@ export default function SessionPage({
           >
             {/* NPC frame */}
             <div
-              className="relative overflow-hidden flex flex-col items-center justify-center min-h-[200px]"
+              className="relative overflow-hidden flex flex-col items-center justify-center min-h-[200px] pt-10 pb-4 md:py-0"
               style={{ background: "var(--surface-3)" }}
             >
               <div className="relative flex flex-col items-center gap-5 z-10">
@@ -740,7 +773,7 @@ export default function SessionPage({
                   />
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-3 opacity-60 pb-14">
+                <div className="flex flex-col items-center gap-3 pb-14">
                   <div className="w-20 h-20 rounded-full bg-ink/5 border border-ink/10 flex items-center justify-center">
                     <svg
                       width="30"
@@ -799,7 +832,7 @@ export default function SessionPage({
                   {isRecording ? "You are speaking" : speaking ? "Listening" : "Your turn"}
                 </p>
               </div>
-              {combo !== null && (
+              {isPractice && combo !== null && (
                 <div
                   role="status"
                   className="absolute top-3 right-3 px-2.5 py-1 font-display font-bold text-xs animate-fade-in-up z-10"
@@ -912,7 +945,7 @@ export default function SessionPage({
                   border: "1px solid rgb(var(--accent-rgb) / 0.4)",
                 }}
               >
-                <span className="font-bold uppercase tracking-wider text-[11px] mt-0.5">Hint</span>
+                <span className="font-bold uppercase tracking-wider text-xs mt-0.5">Hint</span>
                 <span className="text-ink/85">{hint}</span>
               </div>
             )}
@@ -929,7 +962,7 @@ export default function SessionPage({
                 Time is up for a scored call. You can keep practising, or end the call to see your report.
               </div>
             )}
-            {feedback && (
+            {isPractice && feedback && (
               <div
                 role="status"
                 aria-live="polite"
@@ -1049,7 +1082,9 @@ export default function SessionPage({
                 </svg>
               </button>
             </div>
-            <p className="text-ink/70 text-xs mt-2 px-1 flex items-center gap-1.5">
+            <p
+              className={`text-ink/70 text-xs mt-2 px-1 leading-relaxed ${isRecording ? "flex items-center gap-1.5" : ""}`}
+            >
               {isRecording ? (
                 <>
                   <VoiceWave active color="var(--danger)" bars={10} className="!h-3 w-12 !justify-start" />
@@ -1066,7 +1101,7 @@ export default function SessionPage({
               )}
             </p>
           </div>
-        </div>
+        </main>
 
         {/* Right column: objectives + leaderboard */}
         {(showObjectives || showLeaderboard) && (
@@ -1076,6 +1111,7 @@ export default function SessionPage({
           >
             {showObjectives && (
               <aside
+                aria-label="Objectives"
                 className={`flex flex-col overflow-hidden ${showLeaderboard ? "border-b border-ink/10" : "flex-1"}`}
               >
                 <div className="px-4 py-3 border-b border-ink/10 flex items-center justify-between flex-none">
@@ -1097,28 +1133,31 @@ export default function SessionPage({
                     </svg>
                   </button>
                 </div>
-                <div className="px-4 py-3 border-b border-ink/10 flex-none">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-ink/70 text-[11px] font-display uppercase tracking-widest">
-                      Progress
-                    </span>
-                    <span className="font-display font-semibold text-ink text-xs tabular-nums">
-                      {objectivesDone}/{objectives.length}
-                    </span>
-                  </div>
-                  <div
-                    className="h-1.5 w-full overflow-hidden"
-                    style={{ background: "rgb(var(--ink) / 0.1)" }}
-                  >
+                {isPractice && (
+                  <div className="px-4 py-3 border-b border-ink/10 flex-none">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-ink/70 text-xs font-display uppercase tracking-widest">
+                        Progress
+                      </span>
+                      <span className="font-display font-semibold text-ink text-xs tabular-nums">
+                        {objectivesDone}/{objectives.length}
+                      </span>
+                    </div>
                     <div
-                      className="h-full transition-all duration-500"
-                      style={{ width: `${objectivesPct}%`, background: "var(--ok)" }}
-                    />
+                      className="h-1.5 w-full overflow-hidden"
+                      style={{ background: "rgb(var(--ink) / 0.1)" }}
+                    >
+                      <div
+                        className="h-full transition-all duration-500"
+                        style={{ width: `${objectivesPct}%`, background: "var(--ok)" }}
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
                 <div className="py-2 overflow-auto">
                   {objectives.map((o, i) => {
-                    const done = metObjectives[i];
+                    // An assessment never shows live progress against its criteria.
+                    const done = isPractice && metObjectives[i];
                     const celebrating = celebrate === i;
                     const criteria = scenario.instrument.skills
                       .flatMap((s) => s.indicators)
@@ -1178,19 +1217,21 @@ export default function SessionPage({
                             {o.label}
                           </p>
                           <p
-                            className="text-[11px] font-display"
+                            className="text-xs font-display"
                             style={{ color: done ? "var(--ok)" : "rgb(var(--ink) / 0.7)" }}
                           >
-                            {done
-                              ? `Completed · +${o.xp} XP`
-                              : isPractice && showCriteria
-                                ? `${o.xp} XP`
-                                : `Hidden criteria · ${o.xp} XP`}
+                            {!isPractice
+                              ? o.sub
+                              : done
+                                ? `Completed · +${o.xp} XP`
+                                : showCriteria
+                                  ? `${o.xp} XP`
+                                  : `Hidden criteria · ${o.xp} XP`}
                           </p>
                           {isPractice && showCriteria && (
                             <ul className="mt-1 space-y-0.5">
                               {criteria.map((c) => (
-                                <li key={c} className="text-[11px] text-ink/75 leading-snug flex gap-1.5">
+                                <li key={c} className="text-xs text-ink/75 leading-snug flex gap-1.5">
                                   <span
                                     aria-hidden
                                     className="mt-1.5 w-1 h-1 rounded-full bg-brand flex-none"
@@ -1208,7 +1249,7 @@ export default function SessionPage({
                     <div className="px-4 pt-1 pb-2">
                       <button
                         onClick={() => setShowCriteria((v) => !v)}
-                        className="text-[11px] font-display font-semibold text-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] rounded px-1"
+                        className="text-xs font-display font-semibold text-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] rounded px-1"
                         aria-expanded={showCriteria}
                       >
                         {showCriteria ? "Hide what counts" : "Show what counts"}
@@ -1219,7 +1260,7 @@ export default function SessionPage({
               </aside>
             )}
             {showLeaderboard && (
-              <aside className="flex-1 flex flex-col overflow-hidden">
+              <aside aria-label="Leaderboard" className="flex-1 flex flex-col overflow-hidden">
                 <div className="px-4 py-3 border-b border-ink/10 flex items-center justify-between flex-none">
                   <span className="font-display font-semibold text-ink text-sm tracking-tight">
                     Cohort Leaderboard
@@ -1258,7 +1299,7 @@ export default function SessionPage({
                       >
                         {medal ? (
                           <span
-                            className="w-5 h-5 flex-none flex items-center justify-center rounded-full text-[11px] font-display font-bold"
+                            className="w-5 h-5 flex-none flex items-center justify-center rounded-full text-xs font-display font-bold"
                             style={{ background: medal, color: "#1a1500" }}
                           >
                             {p.rank}
@@ -1285,7 +1326,7 @@ export default function SessionPage({
                           style={{ color: you ? "var(--brand)" : "rgb(var(--ink) / 0.7)" }}
                         >
                           {p.pts.toLocaleString()}
-                          <span className="text-[11px] font-normal text-ink/70"> XP</span>
+                          <span className="text-xs font-normal text-ink/70"> XP</span>
                         </span>
                       </div>
                     );
@@ -1303,8 +1344,10 @@ export default function SessionPage({
         )}
       </div>
 
-      {burst.n > 0 && <ConfettiBurst key={burst.n} origin={burst.origin} pieces={burst.origin ? 60 : 90} />}
-      {unlock && (
+      {isPractice && burst.n > 0 && (
+        <ConfettiBurst key={burst.n} origin={burst.origin} pieces={burst.origin ? 60 : 90} />
+      )}
+      {isPractice && unlock && (
         <div
           key={unlock.key}
           role="status"
@@ -1330,7 +1373,7 @@ export default function SessionPage({
               size={52}
             />
             <div>
-              <p className="text-brand text-[11px] font-display font-bold uppercase tracking-widest">
+              <p className="text-brand text-xs font-display font-bold uppercase tracking-widest">
                 {unlock.title}
               </p>
               <p className="text-ink font-display font-semibold text-base">{unlock.sub}</p>
@@ -1339,6 +1382,63 @@ export default function SessionPage({
               +<RollingNumber value={unlock.xp} />
               <span className="text-sm text-ink/75"> XP</span>
             </p>
+          </div>
+        </div>
+      )}
+      {confirmEnd && !finishing && (
+        <div
+          className="fixed inset-0 z-[63] flex items-center justify-center px-4"
+          style={{ background: "color-mix(in srgb, var(--bg) 80%, transparent)" }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeConfirm();
+          }}
+        >
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="end-title"
+            aria-describedby="end-desc"
+            className="w-full max-w-md flex flex-col gap-4 px-6 py-5 border border-ink/15"
+            style={{ background: "var(--surface)" }}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                e.stopPropagation();
+                closeConfirm();
+              }
+              if (e.key === "Tab") {
+                e.preventDefault();
+                (document.activeElement === keepRef.current ? endNowRef : keepRef).current?.focus();
+              }
+            }}
+          >
+            <h2 id="end-title" className="font-display font-semibold text-ink text-lg">
+              {isPractice ? "End the call and see your report?" : "End the assessment?"}
+            </h2>
+            <p id="end-desc" className="text-ink/80 text-sm leading-relaxed">
+              {isPractice
+                ? `This run is scored now and counts as one of your ${scenario.maxPracticeAttempts} practice runs.`
+                : "This is your one attempt. The call is scored now and the report is saved."}
+            </p>
+            <div className="flex flex-wrap justify-end gap-3">
+              <button
+                ref={keepRef}
+                onClick={closeConfirm}
+                className="px-5 py-2.5 min-h-[44px] font-display font-semibold text-sm text-ink border border-ink/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
+              >
+                Keep talking
+              </button>
+              <button
+                ref={endNowRef}
+                onClick={() => {
+                  setConfirmEnd(false);
+                  void endCall();
+                }}
+                className="px-5 py-2.5 min-h-[44px] font-display font-semibold text-sm text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand)]"
+                style={{ background: "var(--accent)" }}
+              >
+                End and score
+              </button>
+            </div>
           </div>
         </div>
       )}

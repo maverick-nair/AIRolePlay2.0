@@ -75,14 +75,14 @@ export default function SkillRadar({ skills, compare }: { skills: RadarSkill[]; 
             <text
               key={k.name}
               x={x}
-              y={y - (lines.length - 1) * 5}
+              y={y - (lines.length - 1) * 6.5}
               textAnchor="middle"
               dominantBaseline="middle"
-              fontSize={9.5}
+              fontSize={12}
               fill="rgb(var(--ink) / 0.8)"
             >
               {lines.map((l, li) => (
-                <tspan key={li} x={x} dy={li ? 11 : 0}>
+                <tspan key={li} x={x} dy={li ? 13 : 0}>
                   {l}
                 </tspan>
               ))}
@@ -91,7 +91,7 @@ export default function SkillRadar({ skills, compare }: { skills: RadarSkill[]; 
         })}
       </svg>
       {compare && (
-        <figcaption className="flex justify-center gap-4 text-[11px] text-ink/75 mt-1">
+        <figcaption className="flex justify-center gap-4 text-xs text-ink/75 mt-1">
           <span className="flex items-center gap-1.5">
             <span aria-hidden className="w-3 h-0.5 bg-[var(--brand)]" />
             You

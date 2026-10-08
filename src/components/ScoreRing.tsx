@@ -48,7 +48,7 @@ export default function ScoreRing({
         </span>
         <span
           style={{
-            fontSize: size * 0.1,
+            fontSize: Math.max(12, size * 0.1),
             color: "rgb(var(--ink) / 0.65)",
             fontFamily: "Inter",
           }}

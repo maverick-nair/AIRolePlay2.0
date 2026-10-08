@@ -30,7 +30,8 @@ type Rule = {
 const QUESTION = /\?/;
 const OPEN_Q =
   /\b(what|how|why|tell me|walk me|describe|explain|share|which|help me understand|could you|can you)\b[^?]*\?/i;
-const OFFER = /\b(\d{1,2}\s?%|percent|discount|off\b|reduce|lower the price|match (it|that|the quote))/i;
+const OFFER =
+  /\b(\d{1,2}\s?%|percent|discount|off\b|reduce|lower the price|price match|match (it|that|them|their|the|your)( (price|quote|offer|number|rate))?|beat (their|the|that) (price|quote|offer))/i;
 const CONDITION =
   /\b(if you|if we|in return|in exchange|provided|on condition|when you|once you|for that)\b/i;
 const RUDE =
@@ -41,7 +42,7 @@ const RULES: Rule[] = [
     indicatorId: "strategy.anchor",
     strong:
       /\b(before (we|i) (get|talk|discuss) (into|about)? ?(numbers|price|pricing)|outcomes?|what success looks like|value (first|before))/i,
-    weak: /\b(what (price|number) (do you|would you) need|how much (lower|less))\b/i,
+    weak: /\b(what (price|number) (do you|would you) need|how much (lower|less)|(we|i) (can|could|will|'ll) (match|beat) (it|that|them|their|the|your))/i,
     harmful: /\b(i can (give|do|offer) (you )?\d{1,2}\s?%)/i,
     notes: {
       Strong: "Held the conversation on outcomes before price.",
@@ -215,7 +216,8 @@ const RULES: Rule[] = [
   },
   {
     indicatorId: "relationship.tone",
-    strong: /\b(together|partnership|we can|let's|with you)\b/i,
+    strong:
+      /\b(together|partnership|partner with you|let's (work|look|find|figure|build|explore)|work with you|we can (work|find|figure|build|explore|look))\b/i,
     harmful: RUDE,
     notes: { Strong: "Kept the tone collaborative.", Harmful: "Tone turned hostile." },
   },

@@ -8,3 +8,6 @@ coverage/
 .DS_Store
 playwright-report/
 test-results/
+
+# Eval output (the scorecard of record is docs/eval-scorecard.md)
+eval/results/

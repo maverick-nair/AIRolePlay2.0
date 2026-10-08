@@ -14,7 +14,7 @@ export default function SkillScore({ score }: { score: number }) {
         <span className="font-display font-bold text-ink text-2xl leading-none tabular-nums">{score}</span>
         <span className="text-ink/70 text-xs font-display">/10</span>
         <span
-          className="ml-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold font-display"
+          className="ml-1.5 px-2 py-0.5 rounded-full text-xs font-semibold font-display"
           style={{ background: b.color, color: readableOn(b.color) }}
         >
           {b.label}
