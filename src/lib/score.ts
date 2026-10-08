@@ -14,3 +14,5 @@ export const scoreLabel = (score: number) =>
         : score >= 3
           ? "Emerging"
           : "Novice";
+export const cefrColor = (lvl: string) =>
+  lvl.startsWith("C") ? "#c2410c" : lvl.startsWith("B") ? "#10b981" : "#f59e0b";

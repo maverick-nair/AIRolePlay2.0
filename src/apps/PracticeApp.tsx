@@ -17,8 +17,7 @@ type Page = "landing" | "session" | "summary";
 export default function PracticeApp() {
   const scenario = renewalNegotiation;
   const [page, setPage] = useState<Page>("landing");
-  // Both products open light; dark is a toggle in the rail.
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(true);
   const [options, setOptions] = useState<PracticeOptions>({ difficulty: "firm", hints: true });
   const [runKey, setRunKey] = useState(0);
   const [report, setReport] = useState<Report | null>(null);

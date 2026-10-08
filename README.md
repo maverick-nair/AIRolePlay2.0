@@ -11,8 +11,6 @@ Every score is produced the same way in both products. A classifier (an LLM, or 
 
 The first scenario is a renewal negotiation with Margaret Hale, VP Procurement at Northwind Freight.
 
-Both interfaces share one frame: a slim icon rail, a soft grey ground and white cards. Every player screen (the AI RolePlay home, the Conversation AI brief and the call in both products) is a single frame cockpit on a laptop or tablet: the context, the people, the objectives and skills, the progress and the actions are all on screen at once, with no scrolling, tabs, accordions or drawers. Inside that frame the two products are deliberately different. AI RolePlay is a practice studio for a mature audience, from entry level employees to leadership: a warm orange accent, Figtree, a path of five runs, a daily goal, quests, streaks and badges, and feedback on every reply. Conversation AI is a quiet assessment room: an indigo accent, IBM Plex Sans and Mono, a numbered brief and no game layer. Every screen is checked against WCAG 2.2 AA in both themes. See `docs/handover.md` for the tokens, the layouts and the sizes they are checked at.
-
 ## Quick start
 
 Node 22 and pnpm 10.
@@ -38,8 +36,6 @@ pnpm dev:ai         # Vite with VITE_AI_PROVIDER=http, proxies /api to the serve
 ```
 
 `pnpm check` runs typecheck, lint, copy lint, format check, tests and build. CI runs the same.
-
-`pnpm eval` builds the app, drives the AI RolePlay and Conversation AI journeys in Chromium at laptop, tablet and phone sizes, and scores the experience out of 100 against `docs/eval.md`: one frame per screen, information on screen, WCAG 2.2 AA, flow, product rules, visual quality and performance. It writes `eval/results/latest.md` and exits with code 1 below 100.
 
 ## LLM routing
 
@@ -82,8 +78,7 @@ src/store/        attempt persistence (localStorage until the backend exists)
 server/           API server: config, LLM registry and runner, jobs, routes
 prompts/          versioned prompt files, one folder per job
 test/             vitest: engine, classifier heuristics, routing config, report assembly
-eval/             product eval: real journeys in a browser, scored against docs/eval.md
-docs/             handover, architecture, eval rubric and scorecard, product strategy
+docs/             handover, architecture, scoring method, product strategy
 ```
 
 See `docs/handover.md` for the full file map, scoring rules and what is still mocked, `docs/architecture.md` for the request flow, and `docs/product-strategy.md` for the market analysis this product is built on.

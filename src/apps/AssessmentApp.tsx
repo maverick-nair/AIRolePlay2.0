@@ -15,7 +15,7 @@ type Page = "landing" | "session" | "summary";
 export default function AssessmentApp() {
   const scenario = renewalNegotiation;
   const [page, setPage] = useState<Page>("landing");
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(true);
   const [report, setReport] = useState<Report | null>(null);
   const [completed, setCompleted] = useState<Report | null>(() => assessmentAttempt(scenario.id));
 
