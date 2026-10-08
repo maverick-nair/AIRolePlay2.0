@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import VoiceWave from "../components/VoiceWave";
 import RollingNumber from "../components/RollingNumber";
 import ConfettiBurst from "../components/ConfettiBurst";
@@ -16,10 +16,8 @@ import { scoreSession } from "../domain/scoring";
 import { providers } from "../providers";
 import { saveAttempt } from "../store/attempts";
 import type { Product } from "../products";
-import useMediaQuery from "../lib/useMediaQuery";
 import AppShell from "../components/AppShell";
 import Icon from "../components/Icon";
-import Tabs, { tabPanelProps } from "../components/Tabs";
 
 const OPENING_OFFSET_SECONDS = 125; // the authored opening ends at 2:05
 const HOLD_MS = 350; // a press on the mic longer than this is hold to talk; shorter is tap to toggle
@@ -37,8 +35,6 @@ type Snapshot = {
   turns: number;
   log: FeedbackEntry[];
 };
-
-type PanelTab = "coach" | "transcript";
 
 type FeedbackEntry = {
   id: number;
@@ -79,6 +75,7 @@ export default function SessionPage({
   const isPractice = mode === "practice";
   const objectives = scenario.instrument.objectives;
   const persona = scenario.stimulus.persona;
+  const player = scenario.stimulus.player;
   const firstName = persona.name.split(" ")[0];
 
   const [muted, setMuted] = useState(false);
@@ -86,27 +83,6 @@ export default function SessionPage({
   const [cameraOn, setCameraOn] = useState(false);
   const [speaking, setSpeaking] = useState(true);
   // Drawers dock beside the stage on wide screens and open as full screen sheets on small ones.
-  const lgUp = useMediaQuery("(min-width: 1024px)");
-  // One details panel beside the stage: docked open on a laptop, a sheet on request below that.
-  const [panelTab, setPanelTab] = useState<PanelTab>(isPractice ? "coach" : "transcript");
-  const [panelOpen, setPanelOpen] = useState(lgUp);
-  useEffect(() => setPanelOpen(lgUp), [lgUp]);
-  const panelCloseRef = useRef<HTMLButtonElement | null>(null);
-  const panelReturnRef = useRef<HTMLElement | null>(null);
-  const openPanel = (tab: PanelTab) => {
-    if (!lgUp && !panelOpen) panelReturnRef.current = document.activeElement as HTMLElement | null;
-    setPanelTab(tab);
-    setPanelOpen(true);
-  };
-  const closePanel = () => {
-    setPanelOpen(false);
-    if (!lgUp) panelReturnRef.current?.focus();
-  };
-  const togglePanel = (tab: PanelTab) => (panelOpen && panelTab === tab ? closePanel() : openPanel(tab));
-  // As a sheet the panel covers the call, so focus moves into it and returns on close.
-  useEffect(() => {
-    if (panelOpen && !lgUp) panelCloseRef.current?.focus();
-  }, [panelOpen, lgUp]);
   const [showCriteria, setShowCriteria] = useState(false);
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<SessionTurn[]>(scenario.stimulus.opening);
@@ -128,7 +104,6 @@ export default function SessionPage({
   const [bestStreak, setBestStreak] = useState(0);
   const [metObjectives, setMetObjectives] = useState<boolean[]>(objectives.map(() => false));
   const [chip, setChip] = useState<FeedbackEntry | null>(null);
-  const [whyOpen, setWhyOpen] = useState(false);
   const [log, setLog] = useState<FeedbackEntry[]>([]);
   const [hint, setHint] = useState<string | null>(null);
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
@@ -264,12 +239,11 @@ export default function SessionPage({
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [messages, panelOpen, panelTab]);
+  }, [messages]);
 
   const level = levelFor(xp).name;
   const levelPct = levelProgress(xp);
   const objectivesDone = metObjectives.filter(Boolean).length;
-  const objectivesPct = objectives.length ? (objectivesDone / objectives.length) * 100 : 0;
   const CONFETTI = [
     { a: -70, d: 26, c: "#ff8a4c" },
     { a: -35, d: 30, c: "#34d399" },
@@ -316,7 +290,6 @@ export default function SessionPage({
     setSpeaking(true);
     setHint(null);
     setChip(null);
-    setWhyOpen(false);
 
     // Snapshot before the turn so practice mode can rewind to exactly this point.
     const snapshot: Snapshot = {
@@ -473,10 +446,9 @@ export default function SessionPage({
     setHint(ind?.coaching.hint ?? "Ask an open question about what the client needs to see.");
   }
 
-  // What counts: shows the criteria under each objective, and brings the coach into view to show them.
+  // What counts: lists the behaviours each objective needs, on request (practice only).
   function toggleCriteria() {
     if (!isPractice) return;
-    if (!showCriteria && !(panelOpen && panelTab === "coach")) openPanel("coach");
     setShowCriteria((v) => !v);
   }
 
@@ -600,91 +572,106 @@ export default function SessionPage({
     </svg>
   );
 
-  const barButton = (label: string, active: boolean, onClick: () => void, icon: ReactNode) => (
-    <button
-      onClick={onClick}
-      aria-pressed={active}
-      aria-label={label}
-      className="btn !px-3 border"
-      style={{
-        background: active ? "var(--accent-soft)" : "var(--surface)",
-        borderColor: active ? "var(--accent-ui)" : "var(--line)",
-        color: active ? "var(--accent-soft-ink)" : "rgb(var(--ink) / 0.85)",
-      }}
-    >
-      {icon}
-      <span aria-hidden className="hidden md:inline text-sm">
-        {label}
-      </span>
-    </button>
-  );
-
   const ringColor = state === "listening" ? "var(--danger)" : "var(--accent-ui)";
-  const panelTabs: { id: PanelTab; label: string }[] = isPractice
-    ? [
-        { id: "coach", label: "Coach" },
-        { id: "transcript", label: "Transcript" },
-      ]
-    : [{ id: "transcript", label: "Transcript" }];
-  const panelLabel = panelTab === "coach" ? "coach" : "transcript";
+  // Feedback on each of your replies, keyed by the time of the reply, shown under it in the transcript.
+  const feedbackFor = new Map(log.map((e) => [e.time, e]));
+  const indicatorLabels = (ids: string[]) =>
+    scenario.instrument.skills
+      .flatMap((sk) => sk.indicators)
+      .filter((ind) => ids.includes(ind.id))
+      .map((ind) => ind.label);
 
   return (
-    <AppShell product={product} fixed railFromLg>
-      <div className="h-full flex flex-col gap-2 lg:gap-3 p-2 sm:p-3 lg:p-4 overflow-hidden">
-        {/* Header card: what this is, how far along, how long is left, and the way out. */}
-        <header className="card flex-none flex flex-wrap sm:flex-nowrap items-center gap-2 md:gap-3 px-3 py-2 md:px-5 md:py-3">
-          <div className="min-w-0 w-full sm:w-auto sm:flex-1">
-            <p className="text-xs md:text-[13px] text-ink/75 truncate">
-              {product.name}
-              <span aria-hidden className="mx-1.5">
-                /
-              </span>
+    <AppShell product={product}>
+      <div className="md:h-full flex flex-col gap-2.5 p-2.5 lg:gap-3 lg:p-3">
+        {/* Header strip: what this is, how far along, how long is left, and the way out */}
+        <header className="card flex-none flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2">
+          <div className="min-w-0 mr-auto">
+            <p className="t-small text-ink/80 truncate">
+              {product.name} <span aria-hidden>/</span>{" "}
               {isPractice ? `Practice run, ${difficulty}` : "Assessment, one attempt"}
             </p>
-            <h1 className="font-display font-semibold text-ink text-[15px] md:text-lg leading-tight truncate">
+            <h1 className="font-semibold text-ink text-base xl:text-lg leading-tight truncate">
               {scenario.title}
             </h1>
           </div>
 
           {isPractice && (
-            <div className="hidden md:flex flex-col gap-1 w-36 flex-none" data-anchor="objectives">
-              <p className="text-xs text-ink/75 tabular-nums" aria-hidden>
-                Objectives {objectivesDone}/{objectives.length}
-              </p>
-              <div
-                className="flex items-center gap-1"
-                role="img"
-                aria-label={`${objectivesDone} of ${objectives.length} objectives complete`}
-              >
-                {objectives.map((o, i) => (
-                  <span
-                    key={o.id}
-                    className="h-2 flex-1 rounded-full transition-colors duration-300"
-                    style={{ background: metObjectives[i] ? "var(--ok)" : "var(--line)" }}
-                  />
-                ))}
+            <dl className="flex flex-wrap items-center gap-x-5 gap-y-2" aria-label="This run">
+              <div className="w-32" data-anchor="objectives">
+                <dt className="t-small text-ink/80 tabular-nums">
+                  Objectives {objectivesDone}/{objectives.length}
+                </dt>
+                <dd className="mt-1">
+                  <div
+                    className="flex items-center gap-1"
+                    role="img"
+                    aria-label={`${objectivesDone} of ${objectives.length} objectives complete`}
+                  >
+                    {objectives.map((o, i) => (
+                      <span
+                        key={o.id}
+                        className="h-2 flex-1 rounded-full transition-colors duration-300"
+                        style={{ background: metObjectives[i] ? "var(--ok)" : "var(--line)" }}
+                      />
+                    ))}
+                  </div>
+                </dd>
               </div>
-            </div>
+              <div className="relative pl-10">
+                <dt className="t-small text-ink/80">
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-8 h-8" aria-hidden>
+                    <svg width="32" height="32" viewBox="0 0 36 36" className="-rotate-90">
+                      <circle cx="18" cy="18" r="15" fill="none" stroke="var(--line)" strokeWidth="3.5" />
+                      <circle
+                        cx="18"
+                        cy="18"
+                        r="15"
+                        fill="none"
+                        stroke="var(--accent-ui)"
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                        strokeDasharray={`${(levelPct / 100) * 94.2} 94.2`}
+                        style={{ transition: "stroke-dasharray .9s cubic-bezier(.2,.8,.2,1)" }}
+                      />
+                    </svg>
+                  </span>
+                  {level}
+                </dt>
+                <dd className="text-sm font-bold text-ink leading-tight tabular-nums">
+                  <RollingNumber value={xp} /> <span className="font-medium text-ink/80">XP</span>
+                </dd>
+              </div>
+              <div>
+                <dt className="sr-only">Strong streak</dt>
+                <dd
+                  className="flex items-center gap-1 h-7 px-2 rounded-full text-[13px] font-bold tabular-nums"
+                  style={
+                    streak >= 3
+                      ? { background: "var(--accent)", color: "#fff" }
+                      : { background: "var(--surface-2)", color: "rgb(var(--ink) / 0.85)" }
+                  }
+                  aria-label={`Strong streak ${streak}${streak >= 3 ? ", 1.5 times XP active" : ""}`}
+                >
+                  <FlameIcon size={13} />
+                  {streak}
+                  {streak >= 3 && <span>x1.5</span>}
+                </dd>
+              </div>
+              <div>
+                <dt className="sr-only">Badges</dt>
+                <dd className="t-small text-ink/80 tabular-nums">
+                  <span className="font-bold text-ink">{badges.length}</span>/{BADGES.length} badges
+                </dd>
+              </div>
+            </dl>
           )}
           <CountdownTimer initial={scenario.durationSeconds} onExpire={onExpire} />
-          {isPractice &&
-            barButton(
-              "Coach",
-              panelOpen && panelTab === "coach",
-              () => togglePanel("coach"),
-              <Icon name="target" size={18} />,
-            )}
-          {barButton(
-            "Transcript",
-            panelOpen && panelTab === "transcript",
-            () => togglePanel("transcript"),
-            <Icon name="list" size={18} />,
-          )}
           <button
             ref={endTriggerRef}
             onClick={requestEnd}
             disabled={finishing || pendingEnd !== null}
-            className="btn !px-3 md:!px-4 border whitespace-nowrap ml-auto sm:ml-0"
+            className="btn !px-3 md:!px-4 border whitespace-nowrap"
             style={{
               background: "var(--surface)",
               color: "var(--danger)",
@@ -695,13 +682,115 @@ export default function SessionPage({
           </button>
         </header>
 
-        <div className="flex-1 min-h-0 flex gap-3">
+        <div
+          className={`flex-1 min-h-0 grid gap-2.5 lg:gap-3 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.3fr)] md:grid-rows-[auto_minmax(0,1fr)] lg:grid-rows-1 ${isPractice ? "lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)_minmax(0,19rem)] xl:grid-cols-[minmax(0,21rem)_minmax(0,1fr)_minmax(0,22rem)]" : "lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)_minmax(0,20rem)] xl:grid-cols-[minmax(0,23rem)_minmax(0,1fr)_minmax(0,22rem)]"}`}
+        >
+          {/* Brief: what you are here to do, and the objectives with their status */}
+          <section
+            className="card p-3 lg:p-4 flex flex-col gap-2.5 min-h-0 md:col-start-1 md:row-start-1 lg:col-auto lg:row-auto"
+            aria-labelledby="call-brief-heading"
+          >
+            <h2 id="call-brief-heading" className="sr-only">
+              Your brief
+            </h2>
+            {!isPractice && (
+              <section>
+                <h3 className="t-small font-semibold text-ink/80 mb-0.5">Your role</h3>
+                <p className="t-body text-ink/90">{player.role}</p>
+              </section>
+            )}
+            <section>
+              <h3 className="t-small font-semibold text-ink/80 mb-0.5">Your goal</h3>
+              <p className="t-body text-ink/90">{player.goal}</p>
+            </section>
+            <section>
+              <h3 className="t-small font-semibold text-ink/80 mb-0.5">The challenge</h3>
+              <p className="t-body text-ink/90">{player.challenge}</p>
+            </section>
+            <section>
+              <h3 className="flex items-baseline justify-between t-small font-semibold text-ink/80 mb-1">
+                Objectives
+                {isPractice && (
+                  <span className="font-medium tabular-nums">
+                    {objectivesDone}/{objectives.length} done
+                  </span>
+                )}
+              </h3>
+              <ul className="flex flex-col gap-1.5">
+                {objectives.map((o, i) => {
+                  const done = isPractice && metObjectives[i];
+                  return (
+                    <li key={o.id} data-objective={i} className="flex items-start gap-2.5">
+                      <span
+                        className="relative w-6 h-6 flex-none rounded-full flex items-center justify-center"
+                        style={{
+                          background: done ? "var(--ok-tint)" : "var(--surface)",
+                          border: done ? "1.5px solid var(--ok)" : "1.5px solid var(--line)",
+                        }}
+                      >
+                        {done ? (
+                          <Icon name="check" size={13} stroke={2.4} className="text-[var(--ok)]" />
+                        ) : (
+                          <span className="font-semibold text-xs text-ink/80 tabular-nums">{i + 1}</span>
+                        )}
+                        {isPractice && celebrate === i && (
+                          <span
+                            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                            aria-hidden
+                          >
+                            {CONFETTI.map((p, k) => (
+                              <span
+                                key={k}
+                                className="absolute w-1.5 h-1.5 rounded-[1px]"
+                                style={{
+                                  background: p.c,
+                                  ["--tx" as string]: `${Math.round(Math.cos((p.a * Math.PI) / 180) * p.d)}px`,
+                                  ["--ty" as string]: `${Math.round(Math.sin((p.a * Math.PI) / 180) * p.d)}px`,
+                                  animation: "confetti-burst 0.9s ease-out forwards",
+                                }}
+                              />
+                            ))}
+                          </span>
+                        )}
+                      </span>
+                      <div className="min-w-0 flex-1 t-small">
+                        <p>
+                          <span className="font-semibold text-ink">{o.label}</span>
+                          <span className="text-ink/85">: {o.sub}</span>
+                          {isPractice && (
+                            <span
+                              className="ml-1.5 font-semibold whitespace-nowrap"
+                              style={{ color: done ? "var(--ok)" : "var(--brand)" }}
+                            >
+                              {done ? "Done, " : ""}+{o.xp} XP
+                            </span>
+                          )}
+                        </p>
+                        {isPractice && showCriteria && (
+                          <p className="mt-0.5 text-ink/85">
+                            <span className="sr-only">What counts: </span>
+                            {indicatorLabels(o.indicatorIds).join(" · ")}
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+            {isPractice && !showCriteria && (
+              <p className="mt-auto t-small text-ink/80">
+                Press What counts (W) to list the behaviours each objective needs.
+              </p>
+            )}
+          </section>
+
           {/* The stage card */}
           <main
             aria-label="Conversation"
-            className="card flex-1 min-w-0 flex flex-col overflow-y-auto md:overflow-hidden"
+            className="card min-w-0 flex flex-col order-first md:order-none md:col-start-2 md:row-start-1 md:row-span-2 lg:col-auto lg:row-auto lg:row-span-1 md:overflow-hidden"
           >
-            <div className="relative flex-1 min-h-0 md:overflow-y-auto flex flex-col items-center justify-start md:justify-center px-4 md:px-8 pt-4 md:pt-6 pb-4 gap-3 md:gap-5">
+            <div className="relative flex-1 min-h-0 md:overflow-y-auto flex flex-col items-center justify-start md:justify-center px-4 md:px-6 pt-4 pb-3 gap-3 md:gap-4">
               {/* Persona: the same 1:1 portrait as the lobby, with a ring that shows who has the floor */}
               <div className="flex items-center gap-4 w-full md:w-auto md:flex-col">
                 <div className="relative flex-none">
@@ -714,7 +803,7 @@ export default function SessionPage({
                     }}
                   />
                   <figure
-                    className={`relative w-20 md:w-[clamp(120px,22vh,260px)] aspect-square overflow-hidden rounded-[var(--radius)] ${state === "thinking" ? "thinking-shimmer" : ""}`}
+                    className={`relative w-20 md:w-[clamp(88px,15vh,200px)] aspect-square overflow-hidden rounded-[var(--radius)] ${state === "thinking" ? "thinking-shimmer" : ""}`}
                     style={{ background: "var(--surface-2)" }}
                   >
                     <img
@@ -817,7 +906,7 @@ export default function SessionPage({
               className="flex-none sticky bottom-0 z-20 md:static px-3 md:px-6 pb-3 pt-3 border-t"
               style={{ background: "var(--surface)", borderColor: "var(--edge)" }}
             >
-              <div className="max-w-4xl mx-auto">
+              <div className="max-w-3xl mx-auto">
                 {hint && isPractice && !hintInSheet && (
                   <div
                     role="status"
@@ -918,20 +1007,11 @@ export default function SessionPage({
                             {hint}
                           </p>
                         )}
-                        {whyOpen && chip.behaviour?.why && (
-                          <p className="mt-1.5 text-sm text-ink/85 leading-relaxed">{chip.behaviour.why}</p>
+                        {chip.behaviour?.why && (
+                          <p className="mt-1 t-small text-ink/85">{chip.behaviour.why}</p>
                         )}
                       </div>
                       <div className="flex flex-none items-center gap-2 w-full sm:w-auto pl-11 sm:pl-0">
-                        {chip.behaviour?.why && (
-                          <button
-                            onClick={() => setWhyOpen((v) => !v)}
-                            aria-expanded={whyOpen}
-                            className="btn btn-secondary !min-h-10 !px-3 text-sm"
-                          >
-                            {whyOpen ? "Hide why" : "Why?"}
-                          </button>
-                        )}
                         {chip.behaviour &&
                           (chip.behaviour.band === "Weak" || chip.behaviour.band === "Harmful") &&
                           canRewindLast && (
@@ -985,13 +1065,15 @@ export default function SessionPage({
                           ? `, interrupts ${firstName}`
                           : ", or tap to start speaking"}
                     </span>
-                    <kbd
-                      aria-hidden
-                      className="kbd"
-                      style={{ color: "#ffffff", borderColor: "rgb(255 255 255 / 0.7)" }}
-                    >
-                      Space
-                    </kbd>
+                    <span className="hidden xl:inline-flex">
+                      <kbd
+                        aria-hidden
+                        className="kbd"
+                        style={{ color: "#ffffff", borderColor: "rgb(255 255 255 / 0.7)" }}
+                      >
+                        Space
+                      </kbd>
+                    </span>
                   </button>
                   <label htmlFor="composer" className="sr-only">
                     Your reply
@@ -1064,7 +1146,7 @@ export default function SessionPage({
                       <rect x="1" y="5" width="15" height="14" rx="2" />
                       {!cameraOn && <line x1="1" y1="1" x2="23" y2="23" />}
                     </svg>
-                    <span className="sr-only sm:not-sr-only">{cameraOn ? "Camera on" : "Camera off"}</span>
+                    <span className="sr-only xl:not-sr-only">Camera</span>
                   </button>
                   <button
                     onClick={() => setMuted((v) => !v)}
@@ -1092,15 +1174,19 @@ export default function SessionPage({
                         />
                       )}
                     </svg>
-                    <span className="sr-only sm:not-sr-only">
-                      {muted ? `${firstName} muted` : `${firstName}'s voice on`}
-                    </span>
+                    <span className="sr-only xl:not-sr-only">Mute</span>
+                    <span className="sr-only"> {firstName}</span>
                   </button>
+                  {!isPractice && (
+                    <p className="t-small text-ink/80 sm:ml-auto">
+                      Only your words are scored. No hints or rewinds in an assessment.
+                    </p>
+                  )}
                   {isPractice && (
                     <>
                       <span
                         aria-hidden
-                        className="hidden sm:block w-px h-6 mx-1"
+                        className="hidden xl:block w-px h-6 mx-1"
                         style={{ background: "var(--edge)" }}
                       />
                       <button
@@ -1134,7 +1220,7 @@ export default function SessionPage({
                         className="btn btn-secondary !min-h-10 !px-3 text-sm !font-medium"
                       >
                         <span>
-                          Rewind<span className="hidden sm:inline"> last turn</span>
+                          Rewind<span className="hidden 2xl:inline"> last turn</span>
                         </span>
                         <kbd className="kbd">R</kbd>
                       </button>
@@ -1145,299 +1231,101 @@ export default function SessionPage({
             </div>
           </main>
 
-          {/* Details panel: Coach and Transcript tabs in AI RolePlay, the transcript alone in Conversation AI.
-              Docked beside the stage on a laptop, a full screen sheet on smaller screens. */}
-          {panelOpen && (
-            <aside
-              aria-label={isPractice ? "Call details" : "Transcript"}
-              onKeyDown={(e) => {
-                if (e.key === "Escape" && !lgUp) closePanel();
-              }}
-              className={`${lgUp ? "card w-[360px] flex-none" : "fixed inset-0 z-50 safe-area md:inset-y-0 md:right-0 md:left-auto md:w-96 md:border-l md:shadow-2xl"} flex flex-col overflow-hidden`}
-              style={lgUp ? undefined : { background: "var(--surface)", borderColor: "var(--edge)" }}
+          {/* Transcript: the whole call so far, newest at the bottom, with the feedback on each reply */}
+          <section
+            className="card flex flex-col min-h-0 max-md:h-[60vh] md:col-start-1 md:row-start-2 lg:col-auto lg:row-auto"
+            aria-labelledby="transcript-heading"
+            data-scroll-log
+          >
+            <h2
+              id="transcript-heading"
+              className="flex-none flex items-baseline justify-between px-4 pt-3 pb-1.5 text-[15px] font-semibold text-ink"
             >
-              <div className="flex items-center gap-2 px-3 pt-3 pb-2 flex-none">
-                {isPractice ? (
-                  <Tabs
-                    label="Call details"
-                    idPrefix="call"
-                    tabs={panelTabs}
-                    value={panelTab}
-                    onChange={setPanelTab}
-                    className="flex-1"
-                  />
-                ) : (
-                  <h2 className="flex-1 px-1 font-display font-semibold text-ink text-base">
-                    Transcript
-                    <span className="ml-2 text-sm font-normal text-ink/75 tabular-nums">
-                      {messages.length} lines
-                    </span>
-                  </h2>
-                )}
-                <button
-                  ref={panelCloseRef}
-                  onClick={closePanel}
-                  className="w-11 h-11 flex-none flex items-center justify-center rounded-[var(--radius-sm)] text-ink/80 hover:bg-[var(--surface-2)]"
-                  aria-label={`Close ${panelLabel}`}
-                >
-                  {closeIcon}
-                </button>
-              </div>
-
-              {isPractice && (
-                <div
-                  {...tabPanelProps("call", "coach")}
-                  className={`${panelTab === "coach" ? "flex" : "hidden"} flex-1 min-h-0 flex-col overflow-y-auto px-3 pb-3 gap-3`}
-                >
-                  {/* Progress */}
-                  <section
-                    className="flex items-center gap-3 p-3 rounded-[var(--radius-sm)]"
-                    style={{ background: "var(--surface-2)" }}
-                  >
-                    <span
-                      className="relative w-11 h-11 flex items-center justify-center flex-none"
-                      aria-hidden
+              Transcript
+              <span className="t-small font-normal text-ink/80 tabular-nums">{messages.length} lines</span>
+            </h2>
+            <div
+              ref={scrollRef}
+              role="log"
+              aria-label="Conversation so far"
+              aria-live="off"
+              tabIndex={0}
+              className="flex-1 min-h-0 overflow-auto px-3 pb-3"
+            >
+              <ol className="flex flex-col">
+                {messages.map((t, i) => {
+                  const you = t.speaker === "You";
+                  const ordinal = you && i >= openingLength ? playerOrdinalAt(i) : -1;
+                  const fb = you && isPractice ? feedbackFor.get(t.time) : undefined;
+                  const canRewind =
+                    isPractice && ordinal >= 0 && ordinal < snapshots.length && !speaking && !finishing;
+                  return (
+                    <li
+                      key={i}
+                      className="flex flex-col gap-1 px-1 py-2.5 border-t first:border-t-0"
+                      style={{ borderColor: "var(--edge)" }}
                     >
-                      <svg width="44" height="44" viewBox="0 0 36 36" className="-rotate-90">
-                        <circle cx="18" cy="18" r="15" fill="none" stroke="var(--line)" strokeWidth="3" />
-                        <circle
-                          cx="18"
-                          cy="18"
-                          r="15"
-                          fill="none"
-                          stroke="var(--accent-ui)"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeDasharray={`${(levelPct / 100) * 94.2} 94.2`}
-                          style={{ transition: "stroke-dasharray .9s cubic-bezier(.2,.8,.2,1)" }}
+                      <div className="flex items-center gap-2 text-[13px]">
+                        <span
+                          aria-hidden
+                          className="w-2 h-2 rounded-full flex-none"
+                          style={{ background: you ? "var(--accent-ui)" : "var(--line)" }}
                         />
-                      </svg>
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-ink/75">{level}</p>
-                      <p className="font-display font-bold text-ink text-lg leading-tight">
-                        <RollingNumber value={xp} />{" "}
-                        <span className="text-sm font-medium text-ink/75">XP</span>
-                      </p>
-                    </div>
-                    <span
-                      className="flex items-center gap-1 h-7 px-2 rounded-full text-xs font-bold tabular-nums"
-                      style={
-                        streak >= 3
-                          ? { background: "var(--accent)", color: "#fff" }
-                          : { background: "var(--surface)", color: "rgb(var(--ink) / 0.85)" }
-                      }
-                      aria-label={`Strong streak ${streak}${streak >= 3 ? ", 1.5 times XP active" : ""}`}
-                    >
-                      <FlameIcon size={13} />
-                      {streak}
-                      {streak >= 3 && <span>x1.5</span>}
-                    </span>
-                    <span
-                      className="text-xs text-ink/80 tabular-nums"
-                      aria-label={`${badges.length} badges earned`}
-                    >
-                      <span className="font-bold text-ink">{badges.length}</span>/{BADGES.length}
-                    </span>
-                  </section>
-
-                  {/* Objectives */}
-                  <section>
-                    <div className="flex items-center justify-between px-1 mb-2">
-                      <h3 className="text-sm font-semibold text-ink">Objectives</h3>
-                      <span className="font-semibold text-ink/80 text-xs tabular-nums">
-                        {objectivesDone}/{objectives.length}
-                      </span>
-                    </div>
-                    <div
-                      className="h-1.5 mx-1 mb-1 overflow-hidden rounded-full"
-                      style={{ background: "var(--edge)" }}
-                    >
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{ width: `${objectivesPct}%`, background: "var(--ok)" }}
-                      />
-                    </div>
-                    <ul>
-                      {objectives.map((o, i) => {
-                        const done = metObjectives[i];
-                        const criteria = scenario.instrument.skills
-                          .flatMap((s) => s.indicators)
-                          .filter((ind) => o.indicatorIds.includes(ind.id))
-                          .map((ind) => ind.label);
-                        return (
-                          <li key={o.id} data-objective={i} className="flex items-start gap-3 px-1 py-2">
-                            <span
-                              className="relative w-8 h-8 flex-none rounded-full flex items-center justify-center"
-                              style={{
-                                background: done ? "var(--ok-tint)" : "var(--surface)",
-                                border: done ? "1.5px solid var(--ok)" : "1.5px solid var(--line)",
-                              }}
-                            >
-                              {done ? (
-                                <Icon name="check" size={15} stroke={2.2} className="text-[var(--ok)]" />
-                              ) : (
-                                <span className="font-semibold text-sm text-ink/80 tabular-nums">
-                                  {i + 1}
-                                </span>
-                              )}
-                              {celebrate === i && (
-                                <span
-                                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                                  aria-hidden
-                                >
-                                  {CONFETTI.map((p, k) => (
-                                    <span
-                                      key={k}
-                                      className="absolute w-1.5 h-1.5 rounded-[1px]"
-                                      style={{
-                                        background: p.c,
-                                        ["--tx" as string]: `${Math.round(Math.cos((p.a * Math.PI) / 180) * p.d)}px`,
-                                        ["--ty" as string]: `${Math.round(Math.sin((p.a * Math.PI) / 180) * p.d)}px`,
-                                        animation: "confetti-burst 0.9s ease-out forwards",
-                                      }}
-                                    />
-                                  ))}
-                                </span>
-                              )}
+                        <span className="font-semibold text-ink">{t.speaker}</span>
+                        <span className="ml-auto text-xs text-ink/75 tabular-nums">{t.time}</span>
+                      </div>
+                      <p className="t-body text-ink/90 pl-4">{t.text}</p>
+                      {fb && (
+                        <div
+                          className="ml-4 mt-0.5 px-2.5 py-1.5 rounded-[var(--radius-sm)] t-small"
+                          style={{ background: "var(--surface-2)" }}
+                        >
+                          <p className="flex items-center gap-2">
+                            {fb.behaviour && <BandChip band={fb.behaviour.band} />}
+                            <span className="ml-auto text-ink/80 tabular-nums">
+                              {fb.gain > 0 ? `+${fb.gain} XP` : "No XP"}
                             </span>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm leading-snug text-ink/90">{o.label}</p>
-                              <p
-                                className="text-xs"
-                                style={{ color: done ? "var(--ok)" : "rgb(var(--ink) / 0.75)" }}
-                              >
-                                {done ? `Completed, +${o.xp} XP` : `${o.sub}`}
-                              </p>
-                              {showCriteria && (
-                                <ul className="mt-1 space-y-0.5" aria-label="What counts">
-                                  {criteria.map((c) => (
-                                    <li key={c} className="text-xs text-ink/85 leading-snug flex gap-1.5">
-                                      <span
-                                        aria-hidden
-                                        className="mt-1.5 w-1 h-1 rounded-full flex-none"
-                                        style={{ background: "var(--accent-ui)" }}
-                                      />
-                                      {c}
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </section>
-
-                  {/* What each turn showed */}
-                  <section className="border-t pt-3" style={{ borderColor: "var(--edge)" }}>
-                    <h3 className="text-sm font-semibold text-ink px-1 mb-2">This call</h3>
-                    {log.length === 0 ? (
-                      <p className="text-sm text-ink/80 leading-relaxed px-1">
-                        After each reply, the behaviour it showed appears here with the reason. Choose What
-                        counts to see the criteria.
-                      </p>
-                    ) : (
-                      <ol className="space-y-2">
-                        {log.map((e) => (
-                          <li
-                            key={e.id}
-                            className="text-sm p-3 rounded-[var(--radius-sm)]"
-                            style={{ background: "var(--surface-2)" }}
-                          >
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs text-ink/75 tabular-nums">{e.time}</span>
-                              {e.behaviour && <BandChip band={e.behaviour.band} />}
-                              <span className="ml-auto text-xs text-ink/75 tabular-nums">
-                                {e.gain > 0 ? `+${e.gain}` : "0"} XP
-                              </span>
-                            </div>
-                            <p className="text-ink/90 mt-1 leading-snug">
-                              {e.behaviour ? e.behaviour.label : e.note}
-                            </p>
-                            {e.behaviour?.why && (
-                              <p className="text-xs text-ink/80 mt-0.5 leading-snug">{e.behaviour.why}</p>
-                            )}
-                          </li>
-                        ))}
-                      </ol>
-                    )}
-                  </section>
+                          </p>
+                          <p className="mt-0.5 font-semibold text-ink">
+                            {fb.behaviour ? fb.behaviour.label : fb.note}
+                          </p>
+                          {fb.behaviour?.why && <p className="mt-0.5 text-ink/85">{fb.behaviour.why}</p>}
+                        </div>
+                      )}
+                      {canRewind && (
+                        <button
+                          onClick={() => rewindTo(ordinal)}
+                          className="ml-3 self-start inline-flex items-center gap-1 text-xs font-semibold text-brand min-h-[32px] px-1 rounded-[var(--radius-sm)]"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden>
+                            <path
+                              d="M3 8a5 5 0 1 0 1.5-3.5M3 3v2.5h2.5"
+                              stroke="currentColor"
+                              strokeWidth="1.6"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                          Retry from here
+                          <span className="sr-only">, your turn at {t.time}</span>
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
+              {thinking && (
+                <div className="flex items-center gap-1 px-5 py-2 w-fit" aria-hidden>
+                  {[0, 0.15, 0.3].map((d, i) => (
+                    <span
+                      key={i}
+                      className="w-1.5 h-1.5 rounded-full bg-ink/40"
+                      style={{ animation: `pulse ${1 + d}s ease-in-out infinite` }}
+                    />
+                  ))}
                 </div>
               )}
-
-              <div
-                {...(isPractice ? tabPanelProps("call", "transcript") : {})}
-                tabIndex={undefined}
-                className={`${panelTab === "transcript" ? "flex" : "hidden"} flex-1 min-h-0 flex-col`}
-              >
-                <div
-                  ref={scrollRef}
-                  role="log"
-                  aria-label="Conversation so far"
-                  aria-live="off"
-                  tabIndex={0}
-                  className="flex-1 overflow-auto px-3 pb-4 pt-1"
-                >
-                  <ol className="flex flex-col">
-                    {messages.map((t, i) => {
-                      const you = t.speaker === "You";
-                      const ordinal = you && i >= openingLength ? playerOrdinalAt(i) : -1;
-                      const canRewind =
-                        isPractice && ordinal >= 0 && ordinal < snapshots.length && !speaking && !finishing;
-                      return (
-                        <li
-                          key={i}
-                          className="flex flex-col gap-1 px-1 py-3 border-t first:border-t-0"
-                          style={{ borderColor: "var(--edge)" }}
-                        >
-                          <div className="flex items-center gap-2 text-[13px]">
-                            <span
-                              aria-hidden
-                              className="w-2 h-2 rounded-full flex-none"
-                              style={{ background: you ? "var(--accent-ui)" : "var(--line)" }}
-                            />
-                            <span className="font-semibold text-ink">{t.speaker}</span>
-                            <span className="ml-auto text-xs text-ink/75 tabular-nums">{t.time}</span>
-                          </div>
-                          <p className="text-sm leading-relaxed text-ink/85 pl-4">{t.text}</p>
-                          {canRewind && (
-                            <button
-                              onClick={() => rewindTo(ordinal)}
-                              className="ml-3 self-start inline-flex items-center gap-1 text-xs font-semibold text-brand min-h-[32px] px-1 rounded-[var(--radius-sm)]"
-                            >
-                              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden>
-                                <path
-                                  d="M3 8a5 5 0 1 0 1.5-3.5M3 3v2.5h2.5"
-                                  stroke="currentColor"
-                                  strokeWidth="1.6"
-                                  strokeLinecap="round"
-                                />
-                              </svg>
-                              Retry from here
-                              <span className="sr-only">, your turn at {t.time}</span>
-                            </button>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ol>
-                  {thinking && (
-                    <div className="flex items-center gap-1 px-5 py-2 w-fit" aria-hidden>
-                      {[0, 0.15, 0.3].map((d, i) => (
-                        <span
-                          key={i}
-                          className="w-1.5 h-1.5 rounded-full bg-ink/40"
-                          style={{ animation: `pulse ${1 + d}s ease-in-out infinite` }}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </aside>
-          )}
+            </div>
+          </section>
         </div>
       </div>
 

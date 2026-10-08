@@ -110,28 +110,27 @@ export default function DeviceCheck() {
     action,
     onClick,
     children,
+    media,
   }: {
     name: string;
     status: Status;
     action: string;
     onClick: () => void;
     children?: React.ReactNode;
+    media?: React.ReactNode;
   }) => (
-    <div
-      className="grid sm:grid-cols-[8rem_1fr_auto] gap-3 items-center py-4 border-t"
-      style={{ borderColor: "var(--edge)" }}
-    >
-      <div>
-        <p className="font-display font-semibold text-ink text-base">{name}</p>
-        <p className="text-xs" style={{ color: statusColor(status) }} role="status">
-          {LABEL[status]}
+    <div className="flex items-center gap-3 py-2 border-t" style={{ borderColor: "var(--edge)" }}>
+      <div className="flex-1 min-w-0">
+        <p className="flex flex-wrap items-baseline gap-x-2">
+          <span className="font-semibold text-ink t-body">{name}</span>
+          <span className="t-small" style={{ color: statusColor(status) }} role="status">
+            {LABEL[status]}
+          </span>
         </p>
+        {children && <div className="mt-1 min-h-[8px] flex items-center">{children}</div>}
       </div>
-      <div className="min-h-[2.5rem] flex items-center">{children}</div>
-      <button
-        onClick={() => void onClick()}
-        className="justify-self-start sm:justify-self-end btn btn-secondary !min-h-10 !px-4 text-sm"
-      >
+      {media}
+      <button onClick={() => void onClick()} className="flex-none btn btn-secondary !min-h-10 !px-3 text-sm">
         {action}
       </button>
     </div>
@@ -165,24 +164,23 @@ export default function DeviceCheck() {
         status={cam}
         action={camStream.current ? "Stop test" : "Test camera"}
         onClick={testCam}
+        media={
+          <video
+            ref={video}
+            muted
+            playsInline
+            aria-label="Camera preview"
+            className="w-12 h-12 flex-none object-cover rounded-[var(--radius-sm)]"
+            style={{ background: "var(--surface-2)", display: cam === "ok" ? "block" : "none" }}
+          />
+        }
       >
-        <video
-          ref={video}
-          muted
-          playsInline
-          aria-label="Camera preview"
-          className="w-24 h-24 object-cover rounded-[var(--radius-sm)]"
-          style={{ background: "var(--surface-2)", display: cam === "ok" ? "block" : "none" }}
-        />
-        {cam !== "ok" && (
-          <p className="text-ink/70 text-xs leading-relaxed">
-            The preview appears here. Your picture is never recorded or scored.
-          </p>
-        )}
+        <p className="text-ink/80 t-small">
+          {cam !== "ok" && "The preview appears here. "}Your picture is never recorded or scored.
+        </p>
       </Row>
-      <p className="text-ink/75 text-xs leading-relaxed pt-3 border-t" style={{ borderColor: "var(--edge)" }}>
-        Both tests are optional. You can type every reply instead of speaking. Only your transcript is
-        assessed; nothing is inferred from your voice or face.
+      <p className="text-ink/80 t-small pt-2 border-t" style={{ borderColor: "var(--edge)" }}>
+        Only your transcript is assessed; nothing is inferred from your voice or face.
       </p>
     </div>
   );

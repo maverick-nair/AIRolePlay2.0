@@ -301,10 +301,6 @@ body {
 }
 
 /* Devices: safe areas for notched phones, and 44px targets wherever the pointer is a finger. */
-.safe-area {
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
-}
 body {
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
@@ -436,6 +432,40 @@ body {
   }
 }
 
+/* ---------- Cockpit type scale ---------- */
+/* One screen layouts carry a lot of information, so body and small text step down a little on
+   narrower frames. Small text never goes below 12px. */
+:root {
+  --t-body: 13.5px;
+  --t-small: 13px;
+}
+@media (max-width: 1399px) {
+  :root {
+    --t-body: 13px;
+    --t-small: 12.5px;
+  }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    --t-body: 12.5px;
+    --t-small: 12px;
+  }
+}
+@media (min-width: 1024px) and (max-width: 1399px) and (max-height: 760px) {
+  :root {
+    --t-body: 12.5px;
+    --t-small: 12px;
+  }
+}
+.t-body {
+  font-size: var(--t-body);
+  line-height: 1.45;
+}
+.t-small {
+  font-size: var(--t-small);
+  line-height: 1.4;
+}
+
 /* ---------- Components shared by both products ---------- */
 /* Buttons: flat and clear. Secondary buttons and inputs carry a 3:1 border (WCAG 1.4.11). */
 .btn {
@@ -549,36 +579,6 @@ body {
   box-shadow:
     0 1px 2px rgb(0 0 0 / 0.08),
     0 0 0 1px var(--edge);
-}
-
-/* Disclosure rows inside panels (the brief, skills). */
-.acc {
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
-}
-.acc > summary {
-  list-style: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  min-height: 52px;
-  padding: 0 1rem;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 15px;
-}
-.acc > summary::-webkit-details-marker {
-  display: none;
-}
-.acc > summary .acc-chevron {
-  transition: transform 0.2s ease;
-}
-.acc[open] > summary .acc-chevron {
-  transform: rotate(180deg);
-}
-.acc > .acc-body {
-  padding: 0 1rem 1rem;
 }
 
 /* Icon rail. */

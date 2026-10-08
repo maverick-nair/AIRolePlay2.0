@@ -3,7 +3,6 @@ import type { ReportTab } from "../types";
 import AppShell from "../components/AppShell";
 import Icon from "../components/Icon";
 import Tabs from "../components/Tabs";
-import BuildStamp from "../components/BuildStamp";
 import TenPointScale from "../components/TenPointScale";
 import ScoreRing from "../components/ScoreRing";
 import RollingNumber from "../components/RollingNumber";
@@ -1373,7 +1372,6 @@ export default function SummaryPage({
           </div>
         )}
       </main>
-      <BuildStamp product={product.name} />
       {party && <ConfettiBurst pieces={120} />}
       {emailOpen && (
         <EmailDialog
