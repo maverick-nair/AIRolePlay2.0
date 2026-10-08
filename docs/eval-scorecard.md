@@ -5,12 +5,13 @@ Recorded with `pnpm eval` on 8 October 2026 against the shared design (rubric in
 | Run | Score | Failing checks |
 | --- | --- | --- |
 | Baseline, this design before fixes | 51.5 | 21 of 45 |
-| Final | 100 | 0 of 45 |
+| Final | 100 | 0 of 46 |
 
 The baseline run also carried some faults in the eval itself (phone journeys timed out, repeated button labels read as a focus trap, scrolled text read as overlapping, selected tabs counted as primary actions). Those were fixed in the eval, not the product, before the product fixes below were measured.
 
 ## What changed in the product
 
+- Progress starts at zero: level Newcomer, 0 season XP and no rank until the first run; the call starts at 0 XP with no streak, and each run adds only what it earned. The rank is against the sample cohort and says so. (Before, every learner started at a seeded 560 XP, streak 2 and rank #4 of 64.)
 - Practice is capped at five runs again: the landing counts runs down, Start becomes "All 5 runs used", and the last report drops Practise again.
 - Conversation AI has no game layer: the XP bar, streak, badges, leaderboard, live XP feedback, objective progress, rewards and confetti are practice only.
 - End Call asks first in both products, because ending uses a practice run or the one assessment attempt. Keep talking takes focus; Escape returns to End Call.
@@ -35,14 +36,14 @@ The baseline run also carried some faults in the eval itself (phone journeys tim
 
 ## Final run
 
-Score: **100 / 100**. 45 checks, 0 failing. Run took 225 s.
+Score: **100 / 100**. 46 checks, 0 failing. Run took 191 s.
 
 | Dimension | Weight | Checks passed | Score |
 | --- | --- | --- | --- |
 | Everything the player needs is there | 15 | 5 of 5 | 15.0 |
 | Accessibility (WCAG 2.2 AA) | 25 | 9 of 9 | 25.0 |
 | Task flow and efficiency | 15 | 6 of 6 | 15.0 |
-| Product rules and integrity | 20 | 12 of 12 | 20.0 |
+| Product rules and integrity | 20 | 13 of 13 | 20.0 |
 | Visual quality and layout | 15 | 8 of 8 | 15.0 |
 | Robustness and performance | 10 | 5 of 5 | 10.0 |
 
@@ -79,6 +80,7 @@ Score: **100 / 100**. 45 checks, 0 failing. Run took 225 s.
 - pass: `rules.criteria-on-request` Practice criteria appear on request
 - pass: `rules.hints` With hints on, a missed opportunity brings a hint
 - pass: `rules.rewind` Retry from here rewinds the reply
+- pass: `rules.no-seeded-progress` A first time learner starts at zero: no XP, streak or rank before the first run
 - pass: `rules.copy` No em or en dashes, and skills is the word used
 - pass: `visual.no-sideways-scroll` No sideways scroll at any size
 - pass: `visual.no-clipped` No region clips or hides content in a hidden overflow

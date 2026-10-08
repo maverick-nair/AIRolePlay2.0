@@ -84,6 +84,10 @@ const CHECKS: Record<string, { dim: Dim; title: string }> = {
   "rules.criteria-on-request": { dim: "rules", title: "Practice criteria appear on request" },
   "rules.hints": { dim: "rules", title: "With hints on, a missed opportunity brings a hint" },
   "rules.rewind": { dim: "rules", title: "Retry from here rewinds the reply" },
+  "rules.no-seeded-progress": {
+    dim: "rules",
+    title: "A first time learner starts at zero: no XP, streak or rank before the first run",
+  },
   "rules.copy": { dim: "rules", title: "No em or en dashes, and skills is the word used" },
   "visual.no-sideways-scroll": { dim: "visual", title: "No sideways scroll at any size" },
   "visual.no-clipped": { dim: "visual", title: "No region clips or hides content in a hidden overflow" },
@@ -465,6 +469,13 @@ async function practiceJourney(browser: Browser, combo: Combo) {
   const { page } = c;
   const main = combo.name === MAIN;
   await audit(c, "rp-home", "player", MANIFEST["rp-home"]);
+  const homeText = (await page.locator("main").innerText()).replace(/\s+/g, " ");
+  check(
+    "rules.no-seeded-progress",
+    /Season XP 0\b/i.test(homeText) && /None yet/.test(homeText),
+    `rp-home ${combo.name}`,
+    homeText.match(/Level .{0,120}/i)?.[0] ?? "no progress strip",
+  );
   const start = page.getByRole("button", { name: /^Start practising/ }).first();
   const box = await start.boundingBox();
   check(
@@ -476,6 +487,10 @@ async function practiceJourney(browser: Browser, combo: Combo) {
   await start.click();
   await waitYourTurn(page);
   await audit(c, "rp-call-start", "player", MANIFEST["rp-call"]);
+  if (combo.w >= 768) {
+    const hud = (await page.locator("header").innerText()).replace(/\s+/g, " ");
+    check("rules.no-seeded-progress", /\b0 XP\b/.test(hud), `rp-call ${combo.name}`, hud.slice(0, 120));
+  }
 
   // A weak reply: with hints on it should bring a hint; Retry from here rewinds it.
   const fb0 = await reply(c, "We can match their price.", true);

@@ -487,6 +487,7 @@ export default function SummaryPage({
                         {stats.startRank > stats.endRank
                           ? `Up ${stats.startRank - stats.endRank} from #${stats.startRank}`
                           : `Held at #${stats.startRank}`}
+                        , sample cohort
                       </p>
                     </div>
                   )}

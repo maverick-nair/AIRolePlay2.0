@@ -47,7 +47,7 @@ Six dimensions with fixed weights add up to 100. A check passes only when every 
 | Everything the player needs is there | 15 | 5 |
 | Accessibility (WCAG 2.2 AA) | 25 | 9 |
 | Task flow and efficiency | 15 | 6 |
-| Product rules and integrity | 20 | 12 |
+| Product rules and integrity | 20 | 13 |
 | Visual quality and layout | 15 | 8 |
 | Robustness and performance | 10 | 5 |
 
@@ -97,6 +97,7 @@ These mirror `CLAUDE.md`.
 - `rules.criteria-on-request`: the behaviours behind each objective appear only after Show what counts.
 - `rules.hints`: with hints on, a reply that misses an opportunity brings a hint, and it is still there when the player has the floor again.
 - `rules.rewind`: Retry from here removes the reply and lets the player try it again.
+- `rules.no-seeded-progress`: a first time learner sees zero XP, the Newcomer level and no rank on the home page, and the first call starts at 0 XP with no streak. Progress comes only from saved runs.
 - `rules.copy`: no em or en dashes on screen, and skills is the word used.
 
 ### Visual quality and layout
@@ -123,6 +124,6 @@ These mirror `CLAUDE.md`.
 | Run | Score | Failing checks |
 | --- | --- | --- |
 | Baseline, this design before fixes | 51.5 | 21 of 45 |
-| Final | 100 | 0 of 45 |
+| Final | 100 | 0 of 46 |
 
 The final scorecard, and what was fixed to get there, is in `docs/eval-scorecard.md`.

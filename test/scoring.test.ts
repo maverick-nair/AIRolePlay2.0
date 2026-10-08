@@ -10,6 +10,10 @@ import {
   bandFromPoints,
   hintFor,
   levelFor,
+  levelProgress,
+  nextLevel,
+  rankAmong,
+  totalXp,
   practiceRunsLeft,
   scoreSession,
   scoreSkill,
@@ -144,6 +148,8 @@ describe("turn outcome (gamification rules)", () => {
       classification: hit("probing.follow-up", "Strong", 2),
     });
     expect(o.levelledUp).toBe(true);
+    expect(levelFor(0).name).toBe("Newcomer");
+    expect(levelFor(299).name).toBe("Newcomer");
     expect(levelFor(690).name).toBe("Competent");
     expect(levelFor(700).name).toBe("Proficient");
   });
@@ -254,6 +260,34 @@ describe("claim ladder", () => {
     const ladder = claimLadder(scenario.instrument.claimRung);
     expect(ladder[0].state).toBe("current");
     expect(ladder[3].state).toBe("ahead");
+  });
+});
+
+describe("progress from saved runs", () => {
+  it("starts at zero XP, as a Newcomer, with progress towards Emerging", () => {
+    expect(totalXp([])).toBe(0);
+    expect(levelFor(totalXp([])).name).toBe("Newcomer");
+    expect(nextLevel(0)?.name).toBe("Emerging");
+    expect(levelProgress(150)).toBe(50);
+  });
+  it("adds only what each run earned", () => {
+    expect(
+      totalXp([
+        { startXp: 0, endXp: 180 },
+        { startXp: 180, endXp: 300 },
+      ]),
+    ).toBe(300);
+    // Runs saved by older builds started from a seeded 560: only the earned part counts.
+    expect(totalXp([{ startXp: 560, endXp: 805 }])).toBe(245);
+  });
+  it("ranks against the board, top first", () => {
+    expect(rankAmong(0, [940, 815, 690, 555, 430])).toBe(6);
+    expect(rankAmong(700, [940, 815, 690, 555, 430])).toBe(3);
+    expect(rankAmong(1000, [940, 815])).toBe(1);
+  });
+  it("has no next level at the top", () => {
+    expect(nextLevel(950)).toBeNull();
+    expect(levelProgress(950)).toBe(25);
   });
 });
 

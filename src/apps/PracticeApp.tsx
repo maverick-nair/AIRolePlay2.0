@@ -7,7 +7,7 @@ import { renewalNegotiation } from "../data/scenarios/renewalNegotiation";
 import type { Report } from "../domain/report";
 import { PRODUCTS, applyProductTheme } from "../products";
 import { listAttempts } from "../store/attempts";
-import { practiceRunsLeft } from "../domain/scoring";
+import { practiceRunsLeft, totalXp } from "../domain/scoring";
 
 // AI RolePlay: the practice product. Up to maxPracticeAttempts runs per scenario, rewind, hints,
 // adaptive persona.
@@ -59,6 +59,7 @@ export default function PracticeApp() {
             scenario={scenario}
             mode="practice"
             difficulty={options.difficulty}
+            startXp={totalXp(attempts.map((a) => a.stats))}
             hints={options.hints}
             onEnd={(r) => {
               setReport(r);

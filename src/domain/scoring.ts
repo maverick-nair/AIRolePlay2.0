@@ -23,6 +23,7 @@ export const XP_RULES = {
 } as const;
 
 export const LEVELS = [
+  { name: "Newcomer", floor: 0 },
   { name: "Emerging", floor: 300 },
   { name: "Competent", floor: 500 },
   { name: "Proficient", floor: 700 },
@@ -37,9 +38,26 @@ export function levelFor(xp: number): (typeof LEVELS)[number] {
   return level;
 }
 
+// The level after the one this XP sits in, or null at the top.
+export function nextLevel(xp: number): (typeof LEVELS)[number] | null {
+  return LEVELS.find((l) => l.floor > xp) ?? null;
+}
+
+// Share of the way from this level's floor to the next level's floor (the top level uses LEVEL_SPAN).
 export function levelProgress(xp: number) {
   const level = levelFor(xp);
-  return Math.min(100, Math.max(0, ((xp - level.floor) / LEVEL_SPAN) * 100));
+  const span = (nextLevel(xp)?.floor ?? level.floor + LEVEL_SPAN) - level.floor;
+  return Math.min(100, Math.max(0, ((xp - level.floor) / span) * 100));
+}
+
+// Progress is only what saved runs earned: every learner starts at zero XP on their first run.
+export function totalXp(runs: { startXp: number; endXp: number }[]): number {
+  return runs.reduce((sum, r) => sum + Math.max(0, r.endXp - r.startXp), 0);
+}
+
+// Rank on a board of other players' points, 1 being the top. Ties rank alongside.
+export function rankAmong(xp: number, others: number[]): number {
+  return 1 + others.filter((p) => p > xp).length;
 }
 
 // ---------- Indicator and skill scores ----------

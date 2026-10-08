@@ -8,11 +8,11 @@ import BadgeMedal from "../components/BadgeMedal";
 import ToolButton from "../components/ToolButton";
 import CountdownTimer from "../components/CountdownTimer";
 import LeaderboardIcon from "../components/LeaderboardIcon";
-import { CAMERA_PREVIEW_SRC, PLAYERS_COMPLETED } from "../data/scenario";
+import { CAMERA_PREVIEW_SRC } from "../data/scenario";
 import { BADGES } from "../data/badges";
 import { PEERS } from "../data/peers";
 import type { Difficulty, Mode, Scenario, SessionTurn, TurnClassification } from "../domain/scenario";
-import { hintFor, levelFor, levelProgress, turnOutcome } from "../domain/scoring";
+import { hintFor, levelFor, levelProgress, rankAmong, turnOutcome } from "../domain/scoring";
 import { assembleReport, buildReportRequest, type Report, type SessionStats } from "../domain/report";
 import reportId from "../lib/reportId";
 import { scoreSession } from "../domain/scoring";
@@ -21,8 +21,6 @@ import { saveAttempt } from "../store/attempts";
 import type { Product } from "../products";
 import useMediaQuery from "../lib/useMediaQuery";
 
-const START_XP = 560;
-const START_STREAK = 2;
 const OPENING_OFFSET_SECONDS = 125; // the authored opening ends at 2:05
 
 // Everything the session needs to restore when the learner rewinds to an earlier turn.
@@ -44,6 +42,7 @@ export default function SessionPage({
   mode,
   difficulty,
   hints,
+  startXp = 0,
   onEnd,
 }: {
   product: Product;
@@ -51,6 +50,8 @@ export default function SessionPage({
   mode: Mode;
   difficulty: Difficulty;
   hints: boolean;
+  // XP the learner has earned on earlier saved runs; zero on the first run.
+  startXp?: number;
   onEnd: (report: Report) => void;
 }) {
   const isPractice = mode === "practice";
@@ -74,8 +75,8 @@ export default function SessionPage({
   const [messages, setMessages] = useState<SessionTurn[]>(scenario.stimulus.opening);
   const [classifications, setClassifications] = useState<TurnClassification[]>([]);
   const [agreements, setAgreements] = useState<number[]>([]);
-  const [xp, setXp] = useState(START_XP);
-  const [streak, setStreak] = useState(START_STREAK);
+  const [xp, setXp] = useState(startXp);
+  const [streak, setStreak] = useState(0);
   const [turns, setTurns] = useState(0);
   const [combo, setCombo] = useState<number | null>(null);
   const [celebrate, setCelebrate] = useState<number | null>(null);
@@ -88,7 +89,7 @@ export default function SessionPage({
     kind: "objective" | "level" | "badge";
   } | null>(null);
   const [badges, setBadges] = useState<string[]>([]);
-  const [bestStreak, setBestStreak] = useState(START_STREAK);
+  const [bestStreak, setBestStreak] = useState(0);
   const [floats, setFloats] = useState<{ id: number; v: number; mult: boolean }[]>([]);
   const [metObjectives, setMetObjectives] = useState<boolean[]>(objectives.map(() => false));
   const [feedback, setFeedback] = useState<{ gain: number; note: string; ok: boolean } | null>(null);
@@ -169,11 +170,14 @@ export default function SessionPage({
     { a: 180, d: 22, c: "#f59e0b" },
   ];
 
-  // Ranked board with the player folded in.
+  // Ranked board with the player folded in; on a tie the player sits level with the peer above.
   const board = [...PEERS, { name: "You", pts: xp, you: true }]
-    .sort((a, b) => b.pts - a.pts)
+    .sort((a, b) => b.pts - a.pts || Number("you" in b) - Number("you" in a))
     .map((p, i) => ({ ...p, rank: i + 1 }));
-  const myRank = board.find((p) => (p as { you?: boolean }).you)?.rank ?? board.length;
+  const myRank = rankAmong(
+    xp,
+    PEERS.map((p) => p.pts),
+  );
 
   // The persona takes the floor: a short think, then her line streams as she says it.
   // The player cannot interrupt; mic and composer stay locked until she finishes.
@@ -351,12 +355,15 @@ export default function SessionPage({
     const scores = scoreSession(scenario, classifications);
     const narrative = await providers.reporter.write(buildReportRequest(scenario, messages, scores));
     const stats: SessionStats = {
-      startXp: START_XP,
+      startXp,
       endXp: xp,
       badges,
       bestStreak,
       objectives: objectivesDone,
-      startRank: 4,
+      startRank: rankAmong(
+        startXp,
+        PEERS.map((p) => p.pts),
+      ),
       endRank: myRank,
     };
     const report = assembleReport({
@@ -1281,7 +1288,7 @@ export default function SessionPage({
                   </button>
                 </div>
                 <p className="px-4 py-2.5 text-ink/70 text-xs border-b border-ink/10 flex-none">
-                  Season XP · top of {PLAYERS_COMPLETED} players
+                  Season XP against a sample cohort
                 </p>
                 <div className="flex-1 overflow-auto py-1">
                   {board.map((p) => {

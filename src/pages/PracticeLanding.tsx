@@ -4,7 +4,9 @@ import BoxField from "../components/BoxField";
 import SectionLabel from "../components/SectionLabel";
 import RollingNumber from "../components/RollingNumber";
 import BadgeMedal from "../components/BadgeMedal";
-import { PLAYERS_COMPLETED, PORTRAIT_SRC, SCENE_SRC } from "../data/scenario";
+import { PORTRAIT_SRC, SCENE_SRC } from "../data/scenario";
+import { PEERS } from "../data/peers";
+import { levelFor, levelProgress, nextLevel, rankAmong, totalXp } from "../domain/scoring";
 import { BADGES } from "../data/badges";
 import type { Report } from "../domain/report";
 import type { Difficulty, Scenario } from "../domain/scenario";
@@ -40,11 +42,19 @@ export default function PracticeLanding({
   const [difficulty, setDifficulty] = useState<Difficulty>("firm");
   const [hints, setHints] = useState(true);
   const best = attempts.length ? Math.max(...attempts.map((a) => a.scores.overall)) : null;
+  // Progress comes only from saved runs, so a first-time learner starts at zero.
+  const xp = totalXp(attempts.map((a) => a.stats));
+  const level = levelFor(xp);
+  const next = nextLevel(xp);
+  const rank = rankAmong(
+    xp,
+    PEERS.map((p) => p.pts),
+  );
   const last = attempts[attempts.length - 1];
   const maxRuns = scenario.maxPracticeAttempts;
   const exhausted = runsLeft <= 0;
   const rung = CLAIM_LADDER[scenario.instrument.claimRung];
-  const totalXp = scenario.instrument.objectives.reduce((a, o) => a + o.xp, 0);
+  const objectiveXp = scenario.instrument.objectives.reduce((a, o) => a + o.xp, 0);
   const minutes = Math.round(scenario.durationSeconds / 60);
   const persona = scenario.stimulus.persona;
   const start = () => {
@@ -146,7 +156,7 @@ export default function PracticeLanding({
                   <span className="w-px h-3.5 bg-ink/15" />
                   <span>{scenario.instrument.objectives.length} Objectives</span>
                   <span className="w-px h-3.5 bg-ink/15" />
-                  <span>Up to {totalXp} XP</span>
+                  <span>Up to {objectiveXp} XP</span>
                 </div>
               </div>
 
@@ -158,20 +168,27 @@ export default function PracticeLanding({
                 {[
                   {
                     k: "Level",
-                    v: "Competent",
+                    v: level.name,
                     sub: (
                       <span
                         className="block mt-2 h-1 w-full"
                         style={{ background: "rgb(var(--ink) / 0.12)" }}
                       >
-                        <span className="block h-full" style={{ width: "30%", background: "var(--brand)" }} />
+                        <span
+                          className="block h-full"
+                          style={{ width: `${levelProgress(xp)}%`, background: "var(--brand)" }}
+                        />
                       </span>
                     ),
                   },
                   {
                     k: "Season XP",
-                    v: <RollingNumber value={560} />,
-                    sub: <span className="text-ink/75 text-xs">140 XP to Proficient</span>,
+                    v: <RollingNumber value={xp} />,
+                    sub: (
+                      <span className="text-ink/75 text-xs">
+                        {next ? `${next.floor - xp} XP to ${next.name}` : "Top level reached"}
+                      </span>
+                    ),
                   },
                   {
                     k: "Practice Runs",
@@ -193,8 +210,14 @@ export default function PracticeLanding({
                   },
                   {
                     k: "Season Rank",
-                    v: "#4",
-                    sub: <span className="text-ink/75 text-xs">of {PLAYERS_COMPLETED} players</span>,
+                    v: attempts.length ? `#${rank}` : "None yet",
+                    sub: (
+                      <span className="text-ink/75 text-xs">
+                        {attempts.length
+                          ? `of ${PEERS.length + 1} in the sample cohort`
+                          : "Ranked after your first run"}
+                      </span>
+                    ),
                   },
                 ].map((c, i) => (
                   <div
