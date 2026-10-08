@@ -31,7 +31,7 @@ describe("LLM routing config", () => {
     expect(c.jobs.npc.fallback).toEqual({ provider: "mock", model: "" });
     expect(c.jobs.classify.route.model).toBe("model-a");
     expect(c.jobs.classify.promptVersion).toBe("v2");
-    expect(c.jobs.report.promptVersion).toBe("v1");
+    expect(c.jobs.report.promptVersion).toBe("v2");
     expect(c.dualPass).toBe(true);
   });
 

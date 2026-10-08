@@ -1,6 +1,9 @@
 import type { AuthMode, ClaudeAuth, CloudOptions } from "./llm/claude";
 import { JOBS, PROVIDERS, type Effort, type JobName, type ProviderId, type Route } from "./llm/types";
 
+// The prompt version each job uses unless PROMPT_VERSION_<JOB> overrides it.
+const DEFAULT_PROMPT_VERSION: Record<JobName, string> = { npc: "v1", classify: "v1", report: "v2" };
+
 // All backend configuration comes from the environment. Nothing here has a model id as a default:
 // the deployment decides which provider and model each job uses, and can change it per job on
 // cost, speed, security or accuracy grounds without touching code.
@@ -8,7 +11,7 @@ import { JOBS, PROVIDERS, type Effort, type JobName, type ProviderId, type Route
 //   LLM_ROUTE_<JOB>     provider:model[:effort]   e.g. anthropic:claude-opus-5-5:medium
 //   LLM_ROUTE_DEFAULT   used for any job without its own route
 //   LLM_FALLBACK_<JOB>  route tried when the primary route fails (provider error or refusal)
-//   PROMPT_VERSION_<JOB> prompt file version under /prompts/<job>/ (default v1)
+//   PROMPT_VERSION_<JOB> prompt file version under /prompts/<job>/ (default v2 for report, v1 otherwise)
 //
 // Credentials never appear in config. LLM_AUTH_MODE chooses how Claude calls authenticate:
 //   env      the SDK resolves them (ANTHROPIC_API_KEY, ANTHROPIC_AUTH_TOKEN, workload identity, profile)
@@ -99,7 +102,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     jobs[job] = {
       route: parseRoute(env[`LLM_ROUTE_${key}`], `LLM_ROUTE_${key}`) ?? defaultRoute,
       fallback: parseRoute(env[`LLM_FALLBACK_${key}`], `LLM_FALLBACK_${key}`),
-      promptVersion: env[`PROMPT_VERSION_${key}`]?.trim() || "v1",
+      promptVersion: env[`PROMPT_VERSION_${key}`]?.trim() || DEFAULT_PROMPT_VERSION[job],
     };
   }
   return {

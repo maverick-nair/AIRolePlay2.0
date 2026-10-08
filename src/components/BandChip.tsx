@@ -14,14 +14,14 @@ export default function BandChip({ band, size = "sm" }: { band: Band | null; siz
   if (!band)
     return (
       <span
-        className={`inline-flex items-center rounded-full font-display font-semibold ${pad} border border-ink/20 text-ink/75`}
+        className={`inline-flex flex-none items-center whitespace-nowrap rounded-full font-display font-semibold ${pad} border border-ink/20 text-ink/75`}
       >
         Not observed
       </span>
     );
   return (
     <span
-      className={`inline-flex items-center rounded-full font-display font-semibold ${pad}`}
+      className={`inline-flex flex-none items-center whitespace-nowrap rounded-full font-display font-semibold ${pad}`}
       style={{ background: BAND_COLORS[band], color: readableOn(BAND_COLORS[band]) }}
     >
       {band}

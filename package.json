@@ -20,7 +20,8 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "pnpm typecheck && pnpm lint && pnpm lint:copy && pnpm format:check && pnpm test && pnpm build"
+    "check": "pnpm typecheck && pnpm lint && pnpm lint:copy && pnpm format:check && pnpm test && pnpm build",
+    "eval": "tsx eval/run.ts"
   },
   "dependencies": {
     "@anthropic-ai/bedrock-sdk": "^0.34.2",
@@ -41,8 +42,10 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^6.0.0",
+    "axe-core": "4.14.0",
     "eslint": "10.11.0",
     "globals": "17.13.0",
+    "playwright-core": "1.56.1",
     "prettier": "3.9.9",
     "tailwindcss": "^4.0.0",
     "tsx": "4.23.15",

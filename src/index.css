@@ -153,6 +153,9 @@ body {
     color 0.4s ease;
 }
 
+/* Laptops 760px tall or less: cockpit screens tighten their padding a step. */
+@custom-variant short (@media (max-height: 760px));
+
 @theme inline {
   --color-background: var(--bg);
   --color-foreground: rgb(var(--ink));
@@ -457,6 +460,17 @@ body {
     --t-small: 12px;
   }
 }
+/* Reading dense pages (the report): one step smaller, still never below 12px. */
+.dense {
+  --t-body: 13px;
+  --t-small: 12.5px;
+}
+@media (max-width: 1399px) {
+  .dense {
+    --t-body: 12.5px;
+    --t-small: 12px;
+  }
+}
 .t-body {
   font-size: var(--t-body);
   line-height: 1.45;
@@ -554,7 +568,7 @@ body {
   background: var(--accent-soft);
 }
 
-/* Segmented tabs, as in the reference panel. */
+/* Segmented control: a small radio group, such as the report's comparison switch. */
 .seg {
   display: flex;
   gap: 2px;
@@ -562,23 +576,6 @@ body {
   border-radius: calc(var(--radius-sm) + 2px);
   background: var(--surface-2);
   border: 1px solid var(--edge);
-}
-.seg [role="tab"] {
-  flex: 1;
-  min-height: 40px;
-  padding: 0 0.75rem;
-  font-size: 14px;
-  font-weight: 500;
-  color: rgb(var(--ink) / 0.8);
-  white-space: nowrap;
-}
-.seg [role="tab"][aria-selected="true"] {
-  background: var(--surface);
-  color: rgb(var(--ink));
-  font-weight: 600;
-  box-shadow:
-    0 1px 2px rgb(0 0 0 / 0.08),
-    0 0 0 1px var(--edge);
 }
 
 /* Icon rail. */

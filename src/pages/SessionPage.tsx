@@ -430,9 +430,8 @@ export default function SessionPage({
   }
   const canRewindLast = isPractice && snapshots.length > 0 && !speaking && !finishing;
   const rewindLast = () => canRewindLast && rewindTo(snapshots.length - 1);
-  // When a reply misses and a hint fires at the same moment, they share one card instead of two.
-  const hintInSheet =
-    !!hint && !!chip?.behaviour && (chip.behaviour.band === "Weak" || chip.behaviour.band === "Harmful");
+  // A hint shown while the feedback card is up joins that card, so the stage keeps its room.
+  const hintInSheet = !!hint && !!chip;
 
   // Practice only: a hint on request, even when automatic hints are off.
   function requestHint() {
@@ -583,15 +582,15 @@ export default function SessionPage({
 
   return (
     <AppShell product={product}>
-      <div className="md:h-full flex flex-col gap-2.5 p-2.5 lg:gap-3 lg:p-3">
+      <div className="md:h-full flex flex-col gap-2.5 p-2.5 lg:gap-3 lg:p-3 lg:short:gap-2.5 lg:short:p-2.5">
         {/* Header strip: what this is, how far along, how long is left, and the way out */}
         <header className="card flex-none flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2">
           <div className="min-w-0 mr-auto">
-            <p className="t-small text-ink/80 truncate">
+            <p className="t-small text-ink/80 md:truncate">
               {product.name} <span aria-hidden>/</span>{" "}
               {isPractice ? `Practice run, ${difficulty}` : "Assessment, one attempt"}
             </p>
-            <h1 className="font-semibold text-ink text-base xl:text-lg leading-tight truncate">
+            <h1 className="font-semibold text-ink text-base xl:text-lg leading-tight md:truncate">
               {scenario.title}
             </h1>
           </div>
@@ -683,11 +682,11 @@ export default function SessionPage({
         </header>
 
         <div
-          className={`flex-1 min-h-0 grid gap-2.5 lg:gap-3 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.3fr)] md:grid-rows-[auto_minmax(0,1fr)] lg:grid-rows-1 ${isPractice ? "lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)_minmax(0,19rem)] xl:grid-cols-[minmax(0,21rem)_minmax(0,1fr)_minmax(0,22rem)]" : "lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)_minmax(0,20rem)] xl:grid-cols-[minmax(0,23rem)_minmax(0,1fr)_minmax(0,22rem)]"}`}
+          className={`flex-1 min-h-0 grid gap-2.5 lg:gap-3 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.3fr)] md:grid-rows-[auto_minmax(0,1fr)] lg:grid-rows-1 ${isPractice ? "lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)_minmax(0,19rem)] min-[1400px]:grid-cols-[minmax(0,24rem)_minmax(0,1fr)_minmax(0,22rem)]" : "lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)_minmax(0,20rem)] min-[1400px]:grid-cols-[minmax(0,23rem)_minmax(0,1fr)_minmax(0,22rem)]"}`}
         >
           {/* Brief: what you are here to do, and the objectives with their status */}
           <section
-            className="card p-3 lg:p-4 flex flex-col gap-2.5 min-h-0 md:col-start-1 md:row-start-1 lg:col-auto lg:row-auto"
+            className="card p-3 lg:p-4 lg:short:p-3 flex flex-col gap-2.5 min-h-0 overflow-hidden md:col-start-1 md:row-start-1 lg:col-auto lg:row-auto"
             aria-labelledby="call-brief-heading"
           >
             <h2 id="call-brief-heading" className="sr-only">
@@ -790,9 +789,9 @@ export default function SessionPage({
             aria-label="Conversation"
             className="card min-w-0 flex flex-col order-first md:order-none md:col-start-2 md:row-start-1 md:row-span-2 lg:col-auto lg:row-auto lg:row-span-1 md:overflow-hidden"
           >
-            <div className="relative flex-1 min-h-0 md:overflow-y-auto flex flex-col items-center justify-start md:justify-center px-4 md:px-6 pt-4 pb-3 gap-3 md:gap-4">
+            <div className="relative flex-1 min-h-0 md:overflow-y-auto flex flex-col items-center justify-start px-4 md:px-6 pt-4 pb-3 gap-3 md:gap-4">
               {/* Persona: the same 1:1 portrait as the lobby, with a ring that shows who has the floor */}
-              <div className="flex items-center gap-4 w-full md:w-auto md:flex-col">
+              <div className="flex items-center gap-4 w-full md:w-auto md:flex-col md:short:flex-row">
                 <div className="relative flex-none">
                   <div
                     aria-hidden
@@ -803,7 +802,7 @@ export default function SessionPage({
                     }}
                   />
                   <figure
-                    className={`relative w-20 md:w-[clamp(88px,15vh,200px)] aspect-square overflow-hidden rounded-[var(--radius)] ${state === "thinking" ? "thinking-shimmer" : ""}`}
+                    className={`relative w-20 md:w-[clamp(80px,14vh,200px)] md:short:w-20 aspect-square overflow-hidden rounded-[var(--radius)] ${state === "thinking" ? "thinking-shimmer" : ""}`}
                     style={{ background: "var(--surface-2)" }}
                   >
                     <img
@@ -812,16 +811,16 @@ export default function SessionPage({
                       className="portrait-img absolute inset-0 w-full h-full object-cover object-top"
                     />
                     <figcaption
-                      className="hidden md:block absolute left-2 bottom-2 px-2.5 py-1 rounded-full text-xs font-semibold"
+                      className="hidden md:block md:short:hidden absolute left-2 bottom-2 px-2.5 py-1 rounded-full text-xs font-semibold"
                       style={{ background: "var(--surface)", color: "rgb(var(--ink))" }}
                     >
                       {persona.name}
                     </figcaption>
                   </figure>
                 </div>
-                <div className="min-w-0 flex flex-col items-start gap-2 md:items-center md:gap-3">
-                  <div className="md:text-center">
-                    <p className="font-display font-semibold text-ink text-lg leading-tight md:sr-only">
+                <div className="min-w-0 flex flex-col items-start gap-2 md:items-center md:gap-3 md:short:items-start md:short:gap-1.5">
+                  <div className="md:text-center md:short:text-left">
+                    <p className="font-display font-semibold text-ink text-lg leading-tight md:sr-only md:short:not-sr-only">
                       {persona.name}
                     </p>
                     <p className="text-ink/75 text-sm">
@@ -866,12 +865,12 @@ export default function SessionPage({
                   role="region"
                   aria-label={`${persona.name}, latest line`}
                   tabIndex={0}
-                  className="w-full max-w-2xl text-center max-h-40 min-h-0 shrink overflow-y-auto px-2"
+                  className="w-full max-w-2xl text-center max-md:h-32 max-h-40 min-h-0 shrink overflow-y-auto px-2"
                   aria-live="polite"
                   aria-atomic="true"
                 >
                   <span className="sr-only">{persona.name} says: </span>
-                  <p className="caption-in text-ink text-base sm:text-lg md:text-xl leading-snug text-left md:text-center">
+                  <p className="caption-in text-ink text-base sm:text-lg md:text-xl [@media(max-height:760px)]:md:text-lg leading-snug text-left md:text-center">
                     {lastPersonaLine.text || " "}
                   </p>
                 </div>
@@ -907,122 +906,150 @@ export default function SessionPage({
               style={{ background: "var(--surface)", borderColor: "var(--edge)" }}
             >
               <div className="max-w-3xl mx-auto">
-                {hint && isPractice && !hintInSheet && (
-                  <div
-                    role="status"
-                    aria-live="polite"
-                    className="sheet-in flex items-start gap-3 mb-2 px-4 py-2.5 text-sm rounded-[var(--radius-sm)]"
-                    style={{ background: "var(--accent-soft)" }}
-                  >
-                    <Icon name="bulb" size={18} className="mt-0.5 flex-none text-[var(--accent-soft-ink)]" />
-                    <span className="flex-1 text-ink">
-                      <span className="font-semibold">Hint </span>
-                      {hint}
-                    </span>
-                    <button
-                      onClick={() => setHint(null)}
-                      aria-label="Dismiss hint"
-                      className="-my-1 w-8 h-8 flex-none flex items-center justify-center rounded-[var(--radius-sm)] text-ink/80"
+                {/* Practice feedback slot: its room is kept from the start so nothing moves when feedback arrives. */}
+                <div
+                  className={
+                    isPractice ? "min-h-[176px] md:min-h-[136px] flex flex-col justify-end" : undefined
+                  }
+                >
+                  {isPractice && !hint && !chip && !timeUp && (
+                    <p
+                      className="mb-2 flex-1 flex items-center justify-center text-center t-small text-ink/80 px-4 rounded-[var(--radius-sm)] border border-dashed"
+                      style={{ borderColor: "var(--line)" }}
                     >
-                      {closeIcon}
-                    </button>
-                  </div>
-                )}
-                {timeUp && isPractice && (
-                  <div
-                    role="status"
-                    className="mb-2 px-3 py-2 text-sm text-ink/85 rounded-[var(--radius-sm)]"
-                    style={{ background: "var(--surface-2)" }}
-                  >
-                    Time is up for a scored call. You can keep practising, or end the call to see your report.
-                  </div>
-                )}
-                {chip && isPractice && (
-                  <div
-                    role="status"
-                    aria-live="polite"
-                    className={`sheet-in mb-2 px-4 py-3 border rounded-[var(--radius-sm)] ${
-                      !chip.behaviour
-                        ? ""
-                        : chip.behaviour.band === "Strong" || chip.behaviour.band === "Adequate"
-                          ? "sheet-ok"
-                          : "sheet-warn"
-                    }`}
-                    style={
-                      chip.behaviour
-                        ? undefined
-                        : { background: "var(--surface-2)", borderColor: "var(--edge)" }
-                    }
-                  >
-                    <div className="flex flex-wrap sm:flex-nowrap items-start gap-x-3 gap-y-2">
-                      <span
-                        aria-hidden
-                        className="mt-0.5 w-8 h-8 flex-none rounded-full flex items-center justify-center"
-                        style={{
-                          background: !chip.behaviour
-                            ? "rgb(var(--ink) / 0.55)"
-                            : chip.behaviour.band === "Strong" || chip.behaviour.band === "Adequate"
-                              ? "var(--ok)"
-                              : "var(--warn)",
-                          color: "var(--surface)",
-                        }}
-                      >
-                        {chip.behaviour &&
-                        (chip.behaviour.band === "Weak" || chip.behaviour.band === "Harmful") ? (
-                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                            <path d="M7 3v5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-                            <circle cx="7" cy="11" r="1.2" fill="currentColor" />
-                          </svg>
-                        ) : (
-                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                            <path
-                              d="M3 7.5l2.5 2.5L11 4.5"
-                              stroke="currentColor"
-                              strokeWidth="2.2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        )}
+                      After each reply, the behaviour it showed and why appears here.
+                    </p>
+                  )}
+                  {hint && isPractice && !hintInSheet && (
+                    <div
+                      role="status"
+                      aria-live="polite"
+                      className="sheet-in flex items-start gap-3 mb-2 px-4 py-2.5 text-sm rounded-[var(--radius-sm)]"
+                      style={{ background: "var(--accent-soft)" }}
+                    >
+                      <Icon
+                        name="bulb"
+                        size={18}
+                        className="mt-0.5 flex-none text-[var(--accent-soft-ink)]"
+                      />
+                      <span className="flex-1 text-ink">
+                        <span className="font-semibold">Hint </span>
+                        {hint}
                       </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="sheet-title font-display font-bold text-base leading-tight">
-                          {!chip.behaviour
-                            ? "On topic"
-                            : chip.behaviour.band === "Strong"
-                              ? "Strong reply"
-                              : chip.behaviour.band === "Adequate"
-                                ? "Good reply"
-                                : "Not quite"}
-                          <span className="ml-2 text-sm font-semibold text-ink/80 tabular-nums whitespace-nowrap">
-                            {chip.gain > 0 ? `+${chip.gain} XP` : "No XP"}
-                          </span>
-                        </p>
-                        <p className="text-sm text-ink mt-0.5">
-                          {chip.behaviour ? chip.behaviour.label : chip.note}
-                        </p>
-                        {hintInSheet && (
-                          <p className="text-sm text-ink/85 mt-1 leading-relaxed">
-                            <span className="font-semibold">Hint </span>
-                            {hint}
-                          </p>
-                        )}
-                        {chip.behaviour?.why && (
-                          <p className="mt-1 t-small text-ink/85">{chip.behaviour.why}</p>
-                        )}
-                      </div>
-                      <div className="flex flex-none items-center gap-2 w-full sm:w-auto pl-11 sm:pl-0">
-                        {chip.behaviour &&
-                          (chip.behaviour.band === "Weak" || chip.behaviour.band === "Harmful") &&
-                          canRewindLast && (
-                            <button onClick={rewindLast} className="btn btn-primary !min-h-10 !px-3 text-sm">
-                              Try again
-                            </button>
+                      <button
+                        onClick={() => setHint(null)}
+                        aria-label="Dismiss hint"
+                        className="-my-1 w-8 h-8 flex-none flex items-center justify-center rounded-[var(--radius-sm)] text-ink/80"
+                      >
+                        {closeIcon}
+                      </button>
+                    </div>
+                  )}
+                  {timeUp && isPractice && (
+                    <div
+                      role="status"
+                      className="mb-2 px-3 py-2 text-sm text-ink/85 rounded-[var(--radius-sm)]"
+                      style={{ background: "var(--surface-2)" }}
+                    >
+                      Time is up for a scored call. You can keep practising, or end the call to see your
+                      report.
+                    </div>
+                  )}
+                  {chip && isPractice && (
+                    <div
+                      role="status"
+                      aria-live="polite"
+                      className={`sheet-in mb-2 px-4 py-3 border rounded-[var(--radius-sm)] ${
+                        !chip.behaviour
+                          ? ""
+                          : chip.behaviour.band === "Strong" || chip.behaviour.band === "Adequate"
+                            ? "sheet-ok"
+                            : "sheet-warn"
+                      }`}
+                      style={
+                        chip.behaviour
+                          ? undefined
+                          : { background: "var(--surface-2)", borderColor: "var(--edge)" }
+                      }
+                    >
+                      <div className="flex flex-wrap sm:flex-nowrap items-start gap-x-3 gap-y-2">
+                        <span
+                          aria-hidden
+                          className="mt-0.5 w-8 h-8 flex-none rounded-full flex items-center justify-center"
+                          style={{
+                            background: !chip.behaviour
+                              ? "rgb(var(--ink) / 0.55)"
+                              : chip.behaviour.band === "Strong" || chip.behaviour.band === "Adequate"
+                                ? "var(--ok)"
+                                : "var(--warn)",
+                            color: "var(--surface)",
+                          }}
+                        >
+                          {chip.behaviour &&
+                          (chip.behaviour.band === "Weak" || chip.behaviour.band === "Harmful") ? (
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                              <path
+                                d="M7 3v5"
+                                stroke="currentColor"
+                                strokeWidth="2.2"
+                                strokeLinecap="round"
+                              />
+                              <circle cx="7" cy="11" r="1.2" fill="currentColor" />
+                            </svg>
+                          ) : (
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                              <path
+                                d="M3 7.5l2.5 2.5L11 4.5"
+                                stroke="currentColor"
+                                strokeWidth="2.2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
                           )}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="sheet-title font-display font-bold text-base leading-tight">
+                            {!chip.behaviour
+                              ? "On topic"
+                              : chip.behaviour.band === "Strong"
+                                ? "Strong reply"
+                                : chip.behaviour.band === "Adequate"
+                                  ? "Good reply"
+                                  : "Not quite"}
+                            <span className="ml-2 text-sm font-semibold text-ink/80 tabular-nums whitespace-nowrap">
+                              {chip.gain > 0 ? `+${chip.gain} XP` : "No XP"}
+                            </span>
+                          </p>
+                          <p className="text-sm text-ink mt-0.5">
+                            {chip.behaviour ? chip.behaviour.label : chip.note}
+                          </p>
+                          {hintInSheet && (
+                            <p className="text-sm text-ink/85 mt-1 leading-relaxed">
+                              <span className="font-semibold">Hint </span>
+                              {hint}
+                            </p>
+                          )}
+                          {chip.behaviour?.why && (
+                            <p className="mt-1 t-small text-ink/85">{chip.behaviour.why}</p>
+                          )}
+                        </div>
+                        <div className="flex flex-none items-center gap-2 w-full sm:w-auto pl-11 sm:pl-0">
+                          {chip.behaviour &&
+                            (chip.behaviour.band === "Weak" || chip.behaviour.band === "Harmful") &&
+                            canRewindLast && (
+                              <button
+                                onClick={rewindLast}
+                                className="btn btn-primary !min-h-10 !px-3 text-sm"
+                              >
+                                Try again
+                              </button>
+                            )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
 
                 <div
                   className="flex items-end gap-2 p-1.5 transition-colors rounded-[var(--radius-sm)]"
@@ -1065,7 +1092,7 @@ export default function SessionPage({
                           ? `, interrupts ${firstName}`
                           : ", or tap to start speaking"}
                     </span>
-                    <span className="hidden xl:inline-flex">
+                    <span className="hidden min-[1400px]:inline-flex">
                       <kbd
                         aria-hidden
                         className="kbd"
@@ -1194,7 +1221,10 @@ export default function SessionPage({
                         aria-keyshortcuts="H"
                         className="btn btn-secondary !min-h-10 !px-3 text-sm !font-medium"
                       >
-                        Hint <kbd className="kbd">H</kbd>
+                        Hint
+                        <span className="hidden min-[1400px]:inline-flex">
+                          <kbd className="kbd">H</kbd>
+                        </span>
                       </button>
                       <button
                         onClick={toggleCriteria}
@@ -1211,7 +1241,10 @@ export default function SessionPage({
                             : undefined
                         }
                       >
-                        What counts <kbd className="kbd">W</kbd>
+                        What counts
+                        <span className="hidden min-[1400px]:inline-flex">
+                          <kbd className="kbd">W</kbd>
+                        </span>
                       </button>
                       <button
                         onClick={rewindLast}
@@ -1222,7 +1255,9 @@ export default function SessionPage({
                         <span>
                           Rewind<span className="hidden 2xl:inline"> last turn</span>
                         </span>
-                        <kbd className="kbd">R</kbd>
+                        <span className="hidden min-[1400px]:inline-flex">
+                          <kbd className="kbd">R</kbd>
+                        </span>
                       </button>
                     </>
                   )}
@@ -1250,7 +1285,7 @@ export default function SessionPage({
               aria-label="Conversation so far"
               aria-live="off"
               tabIndex={0}
-              className="flex-1 min-h-0 overflow-auto px-3 pb-3"
+              className="relative flex-1 min-h-0 overflow-auto px-3 pb-3"
             >
               <ol className="flex flex-col">
                 {messages.map((t, i) => {
@@ -1262,6 +1297,7 @@ export default function SessionPage({
                   return (
                     <li
                       key={i}
+                      data-speaker={you ? "you" : "persona"}
                       className="flex flex-col gap-1 px-1 py-2.5 border-t first:border-t-0"
                       style={{ borderColor: "var(--edge)" }}
                     >
@@ -1277,6 +1313,7 @@ export default function SessionPage({
                       <p className="t-body text-ink/90 pl-4">{t.text}</p>
                       {fb && (
                         <div
+                          data-turn-feedback
                           className="ml-4 mt-0.5 px-2.5 py-1.5 rounded-[var(--radius-sm)] t-small"
                           style={{ background: "var(--surface-2)" }}
                         >

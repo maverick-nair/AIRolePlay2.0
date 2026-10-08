@@ -13,7 +13,7 @@ export default function BadgeMedal({
       style={{
         width: size,
         height: size,
-        fontSize: Math.max(10, size * 0.3),
+        fontSize: Math.max(12, size * 0.3),
         clipPath: "polygon(50% 0, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)",
         background: earned ? "var(--accent)" : "var(--edge)",
         color: earned ? "#ffffff" : "rgb(var(--ink) / 0.8)",

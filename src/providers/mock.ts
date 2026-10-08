@@ -280,29 +280,31 @@ class MockReporter {
     const list = (xs: string[]) =>
       xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}`;
 
+    // A short summary: the report shows every rating with its quote beside it, so this names what
+    // went well, the one thing to work on and what was missing, without repeating the evidence.
     const overall: string[] = [];
-    if (strong.length)
+    const first = req.scenario.stimulus.persona.name.split(" ")[0];
+    overall.push(
+      strong.length
+        ? `Your strongest moves were ${list(strong.slice(0, 2).map((i) => i.label.toLowerCase()))}.`
+        : "Few of the assessed behaviours reached the Strong anchor in this conversation.",
+    );
+    // The thing to work on: the most serious gap in your words, else the earliest missed chance.
+    const moments = unseen
+      .map((i) => ({ i, o: opportunityFor(req.scenario, req.transcript, i.indicatorId) }))
+      .flatMap((x) => (x.o.kind === "moment" ? [{ i: x.i, o: x.o }] : []))
+      .sort((p, q) => p.o.turnIndex - q.o.turnIndex);
+    if (gaps[0]) overall.push(`The one to work on is ${gaps[0].label.toLowerCase()}.`);
+    else if (moments[0]) {
+      const said = moments[0].o.quote.split(/(?<=[.?!])\s/)[0];
       overall.push(
-        `The behaviours that reached the Strong anchor were: ${list(strong.slice(0, 3).map((i) => i.label.toLowerCase()))}. Each was observed in your own words in the transcript and carried the conversation forward.`,
-      );
-    else overall.push("Few of the assessed behaviours reached the Strong anchor in this conversation.");
-    if (gaps.length)
-      overall.push(
-        `The main development area is ${list(gaps.slice(0, 2).map((i) => i.label.toLowerCase()))}. The evidence tab quotes the turns where this showed.`,
-      );
-    if (unseen.length) {
-      // Name the moment the chance came up, so "not observed" points at a turn, not at a template.
-      const first = req.scenario.stimulus.persona.name.split(" ")[0];
-      const cited = unseen.flatMap((i) => {
-        const o = opportunityFor(req.scenario, req.transcript, i.indicatorId);
-        if (o.kind !== "moment") return [];
-        const said = o.quote.split(/(?<=[.?!])\s/)[0];
-        return [`${i.label.toLowerCase()} at ${o.time}, when ${first} said "${said}"`];
-      });
-      overall.push(
-        `${unseen.length} of ${indicators.length} indicators were not observed, and unobserved indicators count as Weak.${cited.length ? ` The clearest missed chances: ${list(cited.slice(0, 2))}` : ""}`,
+        `The clearest missed chance was ${moments[0].i.label.toLowerCase()} at ${moments[0].o.time}, when ${first} said "${said}"`,
       );
     }
+    if (unseen.length)
+      overall.push(
+        `${unseen.length} of ${indicators.length} behaviours did not show in this call, and a behaviour that does not show counts as Weak.`,
+      );
 
     const coaching = new Map(
       req.scenario.instrument.skills.flatMap((s) => s.indicators.map((i) => [i.id, i.coaching] as const)),

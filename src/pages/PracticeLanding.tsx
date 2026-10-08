@@ -124,7 +124,7 @@ export default function PracticeLanding({
           : []),
       ]}
     >
-      <div className="md:h-full flex flex-col gap-2.5 p-2.5 lg:gap-3 lg:p-3">
+      <div className="md:h-full flex flex-col gap-2.5 p-2.5 lg:gap-3 lg:p-3 lg:short:gap-2.5 lg:short:p-2.5">
         {/* Header strip: what this is, its terms, and the game layer at a glance */}
         <header className="card flex-none flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2.5">
           <div className="min-w-0 mr-auto">
@@ -226,10 +226,10 @@ export default function PracticeLanding({
           </dl>
         </header>
 
-        <div className="flex-1 min-h-0 flex flex-col gap-2.5 lg:gap-3 lg:grid lg:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)_minmax(0,0.92fr)]">
+        <main className="flex-1 min-h-0 flex flex-col gap-2.5 lg:gap-3 lg:grid lg:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)_minmax(0,0.92fr)]">
           {/* Situation: who you meet, where, and what you are there to do */}
           <section
-            className="card p-3 lg:p-4 min-h-0 flex-none grid gap-x-5 gap-y-2 xl:gap-y-2.5 md:grid-cols-2 lg:flex lg:flex-col"
+            className="card p-3 lg:p-4 lg:short:p-3 min-h-0 flex-none grid gap-x-5 gap-y-2 xl:gap-y-2.5 md:grid-cols-2 lg:flex lg:flex-col"
             aria-labelledby="situation-heading"
           >
             <h2 id="situation-heading" className="sr-only">
@@ -238,7 +238,7 @@ export default function PracticeLanding({
             <div className="flex flex-col gap-2 xl:gap-2.5">
               <div className="flex items-center gap-3">
                 <figure
-                  className="relative w-16 xl:w-[72px] aspect-square flex-none overflow-hidden rounded-[var(--radius-sm)]"
+                  className="relative w-16 xl:w-[72px] lg:short:w-14 aspect-square flex-none overflow-hidden rounded-[var(--radius-sm)]"
                   style={{ background: "var(--surface-2)" }}
                 >
                   <img
@@ -284,7 +284,7 @@ export default function PracticeLanding({
 
           {/* What you are scored on */}
           <section
-            className="card p-3 lg:p-4 min-h-0 flex-none flex flex-col gap-2.5 md:block md:columns-2 md:gap-x-5 lg:flex lg:columns-1 [&>*+*]:md:mt-2.5 [&>*+*]:lg:mt-0"
+            className="card p-3 lg:p-4 lg:short:p-3 min-h-0 flex-none flex flex-col gap-2.5 md:block md:columns-2 md:gap-x-5 lg:flex lg:columns-1 [&>*+*]:md:mt-2.5 [&>*+*]:lg:mt-0"
             aria-labelledby="scoring-heading"
           >
             <h2 id="scoring-heading" className="sr-only">
@@ -327,7 +327,7 @@ export default function PracticeLanding({
 
           {/* The run you are about to start, and your path so far */}
           <section
-            className="card p-3 lg:p-4 flex flex-col gap-2.5 xl:gap-3 min-h-0 flex-none md:grid md:grid-cols-2 md:gap-x-5 lg:flex"
+            className="card p-3 lg:p-4 lg:short:p-3 flex flex-col gap-2.5 xl:gap-3 lg:short:!gap-2 min-h-0 flex-none max-md:order-first md:grid md:grid-cols-2 md:gap-x-5 lg:flex"
             aria-labelledby="setup-heading"
           >
             <div className="flex flex-col gap-2">
@@ -379,7 +379,7 @@ export default function PracticeLanding({
               </button>
             </div>
 
-            <div className="flex flex-col gap-2.5 xl:gap-3 md:col-start-2 md:row-start-1 md:row-span-2">
+            <div className="flex flex-col gap-2.5 xl:gap-3 lg:short:!gap-2 md:col-start-2 md:row-start-1 md:row-span-2">
               <Block
                 title="Your path"
                 aside={best === null ? "First run sets your baseline" : `Best ${best}/10`}
@@ -492,7 +492,7 @@ export default function PracticeLanding({
               </Block>
             </div>
           </section>
-        </div>
+        </main>
       </div>
     </AppShell>
   );

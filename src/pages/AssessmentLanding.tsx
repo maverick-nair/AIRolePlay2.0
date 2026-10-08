@@ -6,6 +6,7 @@ import { PORTRAIT_SRC } from "../data/scenario";
 import type { Report } from "../domain/report";
 import type { Scenario } from "../domain/scenario";
 import type { Product } from "../products";
+import { CLAIM_LADDER } from "../domain/instrumentStatus";
 
 const mono = { fontFamily: "var(--font-mono)" };
 
@@ -80,7 +81,7 @@ export default function AssessmentLanding({
           : []),
       ]}
     >
-      <div className="md:h-full flex flex-col gap-2.5 p-2.5 lg:gap-3 lg:p-3">
+      <div className="md:h-full flex flex-col gap-2.5 p-2.5 lg:gap-3 lg:p-3 lg:short:gap-2.5 lg:short:p-2.5">
         {/* Header strip: what this is and its terms */}
         <header className="card flex-none flex flex-wrap items-center gap-x-6 gap-y-1.5 px-4 py-2.5">
           <div className="min-w-0 mr-auto">
@@ -104,22 +105,21 @@ export default function AssessmentLanding({
             <li className="flex items-center gap-1.5">
               <Icon name="layers" size={15} /> {scenario.instrument.skills.length} skills
             </li>
-            {pilot && (
-              <li>
-                <span className="chip chip-neutral">Pilot assessment, feedback only</span>
-              </li>
-            )}
+            <li className="flex items-center gap-1.5">
+              <Icon name="shield" size={15} /> Rung {scenario.instrument.claimRung} of 4,{" "}
+              {CLAIM_LADDER[scenario.instrument.claimRung].title.toLowerCase()}
+            </li>
           </ul>
         </header>
 
-        <div className="flex-1 min-h-0 flex flex-col gap-2.5 md:gap-2 md:grid md:grid-cols-2 md:content-start lg:content-stretch lg:gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)_minmax(0,1fr)]">
+        <main className="flex-1 min-h-0 flex flex-col gap-2.5 md:gap-2 md:grid md:grid-cols-2 md:content-start lg:content-stretch lg:gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)_minmax(0,1fr)]">
           {/* The brief, as a numbered paper */}
           <article
-            className="card flex-none p-3 lg:p-4 md:col-span-2 md:columns-2 md:gap-x-6 lg:col-span-1 lg:columns-1 lg:flex lg:flex-col"
+            className="card flex-none p-3 lg:p-4 lg:short:p-3 md:col-span-2 md:columns-2 md:gap-x-6 lg:col-span-1 lg:columns-1 lg:flex lg:flex-col"
             aria-labelledby="brief-heading"
           >
             <PanelTitle id="brief-heading">Assessment brief</PanelTitle>
-            <div className="flex flex-col gap-2 xl:gap-2.5 md:block md:[&>*+*]:mt-2.5 lg:flex lg:[&>*+*]:mt-0">
+            <div className="flex flex-col gap-2 xl:gap-2.5 lg:short:!gap-2 md:block md:[&>*+*]:mt-2.5 lg:flex lg:[&>*+*]:mt-0">
               <BriefRow n="01" title="The scene">
                 <p className="t-body text-ink/90">{player.scene}</p>
               </BriefRow>
@@ -150,7 +150,7 @@ export default function AssessmentLanding({
           {/* Who you meet, and what is assessed */}
           <div className="flex-none flex flex-col gap-2.5 md:contents lg:flex lg:gap-3">
             <section
-              className="card p-3 lg:p-4 flex items-center gap-3 md:col-start-1 md:row-start-3 lg:row-auto lg:col-auto"
+              className="card p-3 lg:p-4 lg:short:p-3 flex items-center gap-3 md:col-start-1 md:row-start-3 lg:row-auto lg:col-auto"
               aria-label="Your counterpart"
             >
               <figure
@@ -197,7 +197,7 @@ export default function AssessmentLanding({
           {/* Devices and begin */}
           <div className="flex-none flex flex-col gap-2.5 md:contents lg:flex lg:gap-3">
             <section
-              className="card p-3 lg:p-4 md:col-start-1 md:row-start-4 lg:row-auto lg:col-auto"
+              className="card p-3 lg:p-4 lg:short:p-3 md:col-start-1 md:row-start-4 lg:row-auto lg:col-auto"
               aria-labelledby="devices-heading"
             >
               <h2 id="devices-heading" className="text-[15px] font-semibold text-ink leading-tight mb-1">
@@ -207,7 +207,7 @@ export default function AssessmentLanding({
             </section>
 
             <section
-              className="card p-3 lg:p-4 md:col-start-2 md:row-start-3 md:row-span-2 lg:row-auto lg:col-auto lg:row-span-1"
+              className="card p-3 lg:p-4 lg:short:p-3 md:col-start-2 md:row-start-3 md:row-span-2 lg:row-auto lg:col-auto lg:row-span-1"
               style={{ borderColor: "var(--accent-ui)", borderWidth: 2 }}
               aria-labelledby="begin-heading"
             >
@@ -229,7 +229,12 @@ export default function AssessmentLanding({
                 </>
               ) : (
                 <>
-                  <PanelTitle id="begin-heading">Before you begin</PanelTitle>
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                    <h2 id="begin-heading" className="text-[15px] font-semibold text-ink leading-tight">
+                      Before you begin
+                    </h2>
+                    {pilot && <span className="chip chip-neutral">Pilot assessment, feedback only</span>}
+                  </div>
                   <ol className="flex flex-col gap-1" aria-label="Instructions">
                     {INSTRUCTIONS.map((t, i) => (
                       <li key={t} className="grid grid-cols-[1.25rem_1fr] t-small">
@@ -238,10 +243,10 @@ export default function AssessmentLanding({
                       </li>
                     ))}
                   </ol>
-                  <p className="mt-1.5 mb-3 t-small text-ink/90 font-medium">
+                  <p className="mt-1 mb-2 t-small text-ink/90 font-medium">
                     Need more time? Extended time is available on request from your administrator.
                   </p>
-                  <label className="flex items-start gap-2.5 t-body text-ink/90 cursor-pointer mb-3">
+                  <label className="flex items-start gap-2.5 t-body text-ink/90 cursor-pointer mb-2">
                     <input
                       id="confirm-begin"
                       type="checkbox"
@@ -261,7 +266,7 @@ export default function AssessmentLanding({
               )}
             </section>
           </div>
-        </div>
+        </main>
       </div>
     </AppShell>
   );

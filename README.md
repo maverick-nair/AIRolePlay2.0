@@ -39,6 +39,8 @@ pnpm dev:ai         # Vite with VITE_AI_PROVIDER=http, proxies /api to the serve
 
 `pnpm check` runs typecheck, lint, copy lint, format check, tests and build. CI runs the same.
 
+`pnpm eval` builds the app, drives the AI RolePlay and Conversation AI journeys in Chromium at laptop, tablet and phone sizes, and scores the experience out of 100 against `docs/eval.md`: one frame per screen, information on screen, WCAG 2.2 AA, flow, product rules, visual quality and performance. It writes `eval/results/latest.md` and exits with code 1 below 100.
+
 ## LLM routing
 
 Every AI job in the backend (`npc` persona, `classify` turn classifier, `report` writer) is routed independently through environment variables, so cost, speed, security and accuracy decisions are configuration, not code:
@@ -80,7 +82,8 @@ src/store/        attempt persistence (localStorage until the backend exists)
 server/           API server: config, LLM registry and runner, jobs, routes
 prompts/          versioned prompt files, one folder per job
 test/             vitest: engine, classifier heuristics, routing config, report assembly
-docs/             handover, architecture, scoring method, product strategy
+eval/             product eval: real journeys in a browser, scored against docs/eval.md
+docs/             handover, architecture, eval rubric and scorecard, product strategy
 ```
 
 See `docs/handover.md` for the full file map, scoring rules and what is still mocked, `docs/architecture.md` for the request flow, and `docs/product-strategy.md` for the market analysis this product is built on.
