@@ -1,5 +1,4 @@
 import type { Band, IndicatorHit, Scenario, TurnClassification } from "../domain/scenario";
-import { opportunityFor } from "../domain/report";
 import type {
   ClassifyRequest,
   ClassifyResponse,
@@ -31,8 +30,7 @@ type Rule = {
 const QUESTION = /\?/;
 const OPEN_Q =
   /\b(what|how|why|tell me|walk me|describe|explain|share|which|help me understand|could you|can you)\b[^?]*\?/i;
-const OFFER =
-  /\b(\d{1,2}\s?%|percent|discount|off\b|reduce|lower the price|price match|match (it|that|them|their|the|your)( (price|quote|offer|number|rate))?|beat (their|the|that) (price|quote|offer))/i;
+const OFFER = /\b(\d{1,2}\s?%|percent|discount|off\b|reduce|lower the price|match (it|that|the quote))/i;
 const CONDITION =
   /\b(if you|if we|in return|in exchange|provided|on condition|when you|once you|for that)\b/i;
 const RUDE =
@@ -43,7 +41,7 @@ const RULES: Rule[] = [
     indicatorId: "strategy.anchor",
     strong:
       /\b(before (we|i) (get|talk|discuss) (into|about)? ?(numbers|price|pricing)|outcomes?|what success looks like|value (first|before))/i,
-    weak: /\b(what (price|number) (do you|would you) need|how much (lower|less)|(we|i) (can|could|will|'ll) (match|beat) (it|that|them|their|the|your))/i,
+    weak: /\b(what (price|number) (do you|would you) need|how much (lower|less))\b/i,
     harmful: /\b(i can (give|do|offer) (you )?\d{1,2}\s?%)/i,
     notes: {
       Strong: "Held the conversation on outcomes before price.",
@@ -217,8 +215,7 @@ const RULES: Rule[] = [
   },
   {
     indicatorId: "relationship.tone",
-    strong:
-      /\b(together|partnership|partner with you|let's (work|look|find|figure|build|explore)|work with you|we can (work|find|figure|build|explore|look))\b/i,
+    strong: /\b(together|partnership|we can|let's|with you)\b/i,
     harmful: RUDE,
     notes: { Strong: "Kept the tone collaborative.", Harmful: "Tone turned hostile." },
   },
@@ -290,19 +287,10 @@ class MockReporter {
       overall.push(
         `The main development area is ${list(gaps.slice(0, 2).map((i) => i.label.toLowerCase()))}. The evidence tab quotes the turns where this showed.`,
       );
-    if (unseen.length) {
-      // Name the moment the chance came up, so "not observed" points at a turn, not at a template.
-      const first = req.scenario.stimulus.persona.name.split(" ")[0];
-      const cited = unseen.flatMap((i) => {
-        const o = opportunityFor(req.scenario, req.transcript, i.indicatorId);
-        if (o.kind !== "moment") return [];
-        const said = o.quote.split(/(?<=[.?!])\s/)[0];
-        return [`${i.label.toLowerCase()} at ${o.time}, when ${first} said "${said}"`];
-      });
+    if (unseen.length)
       overall.push(
-        `${unseen.length} of ${indicators.length} indicators were not observed, and unobserved indicators count as Weak.${cited.length ? ` The clearest missed chances: ${list(cited.slice(0, 2))}` : ""}`,
+        `${unseen.length} of ${indicators.length} indicators were not observed at all. In this scenario each had an opportunity to appear, so unobserved indicators count as Weak. A longer or broader conversation would give the instrument more to work with.`,
       );
-    }
 
     const coaching = new Map(
       req.scenario.instrument.skills.flatMap((s) => s.indicators.map((i) => [i.id, i.coaching] as const)),

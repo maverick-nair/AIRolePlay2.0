@@ -15,7 +15,7 @@ export default function TenPointScale({
 
   return (
     <div
-      className="flex flex-col p-4 sm:p-6 md:p-8 rounded-2xl border border-ink/10"
+      className="flex flex-col p-6 md:p-8 rounded-2xl border border-ink/10"
       style={{ background: "var(--surface)" }}
     >
       <p className="text-ink/70 text-xs font-bold tracking-widest uppercase mb-5">
@@ -25,7 +25,7 @@ export default function TenPointScale({
       <div className="flex flex-col sm:flex-row sm:items-start gap-6 mb-10">
         <div className="flex items-baseline gap-2">
           <span className="text-8xl font-display font-bold leading-none text-ink tabular-nums">{score}</span>
-          <span className="text-3xl text-ink/75 font-display">/10</span>
+          <span className="text-3xl text-ink/70 font-display">/10</span>
         </div>
         <div className="flex flex-col gap-3 max-w-md sm:mt-2">
           <div className="flex items-center gap-3 flex-wrap">
@@ -43,11 +43,11 @@ export default function TenPointScale({
         </div>
       </div>
 
-      <p className="text-ink/75 text-xs font-bold tracking-widest uppercase mb-4">
+      <p className="text-ink/70 text-[11px] font-bold tracking-widest uppercase mb-4">
         Knolskape Ten-Point Scale
       </p>
       <div
-        className="grid grid-cols-5 gap-1 sm:gap-2 md:gap-3"
+        className="grid grid-cols-5 gap-2 md:gap-3"
         role="img"
         aria-label={`Score ${score} of 10, ${active.label} band (${active.min} to ${active.max})`}
       >
@@ -72,10 +72,11 @@ export default function TenPointScale({
                   return (
                     <div
                       key={n}
-                      className="h-9 flex items-center justify-center text-xs font-bold tabular-nums rounded-md"
+                      className="h-9 flex items-center justify-center text-xs font-display font-bold tabular-nums rounded-md"
                       style={{
-                        background: on ? b.color : `color-mix(in srgb, ${b.color} 30%, var(--surface))`,
-                        color: on ? readableOn(b.color) : "rgb(var(--ink) / 0.85)",
+                        background: b.color,
+                        opacity: on ? 1 : 0.32,
+                        color: on ? readableOn(b.color) : "transparent",
                         outline: here ? `2px solid rgb(var(--ink))` : "none",
                         outlineOffset: 2,
                       }}
@@ -86,11 +87,11 @@ export default function TenPointScale({
                 })}
               </div>
               <span
-                className={`mt-3 text-center text-xs leading-tight min-w-0 ${on ? "font-bold text-ink" : "font-medium text-ink/75"}`}
+                className={`mt-3 text-center text-xs font-display ${on ? "font-bold text-ink" : "font-medium text-ink/70"}`}
               >
                 {b.label}
               </span>
-              <span className="text-center text-xs text-ink/75 tabular-nums">
+              <span className="text-center text-[11px] text-ink/70 tabular-nums">
                 {b.min}-{b.max}
               </span>
             </div>

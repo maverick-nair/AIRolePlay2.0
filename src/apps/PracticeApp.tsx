@@ -6,11 +6,9 @@ import SummaryPage from "../pages/SummaryPage";
 import { renewalNegotiation } from "../data/scenarios/renewalNegotiation";
 import type { Report } from "../domain/report";
 import { PRODUCTS, applyProductTheme } from "../products";
-import { careerXp, listAttempts } from "../store/attempts";
-import { practiceRunsLeft } from "../domain/scoring";
+import { listAttempts } from "../store/attempts";
 
-// AI RolePlay: the practice product. Up to maxPracticeAttempts runs per scenario, rewind, hints,
-// adaptive persona.
+// AI RolePlay: the practice product. Unlimited attempts, rewind, hints, adaptive persona.
 const product = PRODUCTS.roleplay;
 type Page = "landing" | "session" | "summary";
 
@@ -22,7 +20,6 @@ export default function PracticeApp() {
   const [runKey, setRunKey] = useState(0);
   const [report, setReport] = useState<Report | null>(null);
   const [attempts, setAttempts] = useState<Report[]>(() => listAttempts(scenario.id, "practice"));
-  const runsLeft = practiceRunsLeft(attempts.length, scenario.maxPracticeAttempts);
 
   useEffect(() => applyProductTheme(product), []);
   useEffect(() => {
@@ -30,7 +27,6 @@ export default function PracticeApp() {
   }, [dark]);
 
   function start(next: PracticeOptions) {
-    if (runsLeft <= 0) return;
     setOptions(next);
     setRunKey((k) => k + 1);
     setPage("session");
@@ -44,7 +40,6 @@ export default function PracticeApp() {
             product={product}
             scenario={scenario}
             attempts={attempts}
-            runsLeft={runsLeft}
             onStart={start}
             onViewReport={(r) => {
               setReport(r);
@@ -60,7 +55,6 @@ export default function PracticeApp() {
             mode="practice"
             difficulty={options.difficulty}
             hints={options.hints}
-            startXp={careerXp(attempts)}
             onEnd={(r) => {
               setReport(r);
               setAttempts(listAttempts(scenario.id, "practice"));
@@ -74,7 +68,6 @@ export default function PracticeApp() {
             report={report}
             scenario={scenario}
             attempts={attempts}
-            runsLeft={runsLeft}
             onPractiseAgain={() => start(options)}
             onHome={() => setPage("landing")}
           />

@@ -8,9 +8,3 @@ coverage/
 .DS_Store
 playwright-report/
 test-results/
-
-# Playwright screenshots from local verification runs
-products/
-responsive/
-light/
-diff/

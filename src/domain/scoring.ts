@@ -13,22 +13,16 @@ export const BAND_POINTS: Record<Band, number> = { Strong: 10, Adequate: 7, Weak
 // An indicator the scenario gave an opportunity for, but the participant never showed, counts as Weak.
 export const NOT_OBSERVED_POINTS = 4;
 
-// XP rewards the behaviours the instrument teaches, never volume. A turn earns a small amount for
-// staying on topic, then points per behaviour it shows (Strong more than Adequate, the best two
-// counted), plus a bonus for each objective it completes. Weak and Harmful bands earn nothing.
-// The streak counts consecutive turns with a Strong behaviour.
 export const XP_RULES = {
-  onTopic: 15,
-  perStrong: 15,
-  perAdequate: 8,
-  maxBehaviours: 2,
+  onTopic: 25,
   perObjective: 45,
+  maxLengthBonus: 20,
+  substantiveWords: 4,
   streakThreshold: 3,
   streakMultiplier: 1.5,
 } as const;
 
 export const LEVELS = [
-  { name: "Newcomer", floor: 0 },
   { name: "Emerging", floor: 300 },
   { name: "Competent", floor: 500 },
   { name: "Proficient", floor: 700 },
@@ -155,12 +149,8 @@ export function objectiveMet(objective: Objective, classification: TurnClassific
 
 // ---------- Per turn gamification (pure; the session page only renders the result) ----------
 
-// The behaviour a turn is best remembered for, shown first in the in-call feedback chip.
-export type TurnBehaviour = { indicatorId: string; label: string; band: Band; why: string };
-
 export type TurnOutcome = {
   gain: number;
-  behaviour: TurnBehaviour | null;
   multiplied: boolean;
   nextStreak: number;
   newlyMet: boolean[];
@@ -179,19 +169,18 @@ export function turnOutcome(input: {
   xp: number;
   badges: string[];
 }): TurnOutcome {
-  // `text` stays in the input for callers and future descriptive use; it never earns points.
-  const { scenario, classification, metObjectives, streak, xp, badges } = input;
+  const { scenario, text, classification, metObjectives, streak, xp, badges } = input;
   const objectives = scenario.instrument.objectives;
   const matched = objectives.map((o) => objectiveMet(o, classification));
   const newlyMet = matched.map((m, i) => m && !metObjectives[i]);
   const newCount = newlyMet.filter(Boolean).length;
+  const words = text.split(/\s+/).filter(Boolean);
   const onTopic = classification.onTopic || classification.hits.length > 0;
 
   // Relevance gate: a line that neither engages the scenario nor shows a behaviour earns nothing.
   if (!onTopic) {
     return {
       gain: 0,
-      behaviour: null,
       multiplied: false,
       nextStreak: 0,
       newlyMet: objectives.map(() => false),
@@ -202,28 +191,14 @@ export function turnOutcome(input: {
     };
   }
 
-  const hasStrong = classification.hits.some((h) => h.band === "Strong");
-  const hasGap = classification.hits.some((h) => h.band === "Weak" || h.band === "Harmful");
-  const nextStreak = hasStrong ? streak + 1 : hasGap ? 0 : streak;
-  const multiplied = hasStrong && nextStreak >= XP_RULES.streakThreshold;
-  const behaviourPoints = classification.hits
-    .map((h): number =>
-      h.band === "Strong" ? XP_RULES.perStrong : h.band === "Adequate" ? XP_RULES.perAdequate : 0,
-    )
-    .sort((a, b) => b - a)
-    .slice(0, XP_RULES.maxBehaviours)
-    .reduce((a, b) => a + b, 0);
-  const base = XP_RULES.onTopic + behaviourPoints + newCount * XP_RULES.perObjective;
+  const nextStreak = streak + 1;
+  const multiplied = nextStreak >= XP_RULES.streakThreshold;
+  const substantive = words.length >= XP_RULES.substantiveWords;
+  const base =
+    XP_RULES.onTopic +
+    newCount * XP_RULES.perObjective +
+    (substantive ? Math.min(words.length, XP_RULES.maxLengthBonus) : 0);
   const gain = Math.round(base * (multiplied ? XP_RULES.streakMultiplier : 1));
-
-  // Lead with a gap when there is one, so a concession is never hidden behind a point gain.
-  const rank: Record<Band, number> = { Harmful: 0, Weak: 1, Strong: 2, Adequate: 3 };
-  const top = [...classification.hits].sort((a, b) => rank[a.band] - rank[b.band])[0];
-  const labelOf = (id: string) =>
-    scenario.instrument.skills.flatMap((s) => s.indicators).find((i) => i.id === id)?.label ?? id;
-  const behaviour: TurnBehaviour | null = top
-    ? { indicatorId: top.indicatorId, label: labelOf(top.indicatorId), band: top.band, why: top.note }
-    : null;
 
   const earned: string[] = [];
   const add = (id: string) => {
@@ -237,7 +212,6 @@ export function turnOutcome(input: {
   const firstNew = newlyMet.indexOf(true);
   return {
     gain,
-    behaviour,
     multiplied,
     nextStreak,
     newlyMet,
@@ -267,10 +241,4 @@ export function hintFor(scenario: Scenario, recent: TurnClassification[]): strin
     return probe?.coaching.hint ?? null;
   }
   return null;
-}
-
-// Practice runs still available on a scenario. Never negative; the store may hold more runs than
-// the cap if the cap was lowered after they were saved.
-export function practiceRunsLeft(used: number, max: number): number {
-  return Math.max(0, max - used);
 }

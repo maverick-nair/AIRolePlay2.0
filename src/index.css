@@ -1,19 +1,61 @@
-/* Self hosted variable fonts (no third party font host, works inside locked down networks).
-   AI RolePlay: Bricolage Grotesque for display, DM Sans for body.
-   Conversation AI: Newsreader for display, Instrument Sans for body. */
-@import "@fontsource-variable/bricolage-grotesque/opsz.css";
-@import "@fontsource-variable/dm-sans";
-@import "@fontsource-variable/newsreader/opsz.css";
-@import "@fontsource-variable/instrument-sans";
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
 @import "tailwindcss";
+
+@font-face {
+  font-family: "Inter:Semi Bold";
+  font-style: normal;
+  font-weight: 600;
+  src: url("https://static.figma.com/font/Inter_1") format("woff2");
+}
+@font-face {
+  font-family: "SF Pro:Bold";
+  font-style: normal;
+  font-weight: 700;
+  src: url("https://static.figma.com/font/SF-Pro_1") format("woff2");
+}
+@font-face {
+  font-family: "SF Pro:Semibold";
+  font-style: normal;
+  font-weight: 590;
+  src: url("https://static.figma.com/font/SF-Pro_1") format("woff2");
+}
+@font-face {
+  font-family: "Inter:Regular";
+  font-style: normal;
+  font-weight: 400;
+  src: url("https://static.figma.com/font/Inter_1") format("woff2");
+}
+@font-face {
+  font-family: "SF Pro:Regular";
+  font-style: normal;
+  font-weight: 400;
+  src: url("https://static.figma.com/font/SF-Pro_1") format("woff2");
+}
+@font-face {
+  font-family: "SF Pro:Medium";
+  font-style: normal;
+  font-weight: 510;
+  src: url("https://static.figma.com/font/SF-Pro_1") format("woff2");
+}
+@font-face {
+  font-family: "Sacramento:Regular";
+  font-style: normal;
+  font-weight: 400;
+  src: url("https://static.figma.com/font/Sacramento-Regular_1") format("woff2");
+}
+@font-face {
+  font-family: "Inter:Medium";
+  font-style: normal;
+  font-weight: 500;
+  src: url("https://static.figma.com/font/Inter_1") format("woff2");
+}
 
 html,
 body,
 #root {
   height: 100%;
-  font-family: var(--font-body);
-  font-optical-sizing: auto;
-  -webkit-font-smoothing: antialiased;
+  font-family: "Inter", sans-serif;
 }
 
 /* WCAG 2.2, 2.4.7 Focus Visible & 2.4.13 Focus Appearance: a strong, consistent
@@ -38,9 +80,6 @@ body,
 
 /* Theme tokens: dark is the default. `.light` on <html> flips them. */
 :root {
-  /* Design language: AI RolePlay is round, warm and playful; Conversation AI overrides these below. */
-  --font-body: "DM Sans Variable", "DM Sans", system-ui, sans-serif;
-  --radius: 14px;
   --ink: 255 255 255; /* foreground channels, used as rgb(var(--ink) / a) */
   --bg: #0e0d0c; /* warm near-black ground */
   --surface: #161412; /* panels / cards */
@@ -88,37 +127,31 @@ body,
 /* Conversation AI (the assessment product) keeps every token name and takes a cooler accent, so the
    two products read as siblings and are never mistaken for each other. Contrast checked for AA. */
 :root[data-product="conversation-ai"] {
-  --font-display: "Newsreader Variable", "Newsreader", Georgia, serif;
-  --font-body: "Instrument Sans Variable", "Instrument Sans", system-ui, sans-serif;
-  --radius: 0px;
-  --ink: 232 236 246;
-  --bg: #0b1020; /* slate navy paper, not the ember black */
-  --surface: #121a30;
-  --surface-2: #182240;
-  --surface-3: #0e1529;
-  --tile-opacity: 0;
-  --brand: #8ab4ff; /* accent text on the navy ground: 8.6:1 */
+  --brand: #7cc4ff; /* accent text on dark surfaces: 9.3:1 */
   --accent: #1d4ed8; /* solid fills behind white text: 6.3:1 */
   --accent-hover: #1e40af;
   --accent-2: #1e3a8a;
   --accent-rgb: 59 130 246;
   --tile: #3b82f6;
-  /* A single quiet band at the top; the rest is flat paper. */
-  --bg-gradient: linear-gradient(180deg, rgba(59, 130, 246, 0.14) 0%, transparent 320px);
+  --bg-gradient:
+    radial-gradient(1000px 640px at 50% -12%, rgba(59, 130, 246, 0.22), transparent 62%),
+    radial-gradient(760px 560px at 104% 4%, rgba(99, 102, 241, 0.14), transparent 58%),
+    radial-gradient(900px 700px at -6% 110%, rgba(56, 189, 248, 0.08), transparent 60%);
 }
 :root.light[data-product="conversation-ai"] {
-  --ink: 15 23 42;
-  --bg: #f5f7fb;
-  --surface: #ffffff;
   --brand: #1d4ed8; /* accent text on the light ground: 6.1:1 */
   --accent: #1d4ed8;
   --accent-hover: #1e40af;
   --accent-2: #1e3a8a;
   --accent-rgb: 59 130 246;
   --tile: #ffffff;
-  --surface-2: #f3f6fb;
-  --surface-3: #f8fafd;
-  --bg-gradient: linear-gradient(180deg, rgba(147, 197, 253, 0.28) 0%, transparent 320px);
+  --surface-2: rgba(246, 248, 252, 0.97);
+  --surface-3: rgba(249, 250, 253, 0.92);
+  --bg-gradient:
+    radial-gradient(1000px 680px at 50% -14%, rgba(147, 197, 253, 0.34), transparent 60%),
+    radial-gradient(820px 600px at 108% 2%, rgba(165, 180, 252, 0.3), transparent 56%),
+    radial-gradient(900px 760px at -8% 112%, rgba(186, 230, 253, 0.28), transparent 58%),
+    linear-gradient(170deg, #eef3fb 0%, #eef1f6 50%, #f4f2ef 100%);
 }
 
 body {
@@ -146,7 +179,7 @@ body {
   --color-emerald: #10b981;
   --color-amber: #f59e0b;
   --color-rose: #f43f5e;
-  --font-display: "Bricolage Grotesque Variable", "Bricolage Grotesque", system-ui, sans-serif;
+  --font-display: "Outfit", sans-serif;
 }
 
 * {
@@ -292,7 +325,6 @@ body {
 
 .font-display {
   font-family: var(--font-display);
-  letter-spacing: -0.01em;
 }
 
 .glass {
@@ -562,161 +594,16 @@ body {
   }
 }
 
-/* The bundled portrait is drawn for the dark theme; the light theme lifts it. */
+/* Bundled artwork is drawn for the dark theme; the light theme turns it into a daylight version. */
 .portrait-img {
   filter: grayscale(0.2) contrast(1.05);
+}
+.scene-img {
+  filter: grayscale(0.35) brightness(0.5);
 }
 :root.light .portrait-img {
   filter: grayscale(0.25) contrast(0.95) brightness(1.3);
 }
-/* ---------- Product design languages ---------- */
-/* AI RolePlay: rounded, soft, playful. Cards and controls take the product radius; docked call
-   panels stay square because they meet the screen edge. */
-[data-product="roleplay"]
-  :is(
-    button:not(.rounded-full),
-    [role="radio"],
-    [role="tab"],
-    textarea,
-    .rounded-2xl,
-    .rounded-xl,
-    .rounded-lg,
-    .glass,
-    .tool-btn
-  ) {
-  border-radius: var(--radius);
-}
-[data-product="roleplay"] .box-pattern::before {
-  filter: blur(6px);
-}
-
-/* Conversation AI: an assessment paper. Serif headings, sharp edges, ruled ground, no motion flourishes. */
-[data-product="conversation-ai"]
-  :is(.rounded-2xl, .rounded-xl, .rounded-lg, .rounded-md, .rounded, .glass, .glass-strong) {
-  border-radius: var(--radius);
-}
-[data-product="conversation-ai"] .glass,
-[data-product="conversation-ai"] .glass-strong {
-  border-color: rgb(var(--ink) / 0.16);
-}
-[data-product="conversation-ai"] .box-pattern::before {
-  display: none;
-}
-[data-product="conversation-ai"] .box-pattern::after {
-  background-image: linear-gradient(rgb(var(--ink) / 0.07) 1px, transparent 1px);
-  background-size: 100% 32px;
-}
-[data-product="conversation-ai"] .box-pattern {
-  -webkit-mask-image: linear-gradient(#000 0%, #000 60%, transparent 100%);
-  mask-image: linear-gradient(#000 0%, #000 60%, transparent 100%);
-}
-[data-product="conversation-ai"] .tool-btn:hover,
-[data-product="conversation-ai"] .tool-btn:active {
-  transform: none;
-}
-[data-product="conversation-ai"] .font-display {
-  letter-spacing: -0.01em;
-}
-/* The serif is for headings of 20px and above. Small labels, buttons and tabs use the body sans. */
-[data-product="conversation-ai"]
-  :is(.text-xs, .text-sm, .text-base, .text-lg, button, [role="tab"]).font-display,
-[data-product="conversation-ai"] :is(button, [role="tab"]) .font-display {
-  font-family: var(--font-body);
-  letter-spacing: 0;
-}
-
-/* Live caption under the persona: a short fade so a new line reads as new without moving the layout. */
-@keyframes caption-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-.caption-in {
-  animation: caption-in 0.25s ease-out;
-}
-
-/* Call screen. The ring shows who holds the floor; the state pill says it in words, so motion is
-   never the only signal. */
-.kbd {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.4rem;
-  padding: 0 0.3rem;
-  margin-left: 0.25rem;
-  border: 1px solid rgb(var(--ink) / 0.3);
-  border-bottom-width: 2px;
-  border-radius: 5px;
-  font: 600 12px/1.4 var(--font-body, inherit);
-  color: rgb(var(--ink) / 0.85);
-}
-.speak-ring {
-  box-shadow: 0 0 0 3px var(--brand);
-  animation: speak-pulse 1.6s ease-in-out infinite;
-}
-@keyframes speak-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 3px var(--brand);
-  }
-  50% {
-    box-shadow:
-      0 0 0 3px var(--brand),
-      0 0 0 12px color-mix(in srgb, var(--brand) 18%, transparent);
-  }
-}
-.thinking-shimmer::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    110deg,
-    transparent 30%,
-    color-mix(in srgb, var(--brand) 22%, transparent) 50%,
-    transparent 70%
-  );
-  background-size: 250% 100%;
-  animation: shimmer 1.4s linear infinite;
-  pointer-events: none;
-}
-@keyframes shimmer {
-  from {
-    background-position: 120% 0;
-  }
-  to {
-    background-position: -120% 0;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .speak-ring,
-  .thinking-shimmer::after {
-    animation: none;
-  }
-}
-/* Shortcut keys mean nothing on a touch screen. */
-@media (max-width: 639px), (pointer: coarse) {
-  .kbd {
-    display: none;
-  }
-}
-
-/* The practice brief: a drawer from the right edge, full height on every screen. */
-.brief-drawer {
-  height: 100dvh;
-  max-height: 100dvh;
-}
-.brief-drawer::backdrop {
-  background: rgb(0 0 0 / 0.55);
-}
-.brief-drawer[open] {
-  animation: drawer-in 0.22s ease-out;
-}
-@keyframes drawer-in {
-  from {
-    transform: translateX(24px);
-    opacity: 0;
-  }
+:root.light .scene-img {
+  filter: invert(1) hue-rotate(180deg) grayscale(0.35) brightness(1.08) contrast(0.9);
 }

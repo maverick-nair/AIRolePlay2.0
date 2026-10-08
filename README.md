@@ -4,8 +4,8 @@ Two products for workplace conversations, built on one evidence based instrument
 
 | Product | 4E line | Entry | What it does |
 | --- | --- | --- | --- |
-| **AI RolePlay** | Experience | `/` (`index.html`) | Practice: up to five runs per scenario, rewind any of your turns (the persona rewinds with you), criteria on request, hints in the moment, selectable persona difficulty, and a trend across runs. The report leads with one next move. Scores are for the learner. |
-| **Conversation AI** | Evaluate | `/assess/` (`assess/index.html`) | Assessment: one attempt, a fixed time limit, a standardised persona that follows a schedule of critical incidents, hidden criteria, no hints, no rewind, and a confirmation before the attempt starts. The report leads with the result against the pass mark and what happens next, is saved, and the scenario locks. |
+| **AI RolePlay** | Experience | `/` (`index.html`) | Practice: unlimited runs, rewind any of your turns (the persona rewinds with you), criteria on request, hints in the moment, selectable persona difficulty, and a trend across runs. Scores are for the learner. |
+| **Conversation AI** | Evaluate | `/assess/` (`assess/index.html`) | Assessment: one attempt, a fixed time limit, a standardised persona that follows a schedule of critical incidents, hidden criteria, no hints, no rewind, and a confirmation before the attempt starts. The report is saved and the scenario locks. |
 
 Every score is produced the same way in both products. A classifier (an LLM, or the offline heuristic) places each participant turn into a band (Strong, Adequate, Weak, Harmful) against authored behavioural indicators with written anchors, quoting the words that justify it. Rules turn bands into points through a fixed table. No model ever writes a number into a score. Every rating traces to quoted turns, and every report states where the instrument sits on the claim ladder (rung 1 of 4 today: structured feedback, not for talent decisions).
 
@@ -97,4 +97,4 @@ Each has a README with details and tests runnable with `claude plugin test tools
 
 ## Copy and accessibility rules
 
-Say "skills", never "competency". No em dashes, no en dashes, no emojis anywhere (the copy lint fails on them). WCAG 2.2 AA: keyboard operable, visible focus, reduced motion respected, secondary text at `text-ink/70` or stronger, no text below 12px. In Conversation AI the serif is for headings of 20px and above; one corner radius per product (`--radius`). Default exports for components.
+Say "skills", never "competency". No em dashes, no en dashes, no emojis anywhere (the copy lint fails on them). WCAG 2.2 AA: keyboard operable, visible focus, reduced motion respected, secondary text at `text-ink/70` or stronger. Default exports for components.

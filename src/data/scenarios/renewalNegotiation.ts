@@ -9,7 +9,6 @@ export const renewalNegotiation = validateScenario({
   category: "Sales Negotiation",
   durationSeconds: 900,
   passScore: 8,
-  maxPracticeAttempts: 5,
   stimulus: {
     persona: {
       name: "Margaret Hale",
@@ -68,7 +67,6 @@ export const renewalNegotiation = validateScenario({
     incidents: [
       {
         id: "competitor-detail",
-        opportunityFor: ["strategy.batna", "value.differentiation", "objection.reframe"],
         label: "The fine print",
         afterPlayerTurn: 1,
         directive:
@@ -78,13 +76,6 @@ export const renewalNegotiation = validateScenario({
       },
       {
         id: "savings-demand",
-        opportunityFor: [
-          "value.business-impact",
-          "value.client-evidence",
-          "strategy.anchor",
-          "objection.acknowledge",
-          "relationship.empathy",
-        ],
         label: "Show me the savings",
         afterPlayerTurn: 2,
         directive:
@@ -94,7 +85,6 @@ export const renewalNegotiation = validateScenario({
       },
       {
         id: "longer-term-hint",
-        opportunityFor: ["listening.cues", "strategy.conditional-concession"],
         label: "The buying signal",
         afterPlayerTurn: 3,
         directive:
@@ -104,12 +94,6 @@ export const renewalNegotiation = validateScenario({
       },
       {
         id: "cfo-deadline",
-        opportunityFor: [
-          "strategy.next-steps",
-          "objection.composure",
-          "relationship.commitment",
-          "probing.decision-criteria",
-        ],
         label: "Friday is real",
         afterPlayerTurn: 5,
         directive:

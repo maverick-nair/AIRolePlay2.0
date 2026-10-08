@@ -1,72 +1,14 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useState } from "react";
 import ThemeToggle from "../components/ThemeToggle";
-import DeviceCheck from "../components/DeviceCheck";
+import SectionLabel from "../components/SectionLabel";
 import { PORTRAIT_SRC } from "../data/scenario";
 import type { Report } from "../domain/report";
 import type { Scenario } from "../domain/scenario";
 import type { Product } from "../products";
 import BuildStamp from "../components/BuildStamp";
-import useMediaQuery from "../lib/useMediaQuery";
 
-// One numbered section of the brief. From md up it is a plain card; on phones it collapses so the
-// page is short, with the scene and the instructions open by default.
-function BriefSection({
-  n,
-  title,
-  defaultOpen,
-  collapsible,
-  children,
-}: {
-  n: string;
-  title: string;
-  defaultOpen: boolean;
-  collapsible: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <details
-      open={collapsible ? defaultOpen : true}
-      className="group border border-ink/15 p-5"
-      style={{ background: "var(--surface)" }}
-    >
-      <summary
-        className={`list-none flex items-baseline gap-3 [&::-webkit-details-marker]:hidden ${collapsible ? "cursor-pointer" : "cursor-default"} focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]`}
-        tabIndex={collapsible ? 0 : -1}
-        onClick={(e) => {
-          if (!collapsible) e.preventDefault();
-        }}
-      >
-        <h2 className="flex-1 flex items-baseline gap-3">
-          <span className="text-xs font-semibold tracking-[0.2em] text-brand tabular-nums">{n}</span>
-          <span className="font-display font-semibold text-ink text-xl tracking-tight">{title}</span>
-        </h2>
-        {collapsible && (
-          <svg
-            aria-hidden
-            width="14"
-            height="14"
-            viewBox="0 0 14 14"
-            className="self-center text-ink/70 transition-transform group-open:rotate-180"
-          >
-            <path
-              d="M3 5l4 4 4-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-            />
-          </svg>
-        )}
-      </summary>
-      <div className="mt-3">{children}</div>
-    </details>
-  );
-}
-
-// Conversation AI landing: an assessment brief built to fit a laptop viewport (about 1500 by 750).
-// Six blocks on a dense sheet: the scene, your role, your goal, the challenge with its objectives,
-// skills mapped (name and one liner) and instructions with a microphone and camera test. A sticky
-// candidate card holds the confirmation and Begin. No gamification, no hints, no indicators shown.
+// Conversation AI landing: the assessment product. No gamification, no difficulty choice, no hints.
+// The participant reads the brief and the rules, confirms them, and takes the one attempt.
 export default function AssessmentLanding({
   product,
   scenario,
@@ -81,67 +23,57 @@ export default function AssessmentLanding({
   onViewReport: (report: Report) => void;
 }) {
   const [confirmed, setConfirmed] = useState(false);
-  const mdUp = useMediaQuery("(min-width: 768px)");
-  const lgUp = useMediaQuery("(min-width: 1024px)");
-  const collapsible = !mdUp;
-  // On narrow screens the begin card sits below the brief, so a sticky bar carries the next step
-  // until the card itself is on screen.
-  const beginRef = useRef<HTMLElement | null>(null);
-  const [beginVisible, setBeginVisible] = useState(false);
-  useEffect(() => {
-    const el = beginRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver(([entry]) => setBeginVisible(entry.isIntersecting), {
-      threshold: 0.25,
-    });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-  const goToBegin = () => {
-    beginRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    window.setTimeout(() => document.getElementById("confirm-begin")?.focus({ preventScroll: true }), 350);
-  };
   const minutes = Math.round(scenario.durationSeconds / 60);
   const persona = scenario.stimulus.persona;
-  const player = scenario.stimulus.player;
+  const indicatorCount = scenario.instrument.skills.reduce((a, s) => a + s.indicators.length, 0);
 
-  const META: [string, string][] = [
-    ["Attempts", "1"],
-    ["Time limit", `${minutes} min`],
-    ["Skills", String(scenario.instrument.skills.length)],
-    ["Pass mark", `${scenario.passScore}/10`],
-  ];
-
-  const INSTRUCTIONS = [
-    `Find a quiet place and allow the full ${minutes} minutes in one sitting.`,
-    "Test your microphone and camera. Both are optional; you can type every reply.",
-    `Speak or type to ${persona.name.split(" ")[0]} as you would in a real call. Only your transcript is scored.`,
-    "You have one attempt. The call ends when you end it or when the time runs out, and the report is saved.",
-    "Tick the confirmation, then press Begin the assessment.",
+  const RULES = [
+    {
+      k: "One attempt",
+      v: "The conversation runs once. There is no rewind, no retry and no second sitting.",
+    },
+    {
+      k: `${minutes} minutes`,
+      v: "The call ends when the time runs out and the report is produced from what was said.",
+    },
+    {
+      k: "Standardised persona",
+      v: `${persona.name} follows the same schedule of critical incidents for every participant.`,
+    },
+    {
+      k: "Hidden criteria",
+      v: `${indicatorCount} behavioural indicators are scored. Their anchors are shown only in the report, beside your words.`,
+    },
+    {
+      k: "Evidence, not impressions",
+      v: "Every rating quotes the turn it comes from. Conversation metrics are descriptive and never enter the score.",
+    },
+    {
+      k: "Text only scoring",
+      v: "If you speak, only the transcript is assessed. Nothing is inferred from voice or face.",
+    },
   ];
 
   return (
     <div className="relative isolate min-h-full overflow-auto" style={{ background: "transparent" }}>
       <div aria-hidden className="box-pattern" />
-
-      {/* Product bar */}
       <nav
-        className="sticky top-0 z-20 flex items-center justify-between px-6 md:px-10 h-14 border-b border-ink/15"
-        style={{ background: "color-mix(in srgb, var(--bg) 92%, transparent)", backdropFilter: "blur(8px)" }}
+        className="sticky top-0 z-20 flex items-center justify-between px-6 md:px-10 h-16 border-b border-ink/10"
+        style={{ background: "color-mix(in srgb, var(--bg) 85%, transparent)", backdropFilter: "blur(8px)" }}
       >
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 flex items-center justify-center" style={{ background: "var(--accent)" }}>
-            <span className="text-white text-xs font-bold leading-none">{product.mark}</span>
+            <span className="text-white text-xs font-bold font-display leading-none">{product.mark}</span>
           </div>
-          <span className="text-ink font-display font-semibold text-lg tracking-tight">{product.name}</span>
-          <span className="hidden sm:inline text-ink/70 text-xs uppercase tracking-widest border-l border-ink/15 pl-3">
+          <span className="text-ink font-display font-semibold text-base tracking-tight">{product.name}</span>
+          <span className="hidden sm:inline text-ink/70 text-[11px] font-display uppercase tracking-widest border-l border-ink/15 pl-3">
             {product.line}
           </span>
         </div>
         <div className="flex items-center gap-4">
           <span
-            className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 text-xs uppercase tracking-wider border"
-            style={{ borderColor: "rgb(var(--accent-rgb) / 0.5)", color: "var(--brand)" }}
+            className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 text-[11px] font-display uppercase tracking-wider"
+            style={{ background: "rgb(var(--accent-rgb) / 0.14)", color: "var(--brand)" }}
           >
             Assessment
           </span>
@@ -149,224 +81,201 @@ export default function AssessmentLanding({
         </div>
       </nav>
 
-      {/* Brief header: title left, meta right, one row */}
-      <main className={lgUp ? "" : "pb-24"}>
-        <header className="max-w-7xl mx-auto px-6 md:px-10 pt-7 pb-5 animate-fade-in-up">
-          <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-4 border-b border-ink/20 pb-5">
-            <div className="max-w-4xl">
-              <p className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-2">
-                <span className="text-xs font-semibold tracking-[0.2em] text-brand uppercase">
-                  Assessment brief · {scenario.category}
-                </span>
-                {scenario.instrument.claimRung === 1 && (
-                  <span className="px-2 py-0.5 text-xs font-semibold border border-ink/30 text-ink/85">
-                    Pilot assessment, feedback only
-                  </span>
-                )}
-              </p>
-              <h1 className="font-display font-semibold text-4xl md:text-[2.75rem] text-ink tracking-[-0.015em] leading-[1.05] mb-2">
-                {scenario.title}
-              </h1>
-              <p className="text-ink/75 text-sm leading-relaxed">
-                {product.tagline} One conversation with {persona.name}, {persona.role} at{" "}
-                {persona.organisation}.
-              </p>
-            </div>
-            <dl className="flex flex-wrap gap-x-8 gap-y-3">
-              {META.map(([k, v]) => (
-                <div key={k}>
-                  <dt className="text-ink/70 text-xs uppercase tracking-widest mb-0.5">{k}</dt>
-                  <dd className="font-display font-semibold text-ink text-lg tabular-nums leading-tight">
-                    {v}
-                  </dd>
+      <header className="max-w-6xl mx-auto px-6 md:px-10 pt-16 md:pt-20 pb-12 animate-fade-in-up">
+        <div className="grid md:grid-cols-12 gap-10 items-start">
+          <div className="md:col-span-8">
+            <p className="font-display text-xs font-semibold tracking-[0.2em] text-brand mb-4">
+              {scenario.category.toUpperCase()} · ASSESSMENT
+            </p>
+            <h1 className="font-display font-bold text-4xl md:text-5xl text-ink tracking-tight leading-[1.05] mb-5">
+              {scenario.title}
+            </h1>
+            <p className="text-ink/75 text-sm leading-relaxed max-w-2xl mb-6">
+              {product.tagline} You will hold one conversation with {persona.name}, {persona.role} at{" "}
+              {persona.organisation}. Your words are scored against {scenario.instrument.skills.length} skills
+              by the method described below, and the report shows the evidence behind every rating.
+            </p>
+            <dl
+              className="grid grid-cols-2 sm:grid-cols-4 border border-ink/15"
+              style={{ background: "var(--surface)" }}
+            >
+              {[
+                ["Attempts", "1"],
+                ["Time limit", `${minutes} min`],
+                ["Skills", String(scenario.instrument.skills.length)],
+                ["Pass mark", `${scenario.passScore}/10`],
+              ].map(([k, v], i) => (
+                <div
+                  key={k}
+                  className={`p-4 ${i ? "border-l border-ink/10" : ""} ${i >= 2 ? "max-sm:border-t max-sm:border-l-0" : ""}`}
+                >
+                  <dt className="text-ink/75 text-[11px] font-display uppercase tracking-widest mb-1">{k}</dt>
+                  <dd className="font-display font-bold text-ink text-lg tabular-nums">{v}</dd>
                 </div>
               ))}
             </dl>
           </div>
-        </header>
-
-        <div className="max-w-7xl mx-auto px-6 md:px-10 pb-10 grid lg:grid-cols-12 gap-5 items-start animate-fade-in-up">
-          <div className="lg:col-span-8 space-y-5">
-            <div className="grid md:grid-cols-3 gap-5">
-              <BriefSection n="01" title="The scene" defaultOpen collapsible={collapsible}>
-                <p className="text-ink/80 text-sm leading-relaxed">{player.scene}</p>
-              </BriefSection>
-              <BriefSection n="02" title="Your role" defaultOpen={false} collapsible={collapsible}>
-                <p className="text-ink/80 text-sm leading-relaxed">{player.role}</p>
-              </BriefSection>
-              <BriefSection n="03" title="Your goal" defaultOpen={false} collapsible={collapsible}>
-                <p className="text-ink/80 text-sm leading-relaxed">{player.goal}</p>
-              </BriefSection>
-            </div>
-
-            <BriefSection n="04" title="The challenge" defaultOpen={false} collapsible={collapsible}>
-              <div className="grid md:grid-cols-2 gap-x-8 gap-y-3">
-                <p className="text-ink/80 text-sm leading-relaxed">{player.challenge}</p>
-                <div>
-                  <p className="text-ink/70 text-xs uppercase tracking-widest mb-2">Objectives to achieve</p>
-                  <ol className="space-y-1.5">
-                    {scenario.instrument.objectives.map((o, i) => (
-                      <li key={o.id} className="grid grid-cols-[1.5rem_1fr] gap-x-2 text-sm leading-snug">
-                        <span className="text-ink/75 text-xs tabular-nums pt-0.5">{i + 1}.</span>
-                        <span>
-                          <span className="font-display font-semibold text-ink">{o.label}</span>
-                          <span className="text-ink/75">: {o.sub}</span>
-                        </span>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              </div>
-            </BriefSection>
-
-            <BriefSection n="06" title="Instructions" defaultOpen collapsible={collapsible}>
-              <div className="grid md:grid-cols-2 gap-x-8 gap-y-5">
-                <ol className="space-y-2">
-                  {INSTRUCTIONS.map((t, i) => (
-                    <li key={t} className="grid grid-cols-[1.5rem_1fr] gap-x-2">
-                      <span className="text-ink/75 text-xs tabular-nums pt-0.5">{i + 1}.</span>
-                      <span className="text-ink/80 text-sm leading-relaxed">{t}</span>
-                    </li>
-                  ))}
-                </ol>
-                <p className="md:col-start-1 text-ink/85 text-sm leading-relaxed pt-2 border-t border-ink/15 md:order-none">
-                  Need more time? Extended time is available on request from your administrator.
-                </p>
-                <div className="md:col-start-2 md:row-start-1 md:row-span-2">
-                  <h3 className="font-display font-semibold text-ink text-base mb-1">
-                    Audio and video access test
-                  </h3>
-                  <p className="text-ink/70 text-xs leading-relaxed mb-1">
-                    Check that your browser can reach your microphone and camera before you begin.
-                  </p>
-                  <DeviceCheck />
-                </div>
-              </div>
-            </BriefSection>
-          </div>
-
-          {/* Candidate card: a 1:1 portrait beside a text panel of the same size */}
-          <aside className="lg:col-span-4 space-y-5">
-            <div className="border border-ink/15 grid grid-cols-2" style={{ background: "var(--surface)" }}>
-              <figure
-                className="relative aspect-square overflow-hidden border-r border-ink/15"
-                style={{ background: "var(--surface-2)" }}
-              >
-                <img
-                  src={PORTRAIT_SRC}
-                  alt={persona.portraitAlt}
-                  className="portrait-img absolute inset-0 w-full h-full object-cover object-top"
-                />
-              </figure>
-              <div className="aspect-square p-4 flex flex-col justify-center">
-                <p className="text-ink/70 text-xs uppercase tracking-widest mb-1">Your counterpart</p>
-                <p className="font-display font-semibold text-ink text-xl leading-tight">{persona.name}</p>
-                <p className="text-ink/75 text-sm mt-1">
+          <div className="md:col-span-4">
+            <figure
+              className="relative aspect-[4/5] w-full overflow-hidden border border-ink/10"
+              style={{ background: "var(--surface-2)" }}
+            >
+              <img
+                src={PORTRAIT_SRC}
+                alt={persona.portraitAlt}
+                className="portrait-img w-full h-full object-cover"
+              />
+              <div
+                className="absolute inset-0"
+                style={{
+                  background:
+                    "linear-gradient(to top, color-mix(in srgb, var(--bg) 92%, transparent) 0%, color-mix(in srgb, var(--bg) 70%, transparent) 30%, transparent 55%)",
+                }}
+              />
+              <figcaption className="absolute bottom-0 left-0 right-0 p-4">
+                <p className="font-display font-semibold text-ink text-sm">{persona.name}</p>
+                <p className="text-ink/80 text-xs mt-0.5">
                   {persona.role}, {persona.organisation}
                 </p>
-              </div>
-            </div>
+              </figcaption>
+            </figure>
+          </div>
+        </div>
+      </header>
 
-            <section
-              id="begin"
-              ref={beginRef}
-              className="border p-5 scroll-mt-20"
-              style={{ background: "var(--surface)", borderColor: "rgb(var(--accent-rgb) / 0.6)" }}
-            >
-              {completed ? (
-                <>
-                  <h2 className="font-display font-semibold text-ink text-xl mb-2">Assessment complete</h2>
-                  <p className="text-ink/80 text-sm leading-relaxed mb-4">
-                    Taken on{" "}
-                    {new Date(completed.completedAt).toLocaleString("en-GB", {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}
-                    . Score{" "}
-                    <span className="font-display font-semibold text-ink">{completed.scores.overall}/10</span>
-                    . The one attempt has been used; the report is saved under {completed.id}.
-                  </p>
-                  <button
-                    onClick={() => onViewReport(completed)}
-                    className="w-full inline-flex items-center justify-center gap-3 px-6 py-3.5 font-semibold text-white text-sm tracking-wide focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]"
-                    style={{ background: "var(--accent)" }}
-                  >
-                    Open the report
-                  </button>
-                </>
-              ) : (
-                <>
-                  <h2 className="font-display font-semibold text-ink text-xl mb-3">Before you begin</h2>
-                  <label className="flex items-start gap-3 text-sm text-ink/85 cursor-pointer mb-4">
-                    <input
-                      id="confirm-begin"
-                      type="checkbox"
-                      checked={confirmed}
-                      onChange={(e) => setConfirmed(e.target.checked)}
-                      className="mt-1 w-4 h-4 accent-[var(--accent)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
-                    />
-                    <span>
-                      I have read the brief and the instructions. I understand this is a single, timed attempt
-                      and that the report will be saved.
-                    </span>
-                  </label>
-                  <button
-                    onClick={onBegin}
-                    disabled={!confirmed}
-                    className="w-full inline-flex items-center justify-center gap-3 px-6 py-3.5 font-semibold text-white text-sm tracking-wide transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)] disabled:cursor-not-allowed"
-                    style={{ background: confirmed ? "var(--accent)" : "rgb(var(--ink) / 0.35)" }}
-                  >
-                    Begin the assessment
-                  </button>
-                  <p className="text-ink/70 text-xs mt-3 leading-relaxed">
-                    {minutes} minutes, one sitting. Find a quiet place and allow the full time.
-                  </p>
-                </>
-              )}
-            </section>
-            <BriefSection n="05" title="Skills mapped" defaultOpen={false} collapsible={collapsible}>
-              <ul className="space-y-3">
-                {scenario.instrument.skills.map((sk, i) => (
-                  <li key={sk.id} className="grid grid-cols-[1.75rem_1fr] gap-x-2">
-                    <span className="text-brand text-xs font-semibold tabular-nums pt-1">
+      <div className="max-w-6xl mx-auto px-6 md:px-10 pb-16 space-y-6 animate-fade-in-up">
+        {/* Brief */}
+        <div
+          className="grid md:grid-cols-3 border border-ink/10"
+          style={{ background: "rgb(var(--ink) / 0.08)", gap: 1 }}
+        >
+          <section className="p-7" style={{ background: "var(--surface)" }}>
+            <SectionLabel index="01">Your Role</SectionLabel>
+            <p className="text-ink/80 text-sm leading-relaxed">{scenario.stimulus.player.role}</p>
+          </section>
+          <section className="p-7" style={{ background: "var(--surface)" }}>
+            <SectionLabel index="02">Your Goal</SectionLabel>
+            <p className="text-ink/80 text-sm leading-relaxed">{scenario.stimulus.player.goal}</p>
+          </section>
+          <section className="p-7" style={{ background: "var(--surface)" }}>
+            <SectionLabel index="03">The Situation</SectionLabel>
+            <p className="text-ink/80 text-sm leading-relaxed">{scenario.stimulus.player.scene}</p>
+          </section>
+        </div>
+
+        <div className="grid md:grid-cols-12 gap-6">
+          {/* Skills assessed: names and descriptions only. Indicators and anchors stay hidden until the report. */}
+          <section
+            className="md:col-span-7 border border-ink/10 p-7"
+            style={{ background: "var(--surface)" }}
+          >
+            <SectionLabel index="04">Skills assessed</SectionLabel>
+            <ul className="grid sm:grid-cols-2 gap-3">
+              {scenario.instrument.skills.map((sk, i) => (
+                <li
+                  key={sk.id}
+                  className="p-4 border border-ink/10"
+                  style={{ background: "var(--surface-2)" }}
+                >
+                  <span className="flex items-center justify-between mb-2">
+                    <span className="font-display text-xs text-brand font-semibold tabular-nums">
                       {String(i + 1).padStart(2, "0")}
                     </span>
-                    <span>
-                      <span className="block font-display font-semibold text-ink text-[15px] leading-snug">
-                        {sk.name}
-                      </span>
-                      <span className="block text-ink/75 text-xs leading-relaxed">{sk.desc}</span>
+                    <span className="text-ink/70 text-[11px] font-display uppercase tracking-widest">
+                      Weight {sk.weight}%
                     </span>
-                  </li>
-                ))}
-              </ul>
-            </BriefSection>
-          </aside>
-        </div>
-      </main>
-      <BuildStamp product={product.name} />
+                  </span>
+                  <span className="block font-display font-semibold text-ink text-sm mb-1">{sk.name}</span>
+                  <span className="block text-ink/75 text-xs leading-relaxed">{sk.desc}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-ink/70 text-xs mt-4 leading-relaxed">
+              The behavioural indicators under each skill are not shown before the conversation, so every
+              participant meets the same unprompted challenge. The report lists them with their anchors and
+              your quoted words.
+            </p>
+          </section>
 
-      {!lgUp && !beginVisible && (
-        <div
-          className="fixed inset-x-0 bottom-0 z-30 border-t border-ink/15 px-4 pt-3 flex items-center gap-3"
-          style={{
-            background: "color-mix(in srgb, var(--bg) 94%, transparent)",
-            backdropFilter: "blur(8px)",
-            paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))",
-          }}
-        >
-          <p className="flex-1 min-w-0 text-ink/80 text-xs leading-snug">
-            {completed ? "Your one attempt is complete." : `${minutes} minutes, one attempt.`}
-          </p>
-          <button
-            onClick={() => (completed ? onViewReport(completed) : goToBegin())}
-            className="px-5 py-3 text-sm font-semibold text-white min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--brand)]"
-            style={{ background: "var(--accent)" }}
+          {/* Rules */}
+          <section
+            className="md:col-span-5 border border-ink/10 p-7"
+            style={{ background: "var(--surface)" }}
           >
-            {completed ? "Open the report" : "Review and begin"}
-          </button>
+            <SectionLabel index="05">How this assessment runs</SectionLabel>
+            <dl className="space-y-3">
+              {RULES.map((r) => (
+                <div key={r.k} className="flex gap-3">
+                  <dt className="w-32 flex-none font-display font-semibold text-ink text-sm">{r.k}</dt>
+                  <dd className="text-ink/80 text-sm leading-relaxed">{r.v}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
         </div>
-      )}
+
+        {/* Begin */}
+        <section
+          className="border p-7 grid md:grid-cols-12 gap-6 items-center"
+          style={{ background: "var(--surface)", borderColor: "rgb(var(--accent-rgb) / 0.45)" }}
+        >
+          {completed ? (
+            <>
+              <div className="md:col-span-8">
+                <h2 className="font-display font-semibold text-ink text-lg mb-1">Assessment complete</h2>
+                <p className="text-ink/80 text-sm leading-relaxed">
+                  You took this assessment on{" "}
+                  {new Date(completed.completedAt).toLocaleString("en-GB", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })}{" "}
+                  and scored{" "}
+                  <span className="font-display font-semibold text-ink">{completed.scores.overall}/10</span>.
+                  The one attempt has been used; the report is saved under {completed.id}.
+                </p>
+              </div>
+              <div className="md:col-span-4 flex md:justify-end">
+                <button
+                  onClick={() => onViewReport(completed)}
+                  className="inline-flex items-center justify-center gap-3 px-6 py-3.5 font-display font-semibold text-white text-sm tracking-wide focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]"
+                  style={{ background: "var(--accent)" }}
+                >
+                  Open the report
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="md:col-span-8">
+                <h2 className="font-display font-semibold text-ink text-lg mb-2">Ready to begin?</h2>
+                <label className="flex items-start gap-3 text-sm text-ink/85 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={confirmed}
+                    onChange={(e) => setConfirmed(e.target.checked)}
+                    className="mt-1 w-4 h-4 accent-[var(--accent)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
+                  />
+                  <span>
+                    I understand this is a single, timed attempt with a standardised persona, that my
+                    transcript is scored against hidden criteria, and that the report will be saved.
+                  </span>
+                </label>
+              </div>
+              <div className="md:col-span-4 flex md:justify-end">
+                <button
+                  onClick={onBegin}
+                  disabled={!confirmed}
+                  className="inline-flex items-center justify-center gap-3 px-6 py-3.5 font-display font-semibold text-white text-sm tracking-wide transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)] disabled:cursor-not-allowed"
+                  style={{ background: confirmed ? "var(--accent)" : "rgb(var(--ink) / 0.35)" }}
+                >
+                  Begin the assessment
+                </button>
+              </div>
+            </>
+          )}
+        </section>
+      </div>
+      <BuildStamp product={product.name} />
     </div>
   );
 }

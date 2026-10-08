@@ -10,7 +10,7 @@ export const BAND_COLORS: Record<Band, string> = {
 };
 
 export default function BandChip({ band, size = "sm" }: { band: Band | null; size?: "sm" | "md" }) {
-  const pad = size === "md" ? "px-2.5 py-1 text-xs" : "px-2 py-0.5 text-xs";
+  const pad = size === "md" ? "px-2.5 py-1 text-xs" : "px-2 py-0.5 text-[11px]";
   if (!band)
     return (
       <span

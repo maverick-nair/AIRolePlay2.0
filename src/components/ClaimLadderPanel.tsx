@@ -24,7 +24,7 @@ export default function ClaimLadderPanel({ current }: { current: ClaimRung }) {
                 Rung {r.rung}
               </span>
               <span
-                className="text-xs font-display font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                className="text-[11px] font-display font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded"
                 style={
                   isCurrent
                     ? { background: "var(--accent)", color: "#fff" }
@@ -38,10 +38,10 @@ export default function ClaimLadderPanel({ current }: { current: ClaimRung }) {
             </div>
             <p className="font-display font-semibold text-ink text-sm">{r.title}</p>
             <p className="text-ink/80 text-xs leading-relaxed">{r.claim}</p>
-            <p className="text-ink/70 text-xs leading-relaxed">
+            <p className="text-ink/70 text-[11px] leading-relaxed">
               <span className="font-semibold text-ink/80">Requires:</span> {r.requires}
             </p>
-            <p className="text-ink/70 text-xs leading-relaxed mt-auto">
+            <p className="text-ink/70 text-[11px] leading-relaxed mt-auto">
               <span className="font-semibold text-ink/80">Fit for:</span> {r.fitFor}
             </p>
           </li>

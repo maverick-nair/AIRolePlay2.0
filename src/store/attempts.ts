@@ -4,16 +4,12 @@ import type { Mode } from "../domain/scenario";
 // Attempt persistence. localStorage stands in for the sessions backend; the shape is what the
 // server will store. Assessment mode is one attempt per scenario and the lock lives here.
 
-// Bumping the key resets access for every browser: the assessment unlocks and practice runs start
-// again from five. Older keys are removed on first read so stale reports do not linger.
-const KEY = "gk.roleplay.attempts.v2";
-const RETIRED_KEYS = ["gk.roleplay.attempts.v1"];
+const KEY = "gk.roleplay.attempts.v1";
 
 export type Attempt = Report;
 
 function readAll(): Attempt[] {
   try {
-    for (const k of RETIRED_KEYS) localStorage.removeItem(k);
     const raw = localStorage.getItem(KEY);
     return raw ? (JSON.parse(raw) as Attempt[]) : [];
   } catch {
@@ -48,10 +44,4 @@ export function assessmentAttempt(scenarioId: string): Attempt | null {
 export function clearAttempts(scenarioId?: string) {
   if (!scenarioId) return writeAll([]);
   writeAll(readAll().filter((a) => a.scenarioId !== scenarioId));
-}
-
-// XP actually earned across saved practice runs. This is the only source of a learner's progress
-// until the backend exists; nothing is seeded, so a first time learner starts at zero.
-export function careerXp(list: Attempt[]): number {
-  return list.reduce((sum, a) => sum + Math.max(0, (a.stats?.endXp ?? 0) - (a.stats?.startXp ?? 0)), 0);
 }
